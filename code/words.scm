@@ -1,13 +1,15 @@
 
-(define (nub words)
-  (define seen (make-hashtable string-hash string=?))
-  (define (seen!? word)
-    (let ((yes/no (hashtable-ref seen word #f)))
-      (hashtable-set! seen word #t)
-      yes/no))
-  (fold-right (lambda (word words)
-                (if (not (seen!? word))
-                    (cons word words)
-                    words))
-              '()
-              words))
+(define (get-word-list)
+  (with-input-from-file "input/dict.txt"
+    (lambda ()
+      (let loop ((x (read)) (words '()))
+        (if (eof-object? x)
+            words
+            (loop (read) (cons (string-upcase (symbol->string x)) words)))))))
+
+(define *DICTIONARY*
+  (time
+   (begin
+     "preprocessing the word list..."
+     (dict->trie (get-word-list)))))
+

@@ -1,5 +1,3 @@
-(define size 4)
-
 (define ixs0
   (apply append
          (map (lambda (j)
@@ -15,14 +13,12 @@
         (,x . ,y-1)               (,x . ,y+1)
         (,x+1 . ,y-1) (,x+1 . ,y) (,x+1 . ,y+1)))))
 
-
 (define (ref board)
   (lambda (xy)
     (string-ref (vector-ref board (car xy)) (cdr xy))))
 
 (define (board! n)
-  (define board
-    (make-vector n))
+  (define board (make-vector n))
   (do ((i 0 (1+ i))
        (letters (map roll *DICE*) (list-tail letters size)))
       ((= i n) board)

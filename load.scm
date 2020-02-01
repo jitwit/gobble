@@ -1,4 +1,5 @@
-(import (prefix (patricia) t:))
+(import (prefix (patricia) t:)
+        (only (srfi :1) filter-map append-map))
 
 (print-gensym #f)
 
@@ -6,26 +7,25 @@
   '("code/dice.scm"
     "code/board.scm"
     "code/trie.scm"
-    "code/boggle.scm"
-    "code/words.scm"))
+    "code/words.scm"
+    "code/boggle.scm"))
 
-(for-all load src-files)
-
-(define (get-words)
-  (with-input-from-file "input/words.txt"
-    (lambda ()
-      (let loop ((x (read)) (words '()))
-        (if (eof-object? x)
-            words
-            (loop (read) (cons (string-upcase (symbol->string x)) words)))))))
-
-(define *DICTIONARY*
-  (time
-   (dict->trie (get-words))))
+(parameterize ((optimize-level 3))
+  (for-all load src-files))
 
 (define (run)
   (define board (board! size))
-  (for-all display-ln (reverse (nub (solve board))))
-  (newline)
-  (display-board board))
+  (for-all display-ln (boggle board))
+  (newline) (display-board board))
 
+(define example-board
+  '#("FXIE"
+     "AMLO"
+     "EWBX"
+     "ASTU"))
+
+(define demo-board
+  '#("DEMO"
+     "DEMO"
+     "DEMO"
+     "DEMO"))

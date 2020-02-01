@@ -16,5 +16,7 @@
     "NLNHZR"
     "ENSIEU"))
 
+(define size (isqrt (length *DICE*)))
+
 (define (roll die)
   (string-ref die (random (string-length die))))
