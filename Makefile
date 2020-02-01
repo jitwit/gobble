@@ -1,7 +1,10 @@
 .PHONY : clean
 
+input/trie.txt : code/trie.so
+	scheme --script load.scm
+
 code/trie.so : code/trie.scm
-	echo "(compile-library \"$<\")" | scheme
+	echo "(compile-library \"$<\")" | scheme -q
 
 clean :
 	find . -name "*~" -exec rm {} \;

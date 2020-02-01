@@ -1,3 +1,25 @@
+(define (get-word-list)
+  (with-input-from-file "input/words.txt"
+    (lambda ()
+      (let loop ((x (read)) (words '()))
+        (if (eof-object? x)
+            words
+            (loop (read) (cons (string-upcase (symbol->string x)) words)))))))
+
+(define *DICTIONARY*
+  (time
+   (begin
+     "preprocessing the word list..."
+     (call/cc
+      (lambda (k)
+        (with-exception-handler
+            (lambda (e)
+              (let ((T (dictionary->trie (get-word-list))))
+                (store-trie T "input/trie.txt")
+                (k T)))
+          (lambda ()
+            (fetch-trie "input/trie.txt"))))))))
+
 (define *DICE*
   '("NAEAEG"
     "EGNWEH"
@@ -23,14 +45,7 @@
          (string-ref die (random (string-length die))))
        (shuffle *DICE*)))
 
-(define start-indices
-  (append-map (lambda (j)
-                (map (lambda (i)
-                       (list (cons i j)))
-                     (iota size)))
-              (iota size)))
-
-(define (adj xy)
+(define (adjacent xy)
   (let ((x (car xy)) (y (cdr xy)))
     (let ((x-1 (1- x)) (x+1 (1+ x)) (y-1 (1- y)) (y+1 (1+ y)))
       `((,x-1 . ,y-1) (,x-1 . ,y) (,x-1 . ,y+1)
@@ -39,6 +54,13 @@
 
 (define (board-size board)
   (vector-length board))
+
+(define (board-indices board)
+  (append-map (lambda (j)
+                (map (lambda (i)
+                       `((,i . ,j)))
+                     (iota (board-size board))))
+              (iota (board-size board))))
 
 (define string->board
   (compose list->board string->list))

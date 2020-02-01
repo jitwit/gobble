@@ -1,5 +1,5 @@
 
 - support Qu
 - gui
-- store trie for faster read
+- path compression in trie
 
