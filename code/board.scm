@@ -35,14 +35,10 @@
   (let ((x (car xy)) (y (cdr xy)))
     (let ((x-1 (1- x)) (x+1 (1+ x)) (y-1 (1- y)) (y+1 (1+ y)))
       `((,x-1 . ,y-1) (,x-1 . ,y) (,x-1 . ,y+1)
-        (,x . ,y-1)               (,x . ,y+1)
+        (,x   . ,y-1)             (,x   . ,y+1)
         (,x+1 . ,y-1) (,x+1 . ,y) (,x+1 . ,y+1)))))
 
-(define (ref board)
-  (lambda (xy)
-    (string-ref (vector-ref board (car xy)) (cdr xy))))
-
-(define (board! n)
+(define (board!)
   (define board (make-vector n))
   (do ((i 0 (1+ i))
        (letters (roll) (list-tail letters size)))

@@ -1,13 +1,26 @@
-(import (prefix (patricia) t:)
+(unless (assoc "code" (library-directories))
+  (library-directories (cons "code" (library-directories))))
+
+(import (trie)
         (only (euler) shuffle)
         (only (srfi :1) filter-map append-map))
 
-(print-gensym #f)
+(define (get-word-list)
+  (with-input-from-file "input/dict.txt"
+    (lambda ()
+      (let loop ((x (read)) (words '()))
+        (if (eof-object? x)
+            words
+            (loop (read) (cons (string-upcase (symbol->string x)) words)))))))
+
+(define *DICTIONARY*
+  (time
+   (begin
+     "preprocessing the word list..."
+     (dictionary->trie (get-word-list)))))
 
 (define src-files
   '("code/board.scm"
-    "code/trie.scm"
-    "code/words.scm"
     "code/boggle.scm"))
 
 (parameterize ((optimize-level 3))
