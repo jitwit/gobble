@@ -6,8 +6,7 @@
         (only (srfi :1) filter-map append-map))
 
 (define src-files
-  '(;; "code/preprocess.scm"
-    "code/board.scm"
+  '("code/board.scm"
     "code/boggle.scm"))
 
 (parameterize ((optimize-level 3))

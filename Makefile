@@ -1,6 +1,10 @@
-.PHONY : clean
+.PHONY : clean all
 
-input/trie.txt : code/trie.so
+dictionary::= input/trie.fasl
+
+all : $(dictionary)
+
+input/trie.fasl : code/trie.so
 	scheme --script load.scm
 
 code/trie.so : code/trie.scm

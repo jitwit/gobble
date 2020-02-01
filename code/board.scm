@@ -1,5 +1,5 @@
 (define (get-word-list)
-  (with-input-from-file "input/words.txt"
+  (with-input-from-file "input/collins.txt"
     (lambda ()
       (let loop ((x (read)) (words '()))
         (if (eof-object? x)
@@ -15,10 +15,10 @@
         (with-exception-handler
             (lambda (e)
               (let ((T (dictionary->trie (get-word-list))))
-                (store-trie T "input/trie.txt")
+                (store-trie T "input/trie.fasl")
                 (k T)))
           (lambda ()
-            (fetch-trie "input/trie.txt"))))))))
+            (fetch-trie "input/trie.fasl"))))))))
 
 (define *DICE*
   '("NAEAEG"
