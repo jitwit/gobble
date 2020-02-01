@@ -15,7 +15,7 @@
                          (cons xy word)))
                   (adj (car word))))
     (append-map expand-word words))
-  (let walk ((ok (expand (expand ixs0))) (words '()))
+  (let walk ((ok (expand (expand start-indices))) (words '()))
     (if (null? ok)
         (let ((seen (make-hashtable string-hash string=?)))
           (sort (lambda (A B)

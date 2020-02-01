@@ -4,8 +4,7 @@
 (print-gensym #f)
 
 (define src-files
-  '("code/dice.scm"
-    "code/board.scm"
+  '("code/board.scm"
     "code/trie.scm"
     "code/words.scm"
     "code/boggle.scm"))

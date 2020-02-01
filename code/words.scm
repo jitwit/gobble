@@ -1,4 +1,3 @@
-
 (define (get-word-list)
   (with-input-from-file "input/dict.txt"
     (lambda ()
@@ -12,4 +11,3 @@
    (begin
      "preprocessing the word list..."
      (dict->trie (get-word-list)))))
-
