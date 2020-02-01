@@ -1,0 +1,4 @@
+
+study real boggle to get better boards
+remove duplicates
+
