@@ -1,4 +1,4 @@
 
-study real boggle to get better boards
-remove duplicates
+- study real boggle to get better boards
+- remove duplicates
 

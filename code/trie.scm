@@ -1,7 +1,3 @@
-(import (prefix (patricia) t:))
-
-(print-gensym #f)
-
 (define-record-type trie
   (fields element tries))
 
@@ -61,10 +57,4 @@
   (and (lookup-prefix s T)
        #t))
 
-(define (get-words)
-  (with-input-from-file "dict.txt"
-    (lambda ()
-      (let loop ((x (read)) (words '()))
-        (if (eof-object? x)
-            words
-            (loop (read) (cons (symbol->string x) words)))))))
+

@@ -23,13 +23,12 @@
 (define (board! n)
   (define board
     (make-vector n))
-  (do ((i 0 (1+ i)))
+  (do ((i 0 (1+ i))
+       (letters (map roll DICE) (list-tail letters size)))
       ((= i n) board)
     (vector-set! board i
                  (list->string
-                  (map (lambda (x)
-                         (integer->char (+ 65 (random 26))))
-                       (make-list n 0))))))
+                  (list-head letters size)))))
 
 (define (display-ln object)
   (display object) (newline))
