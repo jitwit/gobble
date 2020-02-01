@@ -1,25 +1,3 @@
-(define (get-word-list)
-  (with-input-from-file "input/collins.txt"
-    (lambda ()
-      (let loop ((x (read)) (words '()))
-        (if (eof-object? x)
-            words
-            (loop (read) (cons (string-upcase (symbol->string x)) words)))))))
-
-(define *DICTIONARY*
-  (time
-   (begin
-     "preprocessing the word list..."
-     (call/cc
-      (lambda (k)
-        (with-exception-handler
-            (lambda (e)
-              (let ((T (dictionary->trie (get-word-list))))
-                (store-trie T "input/trie.fasl")
-                (k T)))
-          (lambda ()
-            (fetch-trie "input/trie.fasl"))))))))
-
 (define *DICE*
   '("NAEAEG"
     "EGNWEH"

@@ -1,7 +1,7 @@
 #!chezscheme
 
 (eval-when (compile load)
-  (optimize-level 3))
+           (optimize-level 3))
 
 (library (trie)
   (export trie?
@@ -61,7 +61,7 @@
       (and (trie? T) (trie-element T))))
 
   (define (trie-prefix? s T)
-    (lookup-prefix s T))
+    (and (lookup-prefix s T) #t))
 
   (define (store-trie obj file)
     (when (file-exists? file)
@@ -76,5 +76,5 @@
         (close-input-port in)
         (assert (trie? obj))
         obj)))
-  
+
   )

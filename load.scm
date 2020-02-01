@@ -1,16 +1,7 @@
 (unless (assoc "code" (library-directories))
   (library-directories (cons "code" (library-directories))))
 
-(import (trie)
-        (only (euler) shuffle compose)
-        (only (srfi :1) filter-map append-map))
-
-(define src-files
-  '("code/board.scm"
-    "code/boggle.scm"))
-
-(parameterize ((optimize-level 3))
-  (for-all load src-files))
+(import (gobble))
 
 (define (run)
   (define board (board!))
