@@ -1,23 +1,24 @@
 .PHONY : clean all
 
 dictionary::= input/trie.fasl
-objs::= code/trie.so code/dictionary.so code/gobble.so
-lib-path::= code:$(CHEZSCHEMELIBDIRS)
+objs::= trie dictionary gobble
+lib-path::= .:$(CHEZSCHEMELIBDIRS)
 scheme::= scheme -q --libdirs $(lib-path)
+libs::= $(foreach lib,$(objs),$(lib).so)
 
-all : $(dictionary) $(objs)
+all : $(dictionary) $(libs)
 
-input/trie.fasl : $(objs)
+input/trie.fasl : $(libs)
 	scheme --script load.scm
 
-code/gobble.so : code/gobble.scm code/dictionary.so code/trie.so
-	echo "(compile-library \"$<\")" | $(scheme)
+gobble.so : code/*.scm dictionary.so trie.so
+	echo "(compile-library \"gobble.sls\")" | $(scheme)
 
-code/dictionary.so : code/dictionary.scm code/trie.so
-	echo "(compile-library \"$<\")" | $(scheme)
+dictionary.so : code/*.scm trie.so
+	echo "(compile-library \"dictionary.sls\")" | $(scheme)
 
-code/trie.so : code/trie.scm
-	echo "(compile-library \"$<\")" | $(scheme)
+trie.so : code/*.scm
+	echo "(compile-library \"trie.sls\")" | $(scheme)
 
 clean :
 	find . -name "*~" -exec rm {} \;
