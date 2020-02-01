@@ -12,14 +12,14 @@
 (for-all load src-files)
 
 (define (get-words)
-  (with-input-from-file "input/dict.txt"
+  (with-input-from-file "input/words.txt"
     (lambda ()
       (let loop ((x (read)) (words '()))
         (if (eof-object? x)
             words
-            (loop (read) (cons (symbol->string x) words)))))))
+            (loop (read) (cons (string-upcase (symbol->string x)) words)))))))
 
-(define DICTIONARY
+(define *DICTIONARY*
   (time
    (dict->trie (get-words))))
 

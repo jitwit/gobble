@@ -1,12 +1,13 @@
 
 (define (nub words)
   (define seen (make-hashtable string-hash string=?))
-  (define (seen? word)
-    (hashtable-ref seen word #f))
+  (define (seen!? word)
+    (let ((yes/no (hashtable-ref seen word #f)))
+      (hashtable-set! seen word #t)
+      yes/no))
   (fold-right (lambda (word words)
-                (if (not (seen? word))
+                (if (not (seen!? word))
                     (cons word words)
                     words))
               '()
               words))
-

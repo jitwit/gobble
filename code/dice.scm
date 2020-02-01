@@ -1,4 +1,4 @@
-(define DICE
+(define *DICE*
   '("NAEAEG"
     "EGNWEH"
     "CSOAHP"

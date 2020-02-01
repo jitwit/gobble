@@ -24,11 +24,9 @@
   (define board
     (make-vector n))
   (do ((i 0 (1+ i))
-       (letters (map roll DICE) (list-tail letters size)))
+       (letters (map roll *DICE*) (list-tail letters size)))
       ((= i n) board)
-    (vector-set! board i
-                 (list->string
-                  (list-head letters size)))))
+    (vector-set! board i (list->string (list-head letters size)))))
 
 (define (display-ln object)
   (display object) (newline))

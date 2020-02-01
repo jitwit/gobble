@@ -22,11 +22,11 @@
 
 (define (bad? board)
   (lambda (ixs)
-    (not (trie-prefix? (ixs->guess board ixs) DICTIONARY))))
+    (not (trie-prefix? (ixs->guess board ixs) *DICTIONARY*))))
 
 (define (word? board)
   (lambda (ixs)
-    (trie-member? (ixs->guess board ixs) DICTIONARY)))
+    (trie-member? (ixs->guess board ixs) *DICTIONARY*)))
 
 (define (solve board)
   (let loop ((ixs (expand ixs0)) (words '()))
