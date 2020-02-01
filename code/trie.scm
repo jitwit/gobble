@@ -21,15 +21,7 @@
                                   (trie-tries S)
                                   (trie-tries T))))))
 
-(define (dictionary->trie strings)
-  (define (aux xs)
-    (cond ((null? xs) (make-trie #f t:empty))
-          ((null? (cdr xs)) (car xs))
-          (else (merge-tries (merge-tries (car xs) (cadr xs))
-                             (aux (cddr xs))))))
-  (aux (map singleton strings)))
-
-(define (dict->trie word-list)
+(define (dictionary->trie word-list)
   (fold-right (lambda (x t)
                 (merge-tries (singleton x) t))
               (make-trie #f t:empty)
@@ -49,12 +41,7 @@
 
 (define (trie-member? s T)
   (let ((T (lookup-prefix s T)))
-    (and (trie? T)
-         (trie-element T)
-         #t)))
+    (and (trie? T) (trie-element T) #t)))
 
 (define (trie-prefix? s T)
-  (and (lookup-prefix s T)
-       #t))
-
-
+  (and (lookup-prefix s T) #t))

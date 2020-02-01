@@ -18,8 +18,10 @@
 
 (define size (isqrt (length *DICE*)))
 
-(define (roll die)
-  (string-ref die (random (string-length die))))
+(define (roll)
+  (map (lambda (die)
+         (string-ref die (random (string-length die))))
+       (shuffle *DICE*)))
 
 (define start-indices
   (apply append
@@ -43,7 +45,7 @@
 (define (board! n)
   (define board (make-vector n))
   (do ((i 0 (1+ i))
-       (letters (map roll *DICE*) (list-tail letters size)))
+       (letters (roll) (list-tail letters size)))
       ((= i n) board)
     (vector-set! board i (list->string (list-head letters size)))))
 

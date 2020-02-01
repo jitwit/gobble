@@ -10,4 +10,4 @@
   (time
    (begin
      "preprocessing the word list..."
-     (dict->trie (get-word-list)))))
+     (dictionary->trie (get-word-list)))))

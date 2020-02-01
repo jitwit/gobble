@@ -1,4 +1,5 @@
 (import (prefix (patricia) t:)
+        (only (euler) shuffle)
         (only (srfi :1) filter-map append-map))
 
 (print-gensym #f)
