@@ -1,4 +1,5 @@
 
-- study real boggle to get better boards
-- remove duplicates
+- support Qu
+- gui
+- store trie for faster read
 

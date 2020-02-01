@@ -24,12 +24,11 @@
        (shuffle *DICE*)))
 
 (define start-indices
-  (apply append
-         (map (lambda (j)
+  (append-map (lambda (j)
                 (map (lambda (i)
                        (list (cons i j)))
                      (iota size)))
-              (iota size))))
+              (iota size)))
 
 (define (adj xy)
   (let ((x (car xy)) (y (cdr xy)))
@@ -38,12 +37,23 @@
         (,x   . ,y-1)             (,x   . ,y+1)
         (,x+1 . ,y-1) (,x+1 . ,y) (,x+1 . ,y+1)))))
 
-(define (board!)
+(define (board-size board)
+  (vector-length board))
+
+(define string->board
+  (compose list->board string->list))
+
+(define (list->board letters)
+  (define n (isqrt (length letters)))
   (define board (make-vector n))
+  (assert (= (* n n) (length letters)))
   (do ((i 0 (1+ i))
-       (letters (roll) (list-tail letters size)))
+       (letters (map char-upcase letters) (list-tail letters n)))
       ((= i n) board)
-    (vector-set! board i (list->string (list-head letters size)))))
+    (vector-set! board i (list->string (list-head letters n)))))
+
+(define (board!)
+  (list->board (roll)))
 
 (define (display-ln object)
   (display object) (newline))

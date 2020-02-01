@@ -2,11 +2,11 @@
   (library-directories (cons "code" (library-directories))))
 
 (import (trie)
-        (only (euler) shuffle)
+        (only (euler) shuffle compose)
         (only (srfi :1) filter-map append-map))
 
 (define (get-word-list)
-  (with-input-from-file "input/dict.txt"
+  (with-input-from-file "input/words.txt"
     (lambda ()
       (let loop ((x (read)) (words '()))
         (if (eof-object? x)
@@ -27,7 +27,7 @@
   (for-all load src-files))
 
 (define (run)
-  (define board (board! size))
+  (define board (board!))
   (for-all display-ln (boggle board))
   (newline) (display-board board))
 
