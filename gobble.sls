@@ -5,19 +5,13 @@
 (library (gobble)
   (export gobble
           boggle
-
           board!
           display-board
           display-ln)
   (import (chezscheme)
           (dictionary)
           (only (euler) shuffle compose)
-          (only (srfi :1) filter-map append-map))
+          (only (srfi :1) append-map filter-map))
 
   (include "code/board.scm")
-  (include "code/boggle.scm")
-
-  (define gobble
-    (compose boggle string->board))
-  
-  )
+  (include "code/boggle.scm"))

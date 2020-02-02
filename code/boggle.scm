@@ -2,8 +2,15 @@
   (define size (board-size board))
   (define (ref xy)
     (string-ref (vector-ref board (car xy)) (cdr xy)))
-  (define (indices->string ixs)
-    (list->string (map ref (reverse ixs))))
+  (define (indices->string indices)
+    (list->string
+     (fold-left (lambda (chars x)
+                  (let ((x (ref x)))
+                    (if (char=? x #\Q)
+                        (cons* x #\U chars)
+                        (cons x chars))))
+                '()
+                indices)))
   (define (expand words)
     (define (on-board? xy)
       (and (< -1 (car xy) size) (< -1 (cdr xy) size)))
@@ -30,3 +37,6 @@
                                      word)))
                             words)))
         (walk (expand prefixes) (append prefixes words)))))
+
+(define gobble
+  (compose boggle string->board))
