@@ -15,6 +15,8 @@
   (newline) (display-board board))
 
 (define (test)
+  (define (lookup-prefix s t)
+    (trie-ref t s))
   (time
    (begin
      "basic trie tests"

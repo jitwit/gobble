@@ -53,11 +53,14 @@
   (lookup (string-upcase word) collins))
 
 (define (suffixes prefix)
-  (map (lambda (path)
-         (list->string (map integer->char path)))
-       (trie-paths (trie-ref collins prefix))))
+  (cond ((trie-ref collins prefix)
+         => (lambda (subtrie)
+              (map (lambda (path)
+                     (list->string (map integer->char path)))
+                   (trie-paths subtrie))))
+        (else '())))
 
 (define (completions prefix)
   (map (lambda (suffix)
          (string-append prefix suffix))
-       (suffixes prefix)))
+       (suffixes (string-upcase prefix))))

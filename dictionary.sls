@@ -4,7 +4,6 @@
   (export prefix?
           word?
           definition
-          suffixes
           completions
           collins)
   (import (chezscheme)

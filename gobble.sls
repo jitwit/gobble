@@ -15,9 +15,7 @@
           word?
           prefix?
           definition
-          suffixes
-          completions
-          )
+          completions)
   (import (chezscheme)
           (dictionary)
           (only (euler) shuffle compose)
