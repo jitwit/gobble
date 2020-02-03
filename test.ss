@@ -1,8 +1,7 @@
 (import (prefix (patricia) t:)
         (only (euler) compose shuffle)
         (only (srfi :1) append-map filter-map)
-        (only (srfi :13) string-tokenize string-join)
-        )
+        (only (srfi :13) string-tokenize string-join))
 
 (for-all load
          '("code/trie.scm"

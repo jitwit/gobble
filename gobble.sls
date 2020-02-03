@@ -15,6 +15,8 @@
           word?
           prefix?
           definition
+          suffixes
+          completions
           )
   (import (chezscheme)
           (dictionary)

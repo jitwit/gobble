@@ -1,5 +1,4 @@
 
-- include function to lookup definitons
-- gui
-- path compression in trie
+- gui/frontend
+- path compression in trie?
 

@@ -4,6 +4,9 @@
 (define (char-ref s j)
   (char->integer (string-ref s j)))
 
+(define empty-trie
+  (make-trie #f t:empty))
+
 (define (singleton s v)
   (let ((n (string-length s)))
     (define (aux j)
@@ -27,35 +30,35 @@
               (make-trie #f t:empty)
               definitions))
 
-(define (lookup-prefix s T)
+(define (trie-ref T s)
   (let ((n (string-length s)))
     (define (aux j T)
-      (cond ((= j n)
-             (and (or (trie-element T)
-                      (not (t:empty? (trie-tries T))))
-                  T))
-            ((t:lookup (char-ref s j) (trie-tries T))
-             =>
-             (lambda (x.ts)
-               (aux (1+ j) (cdr x.ts))))
-            (else #f)))
-    (aux 0 T)))
-
-(define (lookup s T)
-  (let ((n (string-length s)))
-    (define (aux j T)
-      (cond ((= j n) (trie-element T))
+      (cond ((= j n) T)
             ((t:lookup (char-ref s j) (trie-tries T))
              => (lambda (x.ts) (aux (1+ j) (cdr x.ts))))
             (else #f)))
     (aux 0 T)))
 
+(define (lookup s T)
+  (cond ((trie-ref T s) => trie-element)
+        (else #f)))
+
 (define (trie-member? s T)
-  (let ((T (lookup-prefix s T)))
+  (let ((T (trie-ref T s)))
     (and (trie? T) (trie-element T) #t)))
 
 (define (trie-prefix? s T)
-  (and (lookup-prefix s T) #t))
+  (and (trie-ref T s) #t))
+
+(define (trie-paths T)
+  (let ((ts (t:tree->alist (trie-tries T))))
+    (if (null? ts)
+        '(())
+        (append-map (lambda (k.v)
+                      (map (lambda (t)
+                             (cons (car k.v) t))
+                           (trie-paths (cdr k.v))))
+                    ts))))
 
 (define (store-trie obj file)
   (when (file-exists? file)
