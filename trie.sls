@@ -3,6 +3,7 @@
 (library (trie)
   (export trie?
           lookup-prefix
+          lookup
           trie-prefix?
           trie-member?
           dictionary->trie

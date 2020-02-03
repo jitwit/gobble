@@ -3,7 +3,9 @@
 (library (dictionary)
   (export prefix?
           word?
+          definition
           collins)
   (import (chezscheme)
-          (trie))
+          (trie)
+          (only (srfi :13) string-join string-tokenize))
   (include "code/dictionary.scm"))

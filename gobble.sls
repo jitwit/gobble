@@ -3,9 +3,19 @@
 (library (gobble)
   (export gobble
           boggle
+
+          ;; boards
           board!
           display-board
-          display-ln)
+          display-ln
+          roll
+          *DICE*
+
+          ;; definitions
+          word?
+          prefix?
+          definition
+          )
   (import (chezscheme)
           (dictionary)
           (only (euler) shuffle compose)

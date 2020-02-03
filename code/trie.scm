@@ -4,11 +4,11 @@
 (define (char-ref s j)
   (char->integer (string-ref s j)))
 
-(define (singleton s)
+(define (singleton s v)
   (let ((n (string-length s)))
     (define (aux j)
       (if (= j n)
-          (make-trie #t t:empty)
+          (make-trie v t:empty)
           (make-trie #f (t:singleton (char-ref s j) (aux (1+ j))))))
     (aux 0)))
 
@@ -21,11 +21,11 @@
                                   (trie-tries S)
                                   (trie-tries T))))))
 
-(define (dictionary->trie word-list)
-  (fold-right (lambda (x t)
-                (merge-tries (singleton x) t))
+(define (dictionary->trie definitions)
+  (fold-right (lambda (x.y t)
+                (merge-tries (singleton (car x.y) (cdr x.y)) t))
               (make-trie #f t:empty)
-              word-list))
+              definitions))
 
 (define (lookup-prefix s T)
   (let ((n (string-length s)))
@@ -41,14 +41,21 @@
             (else #f)))
     (aux 0 T)))
 
+(define (lookup s T)
+  (let ((n (string-length s)))
+    (define (aux j T)
+      (cond ((= j n) (trie-element T))
+            ((t:lookup (char-ref s j) (trie-tries T))
+             => (lambda (x.ts) (aux (1+ j) (cdr x.ts))))
+            (else #f)))
+    (aux 0 T)))
+
 (define (trie-member? s T)
   (let ((T (lookup-prefix s T)))
-    (and (trie? T)
-         (trie-element T))))
+    (and (trie? T) (trie-element T) #t)))
 
 (define (trie-prefix? s T)
-  (and (lookup-prefix s T)
-       #t))
+  (and (lookup-prefix s T) #t))
 
 (define (store-trie obj file)
   (when (file-exists? file)
