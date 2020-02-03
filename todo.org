@@ -1,4 +1,5 @@
 
+- include function to lookup definitons
 - gui
 - path compression in trie
 

@@ -1,3 +1,20 @@
+;; AAEEGN
+;; ELRTTY
+;; AOOTTW
+;; ABBJOO
+;; EHRTVW
+;; CIMOTU
+;; DISTTY
+;; EIOSST
+;; DELRVY
+;; ACHOPS
+;; HIMNQU
+;; EEINSU
+;; EEGHNW
+;; AFFKPS
+;; HLNNRZ
+;; DEILRX
+
 (define *DICE*
   '("NAEAEG"
     "EGNWEH"
@@ -16,7 +33,8 @@
     "NLNHZR"
     "ENSIEU"))
 
-(define size (isqrt (length *DICE*)))
+(define size
+  (isqrt (length *DICE*)))
 
 (define (roll)
   (map (lambda (die)
@@ -58,5 +76,16 @@
 (define (display-ln object)
   (display object) (newline))
 
+(define (display-row row)
+  (put-char (current-output-port) #\|)
+  (for-all (lambda (char)
+             (put-char (current-output-port) char)
+             (put-char (current-output-port) #\|))
+           (string->list row))
+  (newline))
+
 (define (display-board board)
-  (vector-for-each display-ln board))
+  (define width (1+ (* 2 (vector-length board))))
+  (display-ln (make-string width #\-))
+  (vector-for-each display-row board)
+  (display-ln (make-string width #\-)))

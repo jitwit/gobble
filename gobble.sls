@@ -1,7 +1,5 @@
 #!chezscheme
-
 (eval-when (load compile) (optimize-level 3))
-
 (library (gobble)
   (export gobble
           boggle
@@ -12,6 +10,5 @@
           (dictionary)
           (only (euler) shuffle compose)
           (only (srfi :1) append-map filter-map))
-
   (include "code/board.scm")
   (include "code/boggle.scm"))

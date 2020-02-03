@@ -31,7 +31,8 @@
   (let ((n (string-length s)))
     (define (aux j T)
       (cond ((= j n)
-             (and (or (trie-element T) (not (t:empty? (trie-tries T))))
+             (and (or (trie-element T)
+                      (not (t:empty? (trie-tries T))))
                   T))
             ((t:lookup (char-ref s j) (trie-tries T))
              =>
@@ -42,10 +43,12 @@
 
 (define (trie-member? s T)
   (let ((T (lookup-prefix s T)))
-    (and (trie? T) (trie-element T))))
+    (and (trie? T)
+         (trie-element T))))
 
 (define (trie-prefix? s T)
-  (and (lookup-prefix s T) #t))
+  (and (lookup-prefix s T)
+       #t))
 
 (define (store-trie obj file)
   (when (file-exists? file)

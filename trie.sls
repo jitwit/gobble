@@ -1,7 +1,5 @@
 #!chezscheme
-
 (eval-when (compile load) (optimize-level 3))
-
 (library (trie)
   (export trie?
           lookup-prefix
@@ -12,5 +10,4 @@
           fetch-trie)
   (import (prefix (patricia) t:)
           (chezscheme))
-
   (include "code/trie.scm"))

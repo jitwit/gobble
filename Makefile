@@ -9,7 +9,7 @@ libs::= $(foreach lib,$(objs),$(lib).so)
 all : $(dictionary) $(libs)
 
 input/trie.fasl : $(libs)
-	scheme --script load.scm
+	$(scheme) --script load.scm
 
 gobble.so : code/*.scm dictionary.so trie.so
 	echo "(compile-library \"gobble.sls\")" | $(scheme)
