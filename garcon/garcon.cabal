@@ -1,0 +1,37 @@
+cabal-version:       2.4
+
+name:                gobble
+version:             0.1.0.0
+build-type:          Simple
+
+common doggle
+  default-language: Haskell2010
+  build-depends:
+    bytestring,
+    filepath,
+    trifecta,
+    warp,
+    servant,
+    servant-server,
+    servant-client,
+    servant-blaze,
+    unix,
+    text,
+    bytestring,
+    process,
+    bytestring-trie,
+    websockets,
+    lens,
+    mtl,
+    comonad,
+    wai-websockets,
+    wai,
+    zippers,
+    time,
+    stm
+
+executable gobble
+  import: doggle
+  main-is:             Main.hs
+  build-depends:       base
+  default-language:    Haskell2010

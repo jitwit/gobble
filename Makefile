@@ -11,13 +11,13 @@ all : $(dictionary) $(libs)
 input/trie.fasl : $(libs)
 	$(scheme) --script load.scm
 
-gobble.so : code/*.scm dictionary.so trie.so
+gobble.so : code/*.scm dictionary.so trie.so *.sls
 	echo "(compile-library \"gobble.sls\")" | $(scheme)
 
-dictionary.so : code/*.scm trie.so
+dictionary.so : code/*.scm trie.so *.sls
 	echo "(compile-library \"dictionary.sls\")" | $(scheme)
 
-trie.so : code/*.scm
+trie.so : code/*.scm *.sls
 	echo "(compile-library \"trie.sls\")" | $(scheme)
 
 clean :

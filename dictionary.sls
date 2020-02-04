@@ -5,7 +5,8 @@
           word?
           definition
           completions
-          collins)
+          collins
+          get-collins)
   (import (chezscheme)
           (trie)
           (only (srfi :13) string-join string-tokenize))
