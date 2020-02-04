@@ -21,14 +21,15 @@ import System.Process
 import GHC.IO.Handle
 
 import Text.Blaze.Html5 as H hiding (map,main)
+import qualified Text.Blaze.Html5.Attributes as H
 
 import Network.Wai.Handler.WebSockets
 import Network.WebSockets
 import Servant.HTML.Blaze
+import Servant.Server.StaticFiles
 import Servant.Server
 import Servant.API
 import Network.Wai.Handler.Warp
-
 
 gobbler :: IO [T.Text]
 gobbler = map T.pack . lines <$> readCreateProcess cmd "" where
@@ -77,10 +78,21 @@ new'player uname conn = liftIO $ atomically $ modifyTVar' ?gobble $
 register'player :: (?gobble :: TVar Gobble, MonadIO m) => Connection -> m ()
 register'player conn = do
   uname <- liftIO $ receiveData conn
+  liftIO $ print uname
   is'uname'free uname >>= \case
     False -> register'player conn
-    True  -> new'player uname conn
+    True  -> do new'player uname conn
+                liftIO $ do
+                  print "hihi"
+                  sendTextData conn uname
+                  sendTextData conn =<< fetch'board
 
+talk'player :: (?gobble :: TVar Gobble, MonadIO m) => Connection -> m ()
+talk'player conn = forever $ liftIO $ do
+  dat <- receiveData conn
+  case dat :: Text of
+    _ -> sendTextData conn ("echo" :: Text)
+    
 get'connection :: (?gobble :: TVar Gobble, MonadIO m) => UName -> m (Maybe Connection)
 get'connection who = liftIO $ do
   ps <- _players <$> readTVarIO ?gobble
@@ -91,6 +103,7 @@ boggle pend = do
   conn <- liftIO $ acceptRequest pend
   liftIO $ forkPingThread conn 30
   register'player conn
+  talk'player conn
 
 del'player :: (?gobble :: TVar Gobble, MonadIO m) => Player -> m ()
 del'player = todo
@@ -101,11 +114,15 @@ boggleAPI = Proxy
 data HomePage = HomePage
 
 instance ToMarkup HomePage where
-  toMarkup _ = html $ do H.head $ title "gobble"
+  toMarkup _ = html $ do H.head $ do title "gobble"
+                                     script ! H.src "static/gobble.js" $ "blah"
                          H.h1 "hihi"
                          H.body $ p "hihi"
 
-type BoggleAPI = Get '[HTML] HomePage -- :<|> "home" :> Raw
+type BoggleAPI = Get '[HTML] HomePage :<|> "static" :> Raw
+-- :<|> "home" :> Raw
+boggleServer :: Server BoggleAPI
+boggleServer = home'handler :<|> serveDirectoryWebApp "static"
 
 home'handler :: Handler HomePage
 home'handler = pure HomePage
@@ -119,7 +136,7 @@ main = do
   let addr = "127.0.0.1"
       port = 8000
   let ?gobble = gobble
-   in let bog = websocketsOr defaultConnectionOptions boggle (serve boggleAPI home'handler)
+   in let bog = websocketsOr defaultConnectionOptions boggle (serve boggleAPI boggleServer)
        in run port bog
 
 -- time board state maintain websocket connections
