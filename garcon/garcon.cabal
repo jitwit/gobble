@@ -28,8 +28,9 @@ common doggle
     wai,
     zippers,
     time,
-    stm
-
+    stm,
+    blaze-htmly
+        
 executable gobble
   import: doggle
   main-is:             Main.hs

@@ -1,22 +1,34 @@
 {-# language OverloadedStrings, ImplicitParams, TemplateHaskell, MultiWayIf, LambdaCase #-}
+{-# language TypeOperators, DataKinds #-}
 
 module Main where
+
+import qualified Data.Text as T
+import Data.Text (Text)
+import Data.List (union,(\\))
+import Control.Lens
+import Data.Proxy
 
 import Control.Monad
 import Control.Monad.State
 
+-- import Control.Exception
 import Control.Concurrent
 import Control.Concurrent.STM.TVar
 import Control.Concurrent.STM
 
-import GHC.IO.Handle
 import System.Process
+import GHC.IO.Handle
+
+import Text.Blaze.Html5 as H hiding (map,main)
+
 import Network.Wai.Handler.WebSockets
 import Network.WebSockets
-import qualified Data.Text as T
-import Data.Text (Text)
-import Data.List
-import Control.Lens
+import Servant.HTML.Blaze
+import Servant.Server
+import Servant.API
+import Network.Wai.Handler.Warp
+
 
 gobbler :: IO [T.Text]
 gobbler = map T.pack . lines <$> readCreateProcess cmd "" where
@@ -58,27 +70,57 @@ is'uname'free :: (?gobble :: TVar Gobble, MonadIO m) => UName -> m Bool
 is'uname'free uname = liftIO $
   allOf (players.folded._1) (/=uname) <$> readTVarIO ?gobble
 
-boggle :: (?gobble :: TVar Gobble) => PendingConnection -> IO ()
-boggle pend = do
-  conn <- acceptRequest pend
-  forkPingThread conn 30
-  uname <- receiveData conn
+new'player :: (?gobble :: TVar Gobble, MonadIO m) => UName -> Connection -> m ()
+new'player uname conn = liftIO $ atomically $ modifyTVar' ?gobble $
+  players %~ cons (uname,conn,[])
+
+register'player :: (?gobble :: TVar Gobble, MonadIO m) => Connection -> m ()
+register'player conn = do
+  uname <- liftIO $ receiveData conn
   is'uname'free uname >>= \case
-    False -> todo
-    True -> todo
+    False -> register'player conn
+    True  -> new'player uname conn
+
+get'connection :: (?gobble :: TVar Gobble, MonadIO m) => UName -> m (Maybe Connection)
+get'connection who = liftIO $ do
+  ps <- _players <$> readTVarIO ?gobble
+  return $ fst <$> uncons [ c | p@(n,c,ws) <- ps, n == who ]
+
+boggle :: (?gobble :: TVar Gobble, MonadIO m) => PendingConnection -> m ()
+boggle pend = do
+  conn <- liftIO $ acceptRequest pend
+  liftIO $ forkPingThread conn 30
+  register'player conn
 
 del'player :: (?gobble :: TVar Gobble, MonadIO m) => Player -> m ()
 del'player = todo
+
+boggleAPI :: Proxy BoggleAPI
+boggleAPI = Proxy
+
+data HomePage = HomePage
+
+instance ToMarkup HomePage where
+  toMarkup _ = html $ do H.head $ title "gobble"
+                         H.h1 "hihi"
+                         H.body $ p "hihi"
+
+type BoggleAPI = Get '[HTML] HomePage -- :<|> "home" :> Raw
+
+home'handler :: Handler HomePage
+home'handler = pure HomePage
 
 todo = error "todo"
 
 main :: IO ()
 main = do
-  gob <- newTVarIO =<< start'state
+  gobble <- newTVarIO =<< start'state
   print $ score'submissions [["cat","birds"],["dogwood","cat"],["church"]]
-  let ?gobble = gob in print =<< fetch'board
-
-  
+  let addr = "127.0.0.1"
+      port = 8000
+  let ?gobble = gobble
+   in let bog = websocketsOr defaultConnectionOptions boggle (serve boggleAPI home'handler)
+       in run port bog
 
 -- time board state maintain websocket connections
 

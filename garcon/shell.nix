@@ -4,8 +4,8 @@ let
 
   inherit (nixpkgs) pkgs;
 
-  f = { mkDerivation, base, bytestring, bytestring-trie, comonad
-      , filepath, lens, mtl, process, servant, servant-blaze
+  f = { mkDerivation, base, blaze-html, bytestring, bytestring-trie
+      , comonad, filepath, lens, mtl, process, servant, servant-blaze
       , servant-client, servant-server, stdenv, stm, text, time, trifecta
       , unix, wai, wai-websockets, warp, websockets, zippers
       }:
@@ -16,9 +16,9 @@ let
         isLibrary = false;
         isExecutable = true;
         executableHaskellDepends = [
-          base bytestring bytestring-trie comonad filepath lens mtl process
-          servant servant-blaze servant-client servant-server stm text time
-          trifecta unix wai wai-websockets warp websockets zippers
+          base blaze-html bytestring bytestring-trie comonad filepath lens
+          mtl process servant servant-blaze servant-client servant-server stm
+          text time trifecta unix wai wai-websockets warp websockets zippers
         ];
         license = "unknown";
         hydraPlatforms = stdenv.lib.platforms.none;
