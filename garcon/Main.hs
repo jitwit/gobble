@@ -19,7 +19,6 @@ import Control.Concurrent.STM.TVar
 import Control.Concurrent.STM
 
 import System.Process
-import GHC.IO.Handle
 
 import Text.Blaze.Html5 as H hiding (map,main)
 import qualified Text.Blaze.Html5.Attributes as H
@@ -83,8 +82,7 @@ name'player :: (?gobble :: TVar Gobble, MonadIO m) => Connection -> m UName
 name'player conn = liftIO $ do
   uname <- receiveData conn
   is'uname'free uname >>= \case
-    False -> do let response = A.object [ "name-taken" A..= uname ]
-                sendTextData conn $ A.encode response
+    False -> do reply'simply conn "name-is-taken"
                 name'player conn
     True  -> do board <- fetch'board
                 let response = A.object [ "board" A..= board ]
@@ -125,12 +123,12 @@ request'wordlists :: (?gobble::TVar Gobble, MonadIO m) => m ()
 request'wordlists = broadcast (A.String "wordlist")
 
 pattern Who <- Text "who" _
-pattern WordList ws <- Text (T.words . T.pack . B.unpack -> "words":ws)  _
+pattern WordList ws <- Text (T.words . T.pack . B.unpack -> "words":ws) _
 
 handle'data :: (?gobble::TVar Gobble, MonadIO m) => UName -> Connection -> DataMessage -> m ()
 handle'data who conn = liftIO . \case
-  Who -> sendTextData conn . A.encode =<< get'players
   WordList ws -> submit'wordlist who ws >> reply'simply conn "merci!"
+  Who -> sendTextData conn . A.encode =<< get'players
   Text msg _  -> print msg >> reply'simply conn "idk"
   Binary msg  -> print msg >> reply'simply conn "idk"
 
@@ -150,7 +148,7 @@ boggle pend = liftIO $ do
   conn <- acceptRequest pend
   forkPingThread conn 30
   who <- name'player conn
-  forever $ liftIO $ receive conn >>= \case
+  forever $ receive conn >>= \case
     ControlMessage ctl -> handle'control who conn ctl
     DataMessage _ _ _ msg -> handle'data who conn msg
 
@@ -161,11 +159,13 @@ boggle'api = Proxy
 data GobblePage = GobblePage
 
 instance ToMarkup GobblePage where
-  toMarkup _ = html $ do H.head $ do title "gobble"
-                                     script ! H.src "static/gobble.js" $ "blah"
-                         H.h1 "BOGGLE BITCH"
-                         H.body $ do
-                           H.div ! H.class_ "blaggle" $ "blaggle"
+  toMarkup _ = html $ do
+    H.head $ do
+      title "gobble"
+      script ! H.src "static/gobble.js" $ "blah"
+    H.body $ do
+      H.h1 "BOGGLE BITCH"
+      H.div ! H.id "gobble" $ ""
 
 type BoggleAPI = Get '[HTML] GobblePage :<|> "static" :> Raw
 
@@ -177,18 +177,7 @@ todo = error "todo"
 main :: IO ()
 main = do
   gobble <- newTVarIO =<< start'state
-  print $ score'submissions [["cat","birds"],["dogwood","cat"],["church"]]
   let ?gobble = gobble
    in let back = serve boggle'api boggle'server
        in run 8000 $ websocketsOr defaultConnectionOptions boggle back
 
--- time board state maintain websocket connections
-
--- loop:
---   new board
---   for each conn: boadcast new board
---   listen for new cons, respond with board state/time
---   on expire: ask for submissions
---   score submissions
---   report scores
---   loop
