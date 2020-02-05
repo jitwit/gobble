@@ -1,14 +1,22 @@
-console.log("GOO");
+console.log("MUSH!");
 
 var boggle = new WebSocket ("ws://localhost:8000");
+var name;
+
+get_name = () => {
+    name = prompt('name?');
+    boggle.send(name);
+}
 
 boggle.onopen = () => {
-    console.log("i'm open");
-    boggle.send("jake");
+    get_name();
 }
 
 boggle.onmessage = (msg) => {
-    console.log(msg.data);
+    if (name === null) { get_name(); }
+    msg = JSON.parse(msg.data);
+    console.log(msg);
+    return msg;
 }
 
 boggle.onclose = () => {

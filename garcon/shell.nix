@@ -4,10 +4,11 @@ let
 
   inherit (nixpkgs) pkgs;
 
-  f = { mkDerivation, base, blaze-html, bytestring, bytestring-trie
-      , comonad, filepath, lens, mtl, process, servant, servant-blaze
-      , servant-client, servant-server, stdenv, stm, text, time, trifecta
-      , unix, wai, wai-websockets, warp, websockets, zippers
+  f = { mkDerivation, aeson, base, blaze-html, bytestring
+      , bytestring-trie, comonad, filepath, lens, lens-aeson, mtl
+      , process, servant, servant-blaze, servant-client, servant-server
+      , stdenv, stm, text, time, trifecta, unix, wai, wai-websockets
+      , warp, websockets, zippers
       }:
       mkDerivation {
         pname = "gobble";
@@ -16,9 +17,10 @@ let
         isLibrary = false;
         isExecutable = true;
         executableHaskellDepends = [
-          base blaze-html bytestring bytestring-trie comonad filepath lens
-          mtl process servant servant-blaze servant-client servant-server stm
-          text time trifecta unix wai wai-websockets warp websockets zippers
+          aeson base blaze-html bytestring bytestring-trie comonad filepath
+          lens lens-aeson mtl process servant servant-blaze servant-client
+          servant-server stm text time trifecta unix wai wai-websockets warp
+          websockets zippers
         ];
         license = "unknown";
         hydraPlatforms = stdenv.lib.platforms.none;

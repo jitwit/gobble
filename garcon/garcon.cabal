@@ -29,8 +29,10 @@ common doggle
     zippers,
     time,
     stm,
-    blaze-htmly
-        
+    blaze-html,
+    aeson,
+    lens-aeson
+                
 executable gobble
   import: doggle
   main-is:             Main.hs

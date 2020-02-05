@@ -1,9 +1,11 @@
-{-# language OverloadedStrings, ImplicitParams, TemplateHaskell, MultiWayIf, LambdaCase #-}
-{-# language TypeOperators, DataKinds #-}
+{-# language OverloadedStrings, ImplicitParams, TemplateHaskell, LambdaCase #-}
+{-# language TypeOperators, DataKinds, TypeApplications, ViewPatterns #-}
+{-# language PatternSynonyms #-}
 
 module Main where
 
 import qualified Data.Text as T
+import qualified Data.ByteString.Lazy.Char8 as B
 import Data.Text (Text)
 import Data.List (union,(\\))
 import Control.Lens
@@ -12,7 +14,6 @@ import Data.Proxy
 import Control.Monad
 import Control.Monad.State
 
--- import Control.Exception
 import Control.Concurrent
 import Control.Concurrent.STM.TVar
 import Control.Concurrent.STM
@@ -30,6 +31,8 @@ import Servant.Server.StaticFiles
 import Servant.Server
 import Servant.API
 import Network.Wai.Handler.Warp
+
+import qualified Data.Aeson as A
 
 gobbler :: IO [T.Text]
 gobbler = map T.pack . lines <$> readCreateProcess cmd "" where
@@ -65,67 +68,109 @@ fetch'board :: (?gobble :: TVar Gobble, MonadIO m) => m Text
 fetch'board = liftIO $ fst . _board <$> readTVarIO ?gobble
 
 fresh'board :: (?gobble :: TVar Gobble, MonadIO m) => m ()
-fresh'board = liftIO $ atomically . modifyTVar' ?gobble . (board .~) =<< new'board
+fresh'board = liftIO $ atomically . modifyTVar' ?gobble . set board =<< new'board
 
 is'uname'free :: (?gobble :: TVar Gobble, MonadIO m) => UName -> m Bool
 is'uname'free uname = liftIO $
   allOf (players.folded._1) (/=uname) <$> readTVarIO ?gobble
 
 new'player :: (?gobble :: TVar Gobble, MonadIO m) => UName -> Connection -> m ()
-new'player uname conn = liftIO $ atomically $ modifyTVar' ?gobble $
-  players %~ cons (uname,conn,[])
+new'player uname conn = liftIO $ do
+  atomically $ modifyTVar' ?gobble $ players %~ cons (uname,conn,[])
+  print $ uname <> " joined the chat"
 
-register'player :: (?gobble :: TVar Gobble, MonadIO m) => Connection -> m ()
-register'player conn = do
-  uname <- liftIO $ receiveData conn
-  liftIO $ print uname
+name'player :: (?gobble :: TVar Gobble, MonadIO m) => Connection -> m UName
+name'player conn = liftIO $ do
+  uname <- receiveData conn
   is'uname'free uname >>= \case
-    False -> register'player conn
-    True  -> do new'player uname conn
-                liftIO $ do
-                  print "hihi"
-                  sendTextData conn uname
-                  sendTextData conn =<< fetch'board
+    False -> do let response = A.object [ "name-taken" A..= uname ]
+                sendTextData conn $ A.encode response
+                name'player conn
+    True  -> do board <- fetch'board
+                let response = A.object [ "board" A..= board ]
+                new'player uname conn
+                sendTextData conn $ A.encode response
+                pure uname
 
-talk'player :: (?gobble :: TVar Gobble, MonadIO m) => Connection -> m ()
-talk'player conn = forever $ liftIO $ do
-  dat <- receiveData conn
-  case dat :: Text of
-    _ -> sendTextData conn ("echo" :: Text)
-    
+remove'player :: (?gobble :: TVar Gobble, MonadIO m) => UName -> m ()
+remove'player who = liftIO $ atomically $ modifyTVar' ?gobble $
+  players %~ filter ((/=who) . view _1)
+
+reply'simply :: MonadIO m => Connection -> Text -> m ()
+reply'simply conn msg = liftIO $ sendTextData conn (A.encode msg)
+
+send'json :: MonadIO m => A.Value -> Connection -> m ()
+send'json obj conn = liftIO $ sendTextData conn (A.encode obj)
+
+-- submit'wordlist ::
+submit'wordlist :: (?gobble::TVar Gobble, MonadIO m) => UName -> [Text] -> m ()
+submit'wordlist who ws = liftIO $ do
+  let aux p@(plr,c,_) | plr == who = (plr,c,ws)
+                      | otherwise = p
+  print (who,ws)
+  atomically $ modifyTVar' ?gobble $ players %~ map aux
+
+handle'control :: (?gobble::TVar Gobble, MonadIO m) => UName -> Connection -> ControlMessage -> m ()
+handle'control who conn = liftIO . \case
+  Close{}  -> print (who <> " has left the chat") >> remove'player who
+  Ping msg -> print (who <> " pinged")
+  Pong msg -> print (who <> " pinged")
+
+broadcast :: (?gobble::TVar Gobble, MonadIO m) => A.Value -> m ()
+broadcast obj = liftIO $ do
+  gobble <- readTVarIO ?gobble
+  gobble & mapMOf_ (players . folded . _2) (send'json obj)
+
+request'wordlists :: (?gobble::TVar Gobble, MonadIO m) => m ()
+request'wordlists = broadcast (A.String "wordlist")
+
+pattern Who <- Text "who" _
+pattern WordList ws <- Text (T.words . T.pack . B.unpack -> "words":ws)  _
+
+handle'data :: (?gobble::TVar Gobble, MonadIO m) => UName -> Connection -> DataMessage -> m ()
+handle'data who conn = liftIO . \case
+  Who -> sendTextData conn . A.encode =<< get'players
+  WordList ws -> submit'wordlist who ws >> reply'simply conn "merci!"
+  Text msg _  -> print msg >> reply'simply conn "idk"
+  Binary msg  -> print msg >> reply'simply conn "idk"
+
+get'players :: (?gobble :: TVar Gobble) => IO [UName]
+get'players = (^..players.folded._1) <$> readTVarIO ?gobble
+      
 get'connection :: (?gobble :: TVar Gobble, MonadIO m) => UName -> m (Maybe Connection)
 get'connection who = liftIO $ do
   ps <- _players <$> readTVarIO ?gobble
   return $ fst <$> uncons [ c | p@(n,c,ws) <- ps, n == who ]
 
+-- "ws backend"
+-- talk'player :: (?gobble :: TVar Gobble, MonadIO m) => UName -> Connection -> m ()
+-- talk'player who conn = todo
 boggle :: (?gobble :: TVar Gobble, MonadIO m) => PendingConnection -> m ()
-boggle pend = do
-  conn <- liftIO $ acceptRequest pend
-  liftIO $ forkPingThread conn 30
-  register'player conn
-  talk'player conn
+boggle pend = liftIO $ do
+  conn <- acceptRequest pend
+  forkPingThread conn 30
+  who <- name'player conn
+  forever $ liftIO $ receive conn >>= \case
+    ControlMessage ctl -> handle'control who conn ctl
+    DataMessage _ _ _ msg -> handle'data who conn msg
 
-del'player :: (?gobble :: TVar Gobble, MonadIO m) => Player -> m ()
-del'player = todo
+-- "frontend"
+boggle'api :: Proxy BoggleAPI
+boggle'api = Proxy
 
-boggleAPI :: Proxy BoggleAPI
-boggleAPI = Proxy
+data GobblePage = GobblePage
 
-data HomePage = HomePage
-
-instance ToMarkup HomePage where
+instance ToMarkup GobblePage where
   toMarkup _ = html $ do H.head $ do title "gobble"
                                      script ! H.src "static/gobble.js" $ "blah"
-                         H.h1 "hihi"
-                         H.body $ p "hihi"
+                         H.h1 "BOGGLE BITCH"
+                         H.body $ do
+                           H.div ! H.class_ "blaggle" $ "blaggle"
 
-type BoggleAPI = Get '[HTML] HomePage :<|> "static" :> Raw
--- :<|> "home" :> Raw
-boggleServer :: Server BoggleAPI
-boggleServer = home'handler :<|> serveDirectoryWebApp "static"
+type BoggleAPI = Get '[HTML] GobblePage :<|> "static" :> Raw
 
-home'handler :: Handler HomePage
-home'handler = pure HomePage
+boggle'server :: Server BoggleAPI
+boggle'server = pure GobblePage :<|> serveDirectoryWebApp "static"
 
 todo = error "todo"
 
@@ -133,11 +178,9 @@ main :: IO ()
 main = do
   gobble <- newTVarIO =<< start'state
   print $ score'submissions [["cat","birds"],["dogwood","cat"],["church"]]
-  let addr = "127.0.0.1"
-      port = 8000
   let ?gobble = gobble
-   in let bog = websocketsOr defaultConnectionOptions boggle (serve boggleAPI boggleServer)
-       in run port bog
+   in let back = serve boggle'api boggle'server
+       in run 8000 $ websocketsOr defaultConnectionOptions boggle back
 
 -- time board state maintain websocket connections
 
