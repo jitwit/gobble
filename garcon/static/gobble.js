@@ -1,6 +1,8 @@
 console.log("BOGGLE BITCH!");
 
 var boggle = new WebSocket ("ws://localhost:8000");
+var board;
+var words;
 var name;
 
 board_row = (row) => {
@@ -10,7 +12,7 @@ board_row = (row) => {
     return `<tr>${row.split("").map(mktd).join("")}</tr>`
 }
 
-update_board = (board) => {
+update_board = () => {
     var r1 = board.slice(0,4);
     var r2 = board.slice(4,8);
     var r3 = board.slice(8,12);
@@ -30,13 +32,12 @@ boggle.onopen = () => {
 }
 
 boggle.onmessage = (msg) => {
-    res = JSON.parse(msg.data);
+    var res = JSON.parse(msg.data);
     if (res === "name-is-taken") {
-        console.log("taken! tRY aGAIN");
         get_name(msg=" (previous one is taken)");
     } else if (!(res['board'] == null)) {
-        update_board(res['board']);
-        console.log("board received!");
+        board = res['board'];
+        update_board();
     } else {
         console.log(res);
     }

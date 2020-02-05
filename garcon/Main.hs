@@ -1,6 +1,6 @@
 {-# language OverloadedStrings, ImplicitParams, TemplateHaskell, LambdaCase #-}
 {-# language TypeOperators, DataKinds, TypeApplications, ViewPatterns #-}
-{-# language PatternSynonyms #-}
+{-# language PatternSynonyms, MultiWayIf #-}
 
 module Main where
 
@@ -33,7 +33,6 @@ import Servant.Server.StaticFiles
 import Servant.Server
 import Servant.API
 import Network.Wai.Handler.Warp
-
 import qualified Data.Aeson as A
 
 gobbler :: IO [T.Text]
@@ -49,6 +48,7 @@ new'board = do
 type WordList = [Text]
 type Name = Text
 type Game = (Board,[Player])
+data Phase = Boggled | Scoring
 
 data Board = Board
   { _creationTime :: UTCTime
@@ -60,24 +60,23 @@ data Player = Player
   , _score :: Int }
 data Gobble = Gobble
   { _board :: Board
-  , _players :: Map Name Player }
+  , _players :: Map Name Player
+  , _game'phase :: Phase }
 
+makePrisms ''Phase
 makeLenses ''Board
 makeLenses ''Player
 makeLenses ''Gobble
 
-score'word :: Text -> Int
-score'word = ([0,0,0,1,1,2,3,5,11] !!) . min 8 . T.length
-
-score'submissions :: [[Text]] -> [Int]
-score'submissions = walk [] where
-  score ys x xs = sum [ score'word w | w <- x \\ foldr union ys xs ]
-  walk ys zs = case zs of
-    x:[] -> [score ys x []]
-    x:xs -> score ys x xs : walk (union x ys) xs
+score'submissions :: Gobble -> Gobble
+score'submissions gob = gob & players.traversed %~ scr where
+  score'word = ([0,0,0,1,1,2,3,5,11] !!) . min 8 . T.length
+  subs = gob ^.. players.traversed.answers & M.unionsWith (+)
+  scr (Player conn sol scr) = Player conn M.empty (scr + sum pts) where
+    pts = [ score'word word | (word,1) <- M.toList (M.intersection sol subs) ]
 
 start'state :: IO Gobble
-start'state = Gobble <$> new'board <*> pure M.empty
+start'state = Gobble <$> new'board <*> pure M.empty <*> pure Scoring
 
 fetch'board :: (?gobble :: TVar Gobble, MonadIO m) => m Text
 fetch'board = liftIO $ view (board.letters) <$> readTVarIO ?gobble
@@ -116,7 +115,7 @@ reply'simply conn msg = liftIO $ sendTextData conn (A.encode msg)
 reply :: (?gobble::TVar Gobble, WebSocketsData a, MonadIO m) => Connection -> a -> m ()
 reply conn = liftIO . sendTextData conn
 
-reply'json :: (?gobble::TVar Gobble, MonadIO m) => Connection -> A.Value -> m ()
+reply'json :: (?gobble::TVar Gobble, A.ToJSON j, MonadIO m) => Connection -> j -> m ()
 reply'json conn = reply conn . A.encode
 
 send'json :: MonadIO m => A.Value -> Connection -> m ()
@@ -125,11 +124,13 @@ send'json obj conn = liftIO $ sendTextData conn (A.encode obj)
 submit'word :: (?gobble::TVar Gobble, MonadIO m) => Name -> Text -> m Bool
 submit'word who word = liftIO $ atomically $ do
   gob <- readTVar ?gobble
-  case gob ^? board.word'list.ix word of
-    Nothing -> pure False
-    Just _ -> do
-      writeTVar ?gobble (gob & players.ix who.answers.at word ?~ 1)
-      pure True
+  case gob ^. game'phase of
+    Scoring -> pure False
+    Boggled -> case gob ^? board.word'list.ix word of
+      Nothing -> pure False
+      Just _ -> do
+        writeTVar ?gobble (gob & players.ix who.answers.at word ?~ 1)
+        pure True
 
 handle'control :: (?gobble::TVar Gobble, MonadIO m) => Name -> Connection -> ControlMessage -> m ()
 handle'control who conn = liftIO . \case
@@ -149,11 +150,11 @@ pattern Word w <- Text (T.words.T.toUpper.T.pack.B.unpack -> "GOBBLE":w:[]) _
 
 handle'data :: (?gobble::TVar Gobble, MonadIO m) => Name -> Connection -> DataMessage -> m ()
 handle'data who conn = liftIO . \case
-  Word w -> reply'json conn . A.Bool =<< submit'word who w
-  Query "who-else" -> sendTextData conn . A.encode =<< get'players
-  Query "words" -> sendTextData conn . A.encode =<< get'persons'words who
-  Text msg _  -> print msg >> reply'simply conn "idk/text"
-  Binary msg  -> print msg >> reply'simply conn "idk/bin"
+  Word w -> reply'json conn =<< submit'word who w
+  Query "who-else" -> reply'json conn =<< get'players
+  Query "words" -> reply'json conn =<< get'persons'words who
+  Text msg _ -> print msg >> reply'simply conn "idk/text"
+  Binary msg -> print msg >> reply'simply conn "idk/bin"
 
 get'players :: (?gobble :: TVar Gobble) => IO [Name]
 get'players = M.keys . view players <$> readTVarIO ?gobble
@@ -161,6 +162,42 @@ get'players = M.keys . view players <$> readTVarIO ?gobble
 get'persons'words :: (?gobble :: TVar Gobble) => Name -> IO [Text]
 get'persons'words who = readTVarIO ?gobble <&>
   (^..players.ix who.answers.to M.keys.folded)
+
+threadDelayS :: Int -> IO ()
+threadDelayS = threadDelay . (*10^6)
+
+round'length, score'length :: Int
+round'length = 30
+score'length = 10
+
+update'phase :: (?gobble :: TVar Gobble, MonadIO m) => m ()
+update'phase = liftIO $ atomically $ modifyTVar' ?gobble switch'phase where
+  switch'phase = game'phase %~ \case
+    Scoring -> Boggled
+    Boggled -> Scoring
+
+score'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
+score'round = liftIO $ atomically $ modifyTVar' ?gobble score'submissions
+
+report'scores :: (?gobble :: TVar Gobble, MonadIO m) => m ()
+report'scores = liftIO $ do
+  gob <- readTVarIO ?gobble
+  broadcast $ A.encode $ A.object
+    [ who A..= scr | (who,Player _ _ scr) <- M.toList (gob ^. players) ]
+  
+timer :: (?gobble :: TVar Gobble, MonadIO m) => m ()
+timer = liftIO $ forever $ do
+  fresh'board
+  update'phase
+  print "new-game" 
+  board <- fetch'board
+  broadcast $ A.encode $ A.object [ "board" A..= board ]
+  threadDelayS round'length
+  print "scoring"
+  update'phase
+  score'round
+  report'scores
+  threadDelayS score'length
 
 -- "ws backend"
 -- talk'player :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Connection -> m ()
@@ -202,5 +239,6 @@ main = do
   gobble <- newTVarIO =<< start'state
   let back = serve boggle'api boggle'server
   let ?gobble = gobble
-   in run 8000 $ websocketsOr defaultConnectionOptions boggle back
-
+   in do timer'thread <- forkIO timer
+         let bog = run 8000 $ websocketsOr defaultConnectionOptions boggle back
+         bog `finally` killThread timer'thread
