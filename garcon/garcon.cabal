@@ -9,7 +9,6 @@ common doggle
   build-depends:
     bytestring,
     filepath,
-    trifecta,
     warp,
     servant,
     servant-server,
@@ -26,13 +25,13 @@ common doggle
     comonad,
     wai-websockets,
     wai,
-    zippers,
     time,
     stm,
     blaze-html,
     aeson,
-    lens-aeson
-                
+    lens-aeson,
+    containers
+                    
 executable gobble
   import: doggle
   main-is:             Main.hs

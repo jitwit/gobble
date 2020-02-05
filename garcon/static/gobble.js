@@ -3,12 +3,20 @@ console.log("BOGGLE BITCH!");
 var boggle = new WebSocket ("ws://localhost:8000");
 var name;
 
+board_row = (row) => {
+    mktd = (letter) => {
+        return "<td>" + letter + "</td>";
+    }
+    return `<tr>${row.split("").map(mktd).join("")}</tr>`
+}
+
 update_board = (board) => {
     var r1 = board.slice(0,4);
     var r2 = board.slice(4,8);
     var r3 = board.slice(8,12);
     var r4 = board.slice(12,16);
-    var html = `${r1}<br>${r2}<br>${r3}<br>${r4}`;
+    var rs = [r1,r2,r3,r4];
+    var html = `<table>${rs.map(board_row).join("")}</table>`;
     document.getElementById('gobble').innerHTML = html;
 }
 

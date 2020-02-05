@@ -1,0 +1,18 @@
+
+body {
+    padding-left: 30%;
+    padding-right: 30%;
+    text-align: center;
+}
+
+#gobble > table > tbody > tr > td {
+    border-style: solid;
+    padding: 10px;
+}
+
+#gobble > table {
+    background-color: pink;
+    border-collapse: collapse;
+    text-align: center;
+}
+
