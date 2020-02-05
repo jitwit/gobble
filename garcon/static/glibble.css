@@ -1,8 +1,17 @@
 
+#viz {
+    position: float-left;
+    padding-top: 10px;
+}
+
+#words {
+    position: float-right;
+    padding-top: 10px;    
+}
+
 body {
-    padding-left: 30%;
-    padding-right: 30%;
     text-align: center;
+    height: 100%;
 }
 
 #gobble > table > tbody > tr > td {

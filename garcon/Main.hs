@@ -48,8 +48,8 @@ new'board = do
 type WordList = [Text]
 type Name = Text
 type Game = (Board,[Player])
-data Phase = Boggled | Scoring
 
+data Phase = Boggled | Scoring deriving (Eq)
 data Board = Board
   { _creationTime :: UTCTime
   , _letters :: Text
@@ -61,22 +61,30 @@ data Player = Player
 data Gobble = Gobble
   { _board :: Board
   , _players :: Map Name Player
-  , _game'phase :: Phase }
+  , _game'phase :: Phase
+  , _round :: Int }
 
 makePrisms ''Phase
 makeLenses ''Board
 makeLenses ''Player
 makeLenses ''Gobble
 
+(.&) :: (Ord k, Ord a) => Map k a -> Map k a -> Map k a
+(.&) = M.intersection
+(.-) = M.difference
+
 score'submissions :: Gobble -> Gobble
 score'submissions gob = gob & players.traversed %~ scr where
+  solution = gob ^. board.word'list
   score'word = ([0,0,0,1,1,2,3,5,11] !!) . min 8 . T.length
   subs = gob ^.. players.traversed.answers & M.unionsWith (+)
-  scr (Player conn sol scr) = Player conn M.empty (scr + sum pts) where
-    pts = [ score'word word | (word,1) <- M.toList (M.intersection sol subs) ]
+  scr (Player conn sol scr) = Player conn M.empty (sum pts - sum npts) where
+    pts = [ score'word word | (word,1) <- M.toList (subs .& sol .& solution) ]
+    npts = [ score'word word | (word,1) <- M.toList (subs .& (sol .- solution)) ]
 
 start'state :: IO Gobble
-start'state = Gobble <$> new'board <*> pure M.empty <*> pure Scoring
+start'state = start <$> new'board where
+  start b = Gobble b M.empty Scoring 0
 
 fetch'board :: (?gobble :: TVar Gobble, MonadIO m) => m Text
 fetch'board = liftIO $ view (board.letters) <$> readTVarIO ?gobble
@@ -121,16 +129,17 @@ reply'json conn = reply conn . A.encode
 send'json :: MonadIO m => A.Value -> Connection -> m ()
 send'json obj conn = liftIO $ sendTextData conn (A.encode obj)
 
-submit'word :: (?gobble::TVar Gobble, MonadIO m) => Name -> Text -> m Bool
+submit'word :: (?gobble::TVar Gobble, MonadIO m) => Name -> Text -> m ()
 submit'word who word = liftIO $ atomically $ do
   gob <- readTVar ?gobble
-  case gob ^. game'phase of
-    Scoring -> pure False
-    Boggled -> case gob ^? board.word'list.ix word of
-      Nothing -> pure False
-      Just _ -> do
-        writeTVar ?gobble (gob & players.ix who.answers.at word ?~ 1)
-        pure True
+  when (gob ^. game'phase & isn't _Scoring) $ writeTVar ?gobble
+    (gob & players.ix who.answers.at word ?~ 1)
+
+delete'word :: (?gobble::TVar Gobble, MonadIO m) => Name -> Text -> m ()
+delete'word who word = liftIO $ atomically $ do
+  gob <- readTVar ?gobble
+  when (gob ^. game'phase & isn't _Scoring) $ writeTVar ?gobble
+    (gob & players.ix who.answers.at word .~ Nothing)
 
 handle'control :: (?gobble::TVar Gobble, MonadIO m) => Name -> Connection -> ControlMessage -> m ()
 handle'control who conn = liftIO . \case
@@ -147,10 +156,12 @@ request'wordlists = broadcast @Text "wordlist"
 
 pattern Query cmd <- Text cmd _
 pattern Word w <- Text (T.words.T.toUpper.T.pack.B.unpack -> "GOBBLE":w:[]) _
+pattern Delete w <- Text (T.words.T.toUpper.T.pack.B.unpack -> "DOBBLE":w:[]) _
 
 handle'data :: (?gobble::TVar Gobble, MonadIO m) => Name -> Connection -> DataMessage -> m ()
 handle'data who conn = liftIO . \case
   Word w -> reply'json conn =<< submit'word who w
+  Delete w -> reply'json conn =<< delete'word who w
   Query "who-else" -> reply'json conn =<< get'players
   Query "words" -> reply'json conn =<< get'persons'words who
   Text msg _ -> print msg >> reply'simply conn "idk/text"
@@ -159,16 +170,17 @@ handle'data who conn = liftIO . \case
 get'players :: (?gobble :: TVar Gobble) => IO [Name]
 get'players = M.keys . view players <$> readTVarIO ?gobble
 
-get'persons'words :: (?gobble :: TVar Gobble) => Name -> IO [Text]
-get'persons'words who = readTVarIO ?gobble <&>
-  (^..players.ix who.answers.to M.keys.folded)
+get'persons'words :: (?gobble :: TVar Gobble) => Name -> IO A.Value
+get'persons'words who = do
+  gob <- readTVarIO ?gobble
+  pure $ A.object [ "words" A..= (gob^..players.ix who.answers.to M.keys.folded) ]
 
 threadDelayS :: Int -> IO ()
 threadDelayS = threadDelay . (*10^6)
 
 round'length, score'length :: Int
-round'length = 30
-score'length = 10
+round'length = 20
+score'length = 5
 
 update'phase :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 update'phase = liftIO $ atomically $ modifyTVar' ?gobble switch'phase where
@@ -183,10 +195,10 @@ report'scores :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 report'scores = liftIO $ do
   gob <- readTVarIO ?gobble
   broadcast $ A.encode $ A.object
-    [ who A..= scr | (who,Player _ _ scr) <- M.toList (gob ^. players) ]
-  
-timer :: (?gobble :: TVar Gobble, MonadIO m) => m ()
-timer = liftIO $ forever $ do
+    [ who A..= scr | (who, Player _ _ scr) <- M.toList (gob ^. players) ]
+
+run'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
+run'round = liftIO $ do
   fresh'board
   update'phase
   print "new-game" 
@@ -198,6 +210,9 @@ timer = liftIO $ forever $ do
   score'round
   report'scores
   threadDelayS score'length
+
+timer :: (?gobble :: TVar Gobble, MonadIO m) => m ()
+timer = forever run'round
 
 -- "ws backend"
 -- talk'player :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Connection -> m ()
@@ -225,7 +240,12 @@ instance ToMarkup GobblePage where
       script ! H.src "static/gobble.js" $ ""
     H.body $ do
       H.h1 "BOGGLE BITCH"
-      H.div ! H.id "gobble" $ ""
+      H.div ! H.id "boggle" $ do
+        H.div ! H.id "viz" $ do
+          H.div ! H.id "gobble" $ ""
+        H.div ! H.id "words" $ do
+          H.textarea $ "" ! H.id "scratch"
+          H.div ! H.id "words" $ ""
 
 type BoggleAPI = Get '[HTML] GobblePage :<|> "static" :> Raw
 
