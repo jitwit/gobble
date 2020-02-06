@@ -24,7 +24,7 @@ import Control.Concurrent.STM.TVar
 import Control.Concurrent.STM
 
 import Text.Blaze.Html5 as H hiding (map,main)
-import qualified Text.Blaze.Html5.Attributes as H
+import qualified Text.Blaze.Html5.Attributes as H hiding (form)
 
 import Network.Wai.Handler.WebSockets
 import Network.WebSockets
@@ -179,8 +179,8 @@ threadDelayS :: Int -> IO ()
 threadDelayS = threadDelay . (*10^6)
 
 round'length, score'length :: Int
-round'length = 20
-score'length = 5
+round'length = 90
+score'length = 15
 
 update'phase :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 update'phase = liftIO $ atomically $ modifyTVar' ?gobble switch'phase where
@@ -237,6 +237,7 @@ instance ToMarkup GobblePage where
     H.head $ do
       title "gobble"
       link ! H.rel "stylesheet" ! H.href "static/glibble.css"
+      script ! H.src "static/jquery-3.4.1.slim.js" $ ""
       script ! H.src "static/gobble.js" $ ""
     H.body $ do
       H.h1 "BOGGLE BITCH"
@@ -244,8 +245,14 @@ instance ToMarkup GobblePage where
         H.div ! H.id "viz" $ do
           H.div ! H.id "gobble" $ ""
         H.div ! H.id "words" $ do
-          H.textarea $ "" ! H.id "scratch"
-          H.div ! H.id "words" $ ""
+          H.form ! H.id "mush" $ do
+            H.input
+              ! H.type_ "text"
+              ! H.id "scratch"
+              ! H.name "scratch"
+              ! H.value ""
+            H.input ! H.type_ "submit" ! H.value "mush!"
+          H.div ! H.id "submissions" $ ""
 
 type BoggleAPI = Get '[HTML] GobblePage :<|> "static" :> Raw
 

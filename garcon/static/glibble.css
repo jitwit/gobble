@@ -1,12 +1,13 @@
 
 #viz {
-    position: float-left;
-    padding-top: 10px;
+    position: absolute;
+    padding-right: 53%;
+    padding-left: 30%;
 }
 
 #words {
-    position: float-right;
-    padding-top: 10px;    
+    position: absolute;
+    padding-left: 53%;
 }
 
 body {
@@ -16,7 +17,7 @@ body {
 
 #gobble > table > tbody > tr > td {
     border-style: solid;
-    padding: 10px;
+    padding: 20px;
 }
 
 #gobble > table {
@@ -24,4 +25,3 @@ body {
     border-collapse: collapse;
     text-align: center;
 }
-
