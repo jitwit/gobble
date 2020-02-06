@@ -1,21 +1,14 @@
 var boggle = new WebSocket ("ws://localhost:8000");
+var board;
+var words;
+var name;
 
 $(() => {
-    var words_node = document.getElementById("submissions");
-    var gobble_node = document.getElementById("gobble");
-    var write_node = $("#scratch");
-
-    var board;
-    var words;
-    var name;
     
     add_word = (word) => { boggle.send('gobble ' + word); }
     del_word = (word) => { boggle.send('dobble ' + word); }
     query_words = () => { boggle.send('words'); }
     query_players = () => { boggle.send('who-else'); }
-    update_words = () => {
-        words_node.innerHTML = words;
-    }
     
     boggle.onopen = (e) => {
         set_name();
@@ -43,11 +36,14 @@ $(() => {
     }
     
     update_board = () => {
-        var rs = [0,1,2,3].map((n) => board.slice(4*n,4*(n+1)));
-        var html = `<table>${rs.map(board_row).join("")}</table>`;
-        gobble_node.innerHTML = html;
+        var rows = [0,1,2,3].map((n) => board_row(board.slice(4*n,4*(n+1))));
+        $("#gobble").html(`<table>${rows.join("")}</table>`);
     }
     
+    update_words = () => {
+        var items = words.map((w) => `<li>${w}</li>`).join("");
+        $("#submissions").html(`${items}`);
+    }
     
     set_name = (msg="") => {
         name = prompt('name?' + msg);
@@ -57,10 +53,15 @@ $(() => {
     $("#mush").submit((e) => {
         e.preventDefault();
         add_word($("#scratch").val());
+        $("#scratch").val("");
+        query_words();
+    });
+
+    $("#submissions").on("click","li",(e) => {
+        del_word($(e.target).text());
         query_words();
     });
     
-//    write_node.onsubmit = (e) => {  console.log(e);    }
-    boggle.onclose = () => { alert("close"); }
+    boggle.onclose = () => { alert("lost connection. refresh?"); }
 
 })

@@ -249,10 +249,8 @@ instance ToMarkup GobblePage where
             H.input
               ! H.type_ "text"
               ! H.id "scratch"
-              ! H.name "scratch"
-              ! H.value ""
             H.input ! H.type_ "submit" ! H.value "mush!"
-          H.div ! H.id "submissions" $ ""
+          H.ul ! H.id "submissions" $ ""
 
 type BoggleAPI = Get '[HTML] GobblePage :<|> "static" :> Raw
 
