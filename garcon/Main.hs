@@ -24,6 +24,7 @@ import Control.Concurrent.STM.TVar
 import Control.Concurrent.STM
 
 import Text.Blaze.Html5 as H hiding (map,main)
+import Text.Blaze.Html.Renderer.Text
 import qualified Text.Blaze.Html5.Attributes as H hiding (form)
 
 import Network.Wai.Handler.WebSockets
@@ -37,7 +38,7 @@ import qualified Data.Aeson as A
 
 gobbler :: IO [T.Text]
 gobbler = map T.pack . lines <$> readCreateProcess cmd "" where
-  cmd = (shell "./gobbler.ss") { cwd = Just ".." }
+  cmd = (shell "scheme --script gobbler.ss") { cwd = Just ".." }
 
 new'board :: IO Board
 new'board = do
@@ -71,12 +72,14 @@ makeLenses ''Gobble
 (.&) = M.intersection
 (.-) = M.difference
 
-score'submissions :: Gobble -> Gobble
-score'submissions gob = gob & players.traversed %~ scr where
+score'submissions :: Gobble -> (Map Text Int, Gobble)
+score'submissions gob = (all'subs, gob') where
+  gob' = gob & players.traversed %~ scr
+             & game'phase .~ Scoring
   solution = gob ^. board.word'list
   score'word = ([0,0,0,1,1,2,3,5,11] !!) . min 8 . T.length
   all'subs = gob ^.. players.traversed.answers & M.unionsWith (+)
-  scr (Player conn sol scr) = Player conn M.empty (sum pts - sum npts) where
+  scr (Player conn sol scr) = Player conn sol (sum pts - sum npts) where
     pts = [ score'word word | (word,1) <- M.toList (all'subs .& sol .& solution) ]
     npts = [ score'word word | (word,1) <- M.toList (all'subs .& (sol .- solution)) ]
 
@@ -91,7 +94,8 @@ fresh'board :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 fresh'board = liftIO $ do
   b <- new'board
   atomically $ modifyTVar' ?gobble $
-    (board .~ b) . (game'phase .~ Boggled)
+    (board .~ b) . (game'phase .~ Boggled) .
+    (players.traversed.answers .~ M.empty)
 
 is'name'free :: (?gobble :: TVar Gobble, MonadIO m) => Name -> m Bool
 is'name'free name = liftIO $
@@ -177,17 +181,12 @@ handle'data who conn = liftIO . \case
 get'players :: (?gobble :: TVar Gobble) => IO [Name]
 get'players = M.keys . view players <$> readTVarIO ?gobble
 
-send'words :: (?gobble :: TVar Gobble, MonadIO m) => Connection -> Name -> m ()
-send'words conn who = liftIO (readTVarIO ?gobble) >>=
-  reply'json conn . tag'thing "words" .
-  toListOf (players.ix who.answers.to M.keys.folded)
-
 threadDelayS :: Int -> IO ()
 threadDelayS = threadDelay . (*10^6)
 
 round'length, score'length :: Int
-round'length = 90
-score'length = 10
+round'length = 20
+score'length = 15
 
 update'phase :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 update'phase = liftIO $ atomically $ modifyTVar' ?gobble switch'phase where
@@ -195,18 +194,34 @@ update'phase = liftIO $ atomically $ modifyTVar' ?gobble switch'phase where
     Scoring -> Boggled
     Boggled -> Scoring
 
+send'words :: (?gobble :: TVar Gobble, MonadIO m) => Connection -> Name -> m ()
+send'words conn who = liftIO $ do
+  gob <- readTVarIO ?gobble
+  when (gob ^. game'phase & isn't _Scoring) $ do
+    let lis = renderHtml $ mapM_ (li.text) $
+                gob ^.. players.ix who.answers.to M.keys.folded
+    reply'json conn $ tag'thing "words" lis
+
 score'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 score'round = liftIO $ do
-  gob <- readTVarIO ?gobble
-  let gob' = score'submissions gob & game'phase .~ Scoring
-  atomically $ writeTVar ?gobble gob'
-
-broadcast'scores :: (?gobble :: TVar Gobble, MonadIO m) => m ()
-broadcast'scores = liftIO $ do
-  gob <- readTVarIO ?gobble
-  broadcast'val $ tag'thing "scores" $ A.object
-    [ who A..= scr | (who, Player _ _ scr) <- M.toList (gob ^. players) ]
-
+  (all'subs,gob) <- score'submissions <$> readTVarIO ?gobble
+  atomically $ writeTVar ?gobble gob
+  let sol = gob ^. board.word'list
+      results = renderHtml $ do
+        h3 "scores"
+        ul $ mapM_ id [ li $ text $ who <> " got " <> T.pack (show scr)
+                      | (who, Player _ _ scr) <- M.toList (gob ^. players) ]
+  broadcast'val $ tag'thing "scores" results
+  forM_ (gob^.players&M.toList) $ \(who,Player c a s) -> do
+    let report = renderHtml $ do
+          h4 "mistakes"
+          ul $ mapM_ (li.text) (M.keys $ a.-sol)
+          h4 "valid words"
+          ul $ mapM_ (li.text) (M.keys $ a.&sol)
+          h4 "common words"
+          ul $ mapM_ (li.text) [ w | (w,n) <- M.toList (all'subs.&a), n > 1 ]
+    reply'json c $ tag'thing "words" report
+    
 run'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 run'round = liftIO $ do
   fresh'board
@@ -216,15 +231,12 @@ run'round = liftIO $ do
   
   broadcast'val $ tag'thing @Text "round" "scoring"
   score'round
-  broadcast'scores
   threadDelayS score'length
 
 timer :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 timer = forever run'round
 
 -- "ws backend"
--- talk'player :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Connection -> m ()
--- talk'player who conn = todo
 boggle :: (?gobble :: TVar Gobble, MonadIO m) => PendingConnection -> m ()
 boggle pend = liftIO $ do
   conn <- acceptRequest pend

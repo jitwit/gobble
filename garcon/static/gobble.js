@@ -1,4 +1,4 @@
-var boggle = new WebSocket ("ws://localhost:8000");
+var boggle = new WebSocket ("ws://192.168.2.18:8000");
 var board;
 var words;
 var name;
@@ -24,15 +24,9 @@ $(() => {
             query_words();
         } else if (!(res['words'] == null)) {
             words = res['words'];
-            update_words();
+            $("#submissions").html(words);
         } else if (!(res['scores'] == null)) {
-            var o = res['scores'];
-            var h = "";
-            for (var s in o) {
-                h += `<li>${s} got ${o[s]}</li>`;
-            }
-            console.log(o);
-            $("#scores").html(`<h3>scores</h3><ul>${h}</ul>`);
+            $("#scores").html(res['scores']);
         } else {
             console.log(res);
         }
@@ -48,11 +42,6 @@ $(() => {
         $("#gobble").html(`<table>${rows.join("")}</table>`);
     }
     
-    update_words = () => {
-        var items = words.map((w) => `<li>${w}</li>`).join("");
-        $("#submissions").html(`${items}`);
-    }
-    
     set_name = (msg="") => {
         name = prompt('name?' + msg);
         boggle.send(name);
@@ -66,6 +55,7 @@ $(() => {
     });
 
     $("#submissions").on("click","li",(e) => {
+        $("#scratch").focus();
         del_word($(e.target).text());
         query_words();
     });
