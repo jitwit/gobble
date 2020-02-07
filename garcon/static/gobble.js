@@ -1,7 +1,4 @@
 var boggle = new WebSocket ("ws://192.168.2.18:8000");
-var board;
-var words;
-var name;
 
 $(() => {
     
@@ -19,33 +16,23 @@ $(() => {
         if (res === "name-is-taken") {
             set_name(msg=" (previous one is taken)");
         } else if (!(res['board'] == null)) {
-            board = res['board'];
-            update_board();
+            $("#gobble").html(res['board']);
             query_words();
         } else if (!(res['words'] == null)) {
             words = res['words'];
             $("#submissions").html(words);
-        } else if (!(res['scores'] == null)) {
-            $("#scores").html(res['scores']);
+        } else if (!(res['peeps'] == null)) {
+            $("#scores").html(res['peeps']);
         } else {
             console.log(res);
         }
     }
 
-    board_row = (row) => {
-        mktd = (letter) => { return "<td>" + letter + "</td>"; }
-        return `<tr>${row.split("").map(mktd).join("")}</tr>`
-    }
-    
-    update_board = () => {
-        var rows = [0,1,2,3].map((n) => board_row(board.slice(4*n,4*(n+1))));
-        $("#gobble").html(`<table>${rows.join("")}</table>`);
-    }
-    
     set_name = (msg="") => {
         name = prompt('name?' + msg);
         boggle.send(name);
-    }
+        $("#scratch").focus();
+    };
     
     $("#mush").submit((e) => {
         e.preventDefault();
@@ -60,6 +47,8 @@ $(() => {
         query_words();
     });
     
-    boggle.onclose = () => { alert("lost connection. refresh?"); }
+    boggle.onclose = () => {
+        alert("lost connection. refresh?");
+    };
 
-})
+});

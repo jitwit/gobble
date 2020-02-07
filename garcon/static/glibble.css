@@ -17,11 +17,13 @@ body {
 
 #gobble > table > tbody > tr > td {
     border-style: solid;
-    padding: 20px;
+    height: 60px;
+    width: 60px;
+    text-align: center;
+    font-size: x-large;
 }
 
 #gobble > table {
     background-color: pink;
     border-collapse: collapse;
-    text-align: center;
 }
