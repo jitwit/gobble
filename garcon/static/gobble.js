@@ -25,6 +25,14 @@ $(() => {
         } else if (!(res['words'] == null)) {
             words = res['words'];
             update_words();
+        } else if (!(res['scores'] == null)) {
+            var o = res['scores'];
+            var h = "";
+            for (var s in o) {
+                h += `<li>${s} got ${o[s]}</li>`;
+            }
+            console.log(o);
+            $("#scores").html(`<h3>scores</h3><ul>${h}</ul>`);
         } else {
             console.log(res);
         }

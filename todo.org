@@ -1,4 +1,8 @@
 
-- gui/frontend
-- path compression in trie?
+- timer
+- report scores sensibly
+- passable css
+- 10 round cycles
+- hourglass animation
+
 
