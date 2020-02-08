@@ -92,7 +92,8 @@ new'player who conn = liftIO $ do
   reply'json conn $ tag'thing "board" $ renderHtml $ html'of'board (gob^.board)
   reply'json conn $ A.object
     [ "time" A..= (gob^.board.creationTime.to (addUTCTime round'period))
-    , "pause" A..= score'length ]
+    , "pause" A..= score'length
+    , "round" A..= round'length ]
   when (gob ^. game'phase & isn't _Scoring) $ do
     let peeps = renderHtml $ do
           h3 "who's here?"
@@ -225,8 +226,8 @@ threadDelayS :: Int -> IO ()
 threadDelayS = threadDelay . (*10^6)
 
 round'length, score'length :: Int
-round'length = 90
-score'length = 30
+round'length = 5
+score'length = 2
 round'period :: NominalDiffTime
 round'period = unsafeCoerce $ secondsToDiffTime $
   fromIntegral $ round'length + score'length
@@ -246,7 +247,8 @@ fresh'round = liftIO $ do
   broadcast'val $ tag'thing "board" $ renderHtml $ html'of'board b
   broadcast'val $ A.object
     [ "time" A..= (b^.creationTime.to (addUTCTime round'period))
-    , "pause" A..= score'length ]
+    , "pause" A..= score'length
+    , "round" A..= round'length ]
 
 run'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 run'round = liftIO $ do
@@ -285,6 +287,7 @@ instance ToMarkup GobblePage where
           H.div ! H.id "gobble" $ ""
           H.div ! H.id "scores" $ ""
         H.div ! H.id "words" $ do
+          H.canvas ! H.id "hourglass" ! H.height "100" ! H.width "100" $ ""
           H.div ! H.id "timer" $ ""
           H.form ! H.id "mush" $ do
             H.input ! H.type_ "text" ! H.id "scratch"
