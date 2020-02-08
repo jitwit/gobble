@@ -3,6 +3,6 @@
 - timer animation
 - passable css/visuals
 - 10 round cycles
-
+- definitions
 
 

@@ -90,8 +90,9 @@ new'player who conn = liftIO $ do
   gob <- (players.at who ?~ Player conn M.empty 0) <$> readTVarIO ?gobble
   atomically $ writeTVar ?gobble gob
   reply'json conn $ tag'thing "board" $ renderHtml $ html'of'board (gob^.board)
-  reply'json conn $ tag'thing "time" $
-    gob^.board.creationTime.to (addUTCTime round'period)
+  reply'json conn $ A.object
+    [ "time" A..= (gob^.board.creationTime.to (addUTCTime round'period))
+    , "pause" A..= score'length ]
   when (gob ^. game'phase & isn't _Scoring) $ do
     let peeps = renderHtml $ do
           h3 "who's here?"
@@ -214,7 +215,8 @@ score'round = liftIO $ do
           h4 "valid words"
           ul $ mapM_ (li.text) (dec'len $ M.keys $ a.&sol)
           h4 "common words"
-          ul $ mapM_ (li.text) $ dec'len [ w | (w,n) <- M.toList (all'subs.&a), n > 1 ]
+          ul $ mapM_ (li.text) $ dec'len
+            [ w | (w,n) <- M.toList (all'subs.&a), n > 1 ]
           h4 "missed words"
           ul $ mapM_ (li.text) (dec'len $ M.keys $ sol.-a)
     reply'json c $ tag'thing "words" report
@@ -226,7 +228,8 @@ round'length, score'length :: Int
 round'length = 90
 score'length = 30
 round'period :: NominalDiffTime
-round'period = unsafeCoerce $ secondsToDiffTime $ fromIntegral $ round'length + score'length
+round'period = unsafeCoerce $ secondsToDiffTime $
+  fromIntegral $ round'length + score'length
 
 html'of'board :: Board -> Html
 html'of'board b = table $ forM_ (b^.letters.to (T.chunksOf 4)) $
@@ -234,18 +237,20 @@ html'of'board b = table $ forM_ (b^.letters.to (T.chunksOf 4)) $
     tt 'Q' = "Qu"
     tt x = T.singleton x
 
-fresh'board :: (?gobble :: TVar Gobble, MonadIO m) => m ()
-fresh'board = liftIO $ do
+fresh'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
+fresh'round = liftIO $ do
   b <- new'board
   atomically $ modifyTVar' ?gobble $
     (board .~ b) . (game'phase .~ Boggled) .
     (players.traversed.answers .~ M.empty)
   broadcast'val $ tag'thing "board" $ renderHtml $ html'of'board b
-  broadcast'val $ tag'thing "time" $ b ^. creationTime . to (addUTCTime round'period)
+  broadcast'val $ A.object
+    [ "time" A..= (b^.creationTime.to (addUTCTime round'period))
+    , "pause" A..= score'length ]
 
 run'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 run'round = liftIO $ do
-  fresh'board
+  fresh'round
   threadDelayS round'length
   score'round
   threadDelayS score'length

@@ -5,10 +5,9 @@ let
   inherit (nixpkgs) pkgs;
 
   f = { mkDerivation, aeson, base, blaze-html, bytestring
-      , bytestring-trie, comonad, filepath, lens, lens-aeson, mtl
-      , process, servant, servant-blaze, servant-client, servant-server
-      , stdenv, stm, text, time, unix, wai, wai-websockets, warp
-      , websockets
+      , containers, filepath, lens, lens-aeson, mtl, process, servant
+      , servant-blaze, servant-client, servant-server, stdenv, stm, text
+      , time, unix, wai, wai-websockets, warp, websockets
       }:
       mkDerivation {
         pname = "gobble";
@@ -17,8 +16,8 @@ let
         isLibrary = false;
         isExecutable = true;
         executableHaskellDepends = [
-          aeson base blaze-html bytestring bytestring-trie comonad filepath
-          lens lens-aeson mtl process servant servant-blaze servant-client
+          aeson base blaze-html bytestring containers filepath lens
+          lens-aeson mtl process servant servant-blaze servant-client
           servant-server stm text time unix wai wai-websockets warp
           websockets
         ];
