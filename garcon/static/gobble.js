@@ -7,8 +7,6 @@ void main(void) {
 }
 `;
 
-// given uniform float for time, round 90 + 30
-// js will send it transformed t = t-30; max(t,-3*min(t,0)) to put in range 0 1.
 var frag_src = `#version 300 es
 precision mediump float;
 in vec2 xy;
@@ -16,10 +14,11 @@ uniform float utime;
 out vec4 clr;
 
 void main (void) {
-  float x,y;
-  x = max(0.0,min(1.0,1.0-utime));
-  y = max(0.0,min(1.0,xy.y));
-  clr = vec4(x*y,y,1,1);
+  float c;
+  c = 2.0-(xy.y-2.0*(utime-1.0));
+  c = max(0.0,min(1.0,c));
+  c = pow(c,200.0);
+  clr = vec4(c,c,c,1);
 }
 `;
 
@@ -31,7 +30,10 @@ $(() => {
     var boggle = new WebSocket ("ws://192.168.2.13:8000");
     var hourglass = document.querySelector("#hourglass");
     var gl = hourglass.getContext("webgl2");
-    var dt = 50;
+    var dt = 20;
+    var expires;
+    var round;
+    var pause;
 
     var vs = gl.createShader(gl.VERTEX_SHADER);
     var fs = gl.createShader(gl.FRAGMENT_SHADER);
@@ -48,7 +50,6 @@ $(() => {
     gl.useProgram(program);
     gl.deleteProgram(program);
 
-    // init step 2
     var pos = gl.getAttribLocation(program,"pos");
     var utime = gl.getUniformLocation(program, "utime");
     var vao = gl.createVertexArray();
@@ -60,7 +61,6 @@ $(() => {
     gl.enableVertexAttribArray(pos);
     gl.drawArrays(gl.TRIANGLE_FAN,0,4);
 
-    // ws queries to server
     add_word = async (word) => { boggle.send('gobble ' + word); };
     del_word = async (word) => { boggle.send('dobble ' + word); };
     query_words = async () => { boggle.send('words'); };
@@ -69,7 +69,7 @@ $(() => {
         boggle.send(name);
         $("#scratch").focus();
     };
-    // update stuff in document
+
     $("#mush").submit((e) => {
         e.preventDefault();
         add_word($("#scratch").val());
@@ -81,24 +81,35 @@ $(() => {
         del_word($(e.target).text());
         query_words();
     });
-    // timer
+
     timer = async (expires,round=90,pause=30) => {
-        console.log(round,pause);        
+        console.log(round,pause);
         var end = expires.getTime();
-        var update = async () => {
+        var show = async () => {
+            var now = (new Date ()).getTime();
+            var left = Math.floor(1+((end-now)/1000));
+            if (left > 0) {
+                if (left > pause) {
+                    $("#timer").html("remaining " + (left-pause));
+                } else {
+                    $("#timer").html("next " + left);
+                }
+                setTimeout(show,1000);
+            }
+        }
+        var render = async () => {
             var now = (new Date ()).getTime();
             var left = end-now;
             var time = (left/1000-pause)/round;// to seconds
             time = Math.max(time,-(round/pause)*Math.min(time,0));
-
             gl.uniform1f(utime, time);
             gl.drawArrays(gl.TRIANGLE_FAN,0,4);
-//            console.log(time,left/1000);
-            if (left > dt) { setTimeout(update,dt); }
+            if (left > 0) { setTimeout(render,dt); }
         };
-        update();
-    }
-    // ws client
+        show();
+        render();
+    }    
+    
     boggle.onopen = (e) => { set_name(); };
     boggle.onmessage = async (msg) => {
         var res = JSON.parse(msg.data);

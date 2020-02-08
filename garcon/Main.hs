@@ -226,8 +226,8 @@ threadDelayS :: Int -> IO ()
 threadDelayS = threadDelay . (*10^6)
 
 round'length, score'length :: Int
-round'length = 5
-score'length = 2
+round'length = 90
+score'length = 30
 round'period :: NominalDiffTime
 round'period = unsafeCoerce $ secondsToDiffTime $
   fromIntegral $ round'length + score'length
@@ -287,8 +287,8 @@ instance ToMarkup GobblePage where
           H.div ! H.id "gobble" $ ""
           H.div ! H.id "scores" $ ""
         H.div ! H.id "words" $ do
-          H.canvas ! H.id "hourglass" ! H.height "100" ! H.width "100" $ ""
           H.div ! H.id "timer" $ ""
+          H.canvas ! H.id "hourglass" ! H.height "100" ! H.width "100" $ ""
           H.form ! H.id "mush" $ do
             H.input ! H.type_ "text" ! H.id "scratch"
             H.input ! H.type_ "submit" ! H.value "mush!"
