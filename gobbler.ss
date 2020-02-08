@@ -6,6 +6,7 @@
 (import (gobble))
 
 (random-seed (time-nanosecond (current-time)))
+(random-seed (random (time-nanosecond (current-time))))
 
 (let ((board (list->string (roll))))
   (display-ln board)

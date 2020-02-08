@@ -1,10 +1,11 @@
-.PHONY : clean all
+.PHONY : clean all input/frequencies.txt
 
 dictionary::= input/trie.fasl
 objs::= trie dictionary gobble
 lib-path::= .:$(CHEZSCHEMELIBDIRS)
 scheme::= scheme -q --libdirs $(lib-path)
 libs::= $(foreach lib,$(objs),$(lib).so)
+reps::= 1000
 
 all : $(dictionary) $(libs)
 
@@ -19,6 +20,9 @@ dictionary.so : code/*.scm trie.so *.sls
 
 trie.so : code/*.scm *.sls
 	echo "(compile-library \"trie.sls\")" | $(scheme)
+
+input/frequencies.txt : etude.ss
+	$(scheme) --script $< $(reps) > $@
 
 clean :
 	find . -name "*~" -exec rm {} \;
