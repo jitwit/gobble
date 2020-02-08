@@ -13,6 +13,7 @@ import Data.Function
 import Data.Proxy
 import qualified Data.Map as M
 import Data.Map (Map)
+import Unsafe.Coerce
 
 import Control.Exception
 import Control.Monad
@@ -86,12 +87,14 @@ is'name'free name = liftIO $
 
 new'player :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Connection -> m ()
 new'player who conn = liftIO $ do
-  gob <- (players . at who ?~ Player conn M.empty 0) <$> readTVarIO ?gobble
+  gob <- (players.at who ?~ Player conn M.empty 0) <$> readTVarIO ?gobble
   atomically $ writeTVar ?gobble gob
   reply'json conn $ tag'thing "board" $ renderHtml $ html'of'board (gob^.board)
+  reply'json conn $ tag'thing "time" $
+    gob^.board.creationTime.to (addUTCTime round'period)
   when (gob ^. game'phase & isn't _Scoring) $ do
     let peeps = renderHtml $ do
-          h3 "peeps"
+          h3 "who's here?"
           ul $ mapM_ (li.text) (gob^.players.to M.keys)
     broadcast'val $ tag'thing "peeps" peeps
 
@@ -108,7 +111,7 @@ remove'player who = liftIO $ do
   atomically $ writeTVar ?gobble gob
   when (gob ^. game'phase & isn't _Scoring) $ do
     let peeps = renderHtml $ do
-          h3 "peeps"
+          h3 "who's here?"
           ul $ mapM_ (li.text) (gob^.players.to M.keys)
     broadcast'val $ tag'thing "peeps" peeps
 
@@ -152,17 +155,14 @@ broadcast msg = liftIO $ readTVarIO ?gobble >>=
 broadcast'val :: (?gobble :: TVar Gobble, A.ToJSON a, MonadIO m) => a -> m ()
 broadcast'val = broadcast . A.encode
 
-request'wordlists :: (?gobble :: TVar Gobble, MonadIO m) => m ()
-request'wordlists = broadcast @Text "wordlist"
-
 pattern Query cmd <- Text cmd _
 pattern Word w <- Text (T.words.T.toUpper.T.pack.B.unpack -> "GOBBLE":w:[]) _
 pattern Delete w <- Text (T.words.T.toUpper.T.pack.B.unpack -> "DOBBLE":w:[]) _
 
 handle'data :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Connection -> DataMessage -> m ()
 handle'data who conn = liftIO . \case
-  Word w -> reply'json conn =<< submit'word who w
-  Delete w -> reply'json conn =<< delete'word who w
+  Word w -> submit'word who w
+  Delete w -> delete'word who w
   Query "who-else" -> reply'json conn =<< get'players
   Query "words" -> send'words conn who -- =<< get'persons'words who
   Text msg _ -> print msg >> reply'simply conn "idk/text"
@@ -180,15 +180,13 @@ update'phase = liftIO $ atomically $ modifyTVar' ?gobble switch'phase where
 send'words :: (?gobble :: TVar Gobble, MonadIO m) => Connection -> Name -> m ()
 send'words conn who = liftIO $ do
   gob <- readTVarIO ?gobble
-  when (gob ^. game'phase & isn't _Scoring) $ do
-    let lis = renderHtml $ mapM_ (li.text) $
-                gob ^.. players.ix who.answers.to M.keys.folded
-    reply'json conn $ tag'thing "words" lis
+  when (gob ^. game'phase & isn't _Scoring) $
+    reply'json conn $ tag'thing "words" $ renderHtml $
+    mapM_ (li.text) $ gob^.players.ix who.answers.to M.keys
 
 score'submissions :: Gobble -> (Map Text Int, Gobble)
 score'submissions gob = (all'subs, gob') where
-  gob' = gob & players.traversed %~ scr
-             & game'phase .~ Scoring
+  gob' = gob & players.traversed %~ scr & game'phase .~ Scoring
   solution = gob ^. board.word'list
   score'word = ([0,0,0,1,1,2,3,5,11] !!) . min 8 . T.length
   all'subs = gob ^.. players.traversed.answers & M.unionsWith (+)
@@ -196,26 +194,29 @@ score'submissions gob = (all'subs, gob') where
     pts = [ score'word word | (word,1) <- M.toList (all'subs .& sol .& solution) ]
     npts = [ score'word word | (word,1) <- M.toList (all'subs .& (sol .- solution)) ]
 
+dec'len :: [Text] -> [Text]
+dec'len = sortBy (flip compare `on` T.length)
+
 score'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 score'round = liftIO $ do
   (all'subs,gob) <- score'submissions <$> readTVarIO ?gobble
   atomically $ writeTVar ?gobble gob
   let sol = gob ^. board.word'list
       results = renderHtml $ do
-        h3 "who's here?"
+        h3 "scores"
         ul $ mapM_ id [ li $ text $ who <> " got " <> T.pack (show scr)
                       | (who, Player _ _ scr) <- M.toList (gob ^. players) ]
   broadcast'val $ tag'thing "peeps" results
   forM_ (gob^.players&M.toList) $ \(who,Player c a s) -> do
     let report = renderHtml $ do
           h4 "mistakes"
-          ul $ mapM_ (li.text) (M.keys $ a.-sol)
+          ul $ mapM_ (li.text) (dec'len $ M.keys $ a.-sol)
           h4 "valid words"
-          ul $ mapM_ (li.text) (M.keys $ a.&sol)
+          ul $ mapM_ (li.text) (dec'len $ M.keys $ a.&sol)
           h4 "common words"
-          ul $ mapM_ (li.text) [ w | (w,n) <- M.toList (all'subs.&a), n > 1 ]
+          ul $ mapM_ (li.text) $ dec'len [ w | (w,n) <- M.toList (all'subs.&a), n > 1 ]
           h4 "missed words"
-          ul $ mapM_ (li.text) (sortBy (flip compare `on` T.length) $ M.keys $ sol.-a)
+          ul $ mapM_ (li.text) (dec'len $ M.keys $ sol.-a)
     reply'json c $ tag'thing "words" report
     
 threadDelayS :: Int -> IO ()
@@ -224,6 +225,8 @@ threadDelayS = threadDelay . (*10^6)
 round'length, score'length :: Int
 round'length = 90
 score'length = 30
+round'period :: NominalDiffTime
+round'period = unsafeCoerce $ secondsToDiffTime $ fromIntegral $ round'length + score'length
 
 html'of'board :: Board -> Html
 html'of'board b = table $ forM_ (b^.letters.to (T.chunksOf 4)) $
@@ -238,6 +241,7 @@ fresh'board = liftIO $ do
     (board .~ b) . (game'phase .~ Boggled) .
     (players.traversed.answers .~ M.empty)
   broadcast'val $ tag'thing "board" $ renderHtml $ html'of'board b
+  broadcast'val $ tag'thing "time" $ b ^. creationTime . to (addUTCTime round'period)
 
 run'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 run'round = liftIO $ do
@@ -276,10 +280,9 @@ instance ToMarkup GobblePage where
           H.div ! H.id "gobble" $ ""
           H.div ! H.id "scores" $ ""
         H.div ! H.id "words" $ do
+          H.div ! H.id "timer" $ ""
           H.form ! H.id "mush" $ do
-            H.input
-              ! H.type_ "text"
-              ! H.id "scratch"
+            H.input ! H.type_ "text" ! H.id "scratch"
             H.input ! H.type_ "submit" ! H.value "mush!"
           H.ul ! H.id "submissions" $ ""
 

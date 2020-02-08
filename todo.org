@@ -1,8 +1,7 @@
 
-- timer
-- report scores sensibly
+- timer/hourglass animation
 - passable css
 - 10 round cycles
-- hourglass animation
+
 
 
