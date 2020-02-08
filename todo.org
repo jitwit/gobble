@@ -1,6 +1,7 @@
 
-- timer/hourglass animation
-- passable css
+- set ws ip automatically
+- timer animation
+- passable css/visuals
 - 10 round cycles
 
 
