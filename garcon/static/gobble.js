@@ -14,11 +14,15 @@ uniform float utime;
 out vec4 clr;
 
 void main (void) {
-  float c;
-  c = 2.0-(xy.y-2.0*(utime-1.0));
-  c = max(0.0,min(1.0,c));
-  c = pow(c,2.0);
-  clr = vec4(c,c,c,1);
+  vec2 s1 = xy;
+  float c = utime;
+  float d = dot(s1,s1); d *= d; d *= d; d = 1.0 - d;
+  d = max(0.0,min((utime+1.0)-0.5*(xy.y+1.0),d));
+//  float d = 1.0-min(dot(s1,s1), dot(s2,s2));
+//  c = 2.0-(xy.y-2.0*(utime-1.0));
+//  c = max(0.0,min(1.0,c));
+//  c = pow(c,2.0);
+  clr = vec4(utime*d,utime*d,d,1);
 }
 `;
 
@@ -30,7 +34,7 @@ $(() => {
     var boggle = new WebSocket ("ws://192.168.2.13:8000");
     var hourglass = document.querySelector("#hourglass");
     var gl = hourglass.getContext("webgl2");
-    var dt = 50;
+    var dt = 20;
     var expires;
     var round;
     var pause;

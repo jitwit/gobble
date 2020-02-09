@@ -66,7 +66,7 @@ makeLenses ''Gobble
 
 gobbler :: IO [T.Text]
 gobbler = map T.pack . lines <$> readCreateProcess cmd "" where
-  cmd = (shell "scheme --script gobbler.ss 5x5") { cwd = Just ".." }
+  cmd = (shell "scheme --script gobbler.ss 4x4") { cwd = Just ".." }
 
 new'board :: IO Board
 new'board = do
@@ -229,6 +229,7 @@ threadDelayS = threadDelay . (*10^6)
 round'length, score'length :: Int
 round'length = 90
 score'length = 30
+
 round'period :: NominalDiffTime
 round'period = unsafeCoerce $ secondsToDiffTime $
   fromIntegral $ round'length + score'length

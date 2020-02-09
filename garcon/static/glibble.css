@@ -13,6 +13,10 @@
     padding-left: 53%;
 }
 
+#submissions {
+    text-align: left;
+}
+
 body {
     text-align: center;
     height: 100%;
