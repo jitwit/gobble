@@ -1,21 +1,4 @@
-;; AAEEGN
-;; ELRTTY
-;; AOOTTW
-;; ABBJOO
-;; EHRTVW
-;; CIMOTU
-;; DISTTY
-;; EIOSST
-;; DELRVY
-;; ACHOPS
-;; HIMNQU
-;; EEINSU
-;; EEGHNW
-;; AFFKPS
-;; HLNNRZ
-;; DEILRX
-
-(define *DICE*
+(define dice-4x4
   '("NAEAEG"
     "EGNWEH"
     "CSOAHP"
@@ -33,13 +16,37 @@
     "NLNHZR"
     "ENSIEU"))
 
-(define size
-  (isqrt (length *DICE*)))
+(define dice-5x5
+  '("QBZJXK"
+    "OOOTTU"
+    "OVWRGR"
+    "AAAFSR"
+    "AUMEEG"
+    "HHLRDO"
+    "NDHTHO"
+    "LHNROD"
+    "AFAISR"
+    "YIFASR"
+    "TELPCI"
+    "SSNSEU"
+    "RIYPHR"
+    "DORDLN"
+    "CCWNST"
+    "TTOTEM"
+    "STCIEP"
+    "EANDNN"
+    "MNNEAG"
+    "UOTOWN"
+    "AEAEEE"
+    "YIFPSR"
+    "EEEEMA"
+    "ITITIE"
+    "EITLIC"))
 
-(define (roll)
+(define (roll dice)
   (map (lambda (die)
          (string-ref die (random (string-length die))))
-       (shuffle *DICE*)))
+       (shuffle dice)))
 
 (define (adjacent xy)
   (let ((x (car xy)) (y (cdr xy)))
@@ -70,8 +77,8 @@
       ((= i n) board)
     (vector-set! board i (list->string (list-head letters n)))))
 
-(define (board!)
-  (list->board (roll)))
+(define (board! dice)
+  (list->board (roll dice)))
 
 (define (display-ln object)
   (display object) (newline))

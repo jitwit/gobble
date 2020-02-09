@@ -9,7 +9,8 @@
           display-board
           display-ln
           roll
-          *DICE*
+          dice-4x4
+          dice-5x5
 
           ;; definitions
           word?

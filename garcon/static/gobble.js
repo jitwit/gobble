@@ -17,7 +17,7 @@ void main (void) {
   float c;
   c = 2.0-(xy.y-2.0*(utime-1.0));
   c = max(0.0,min(1.0,c));
-  c = pow(c,200.0);
+  c = pow(c,2.0);
   clr = vec4(c,c,c,1);
 }
 `;
@@ -30,7 +30,7 @@ $(() => {
     var boggle = new WebSocket ("ws://192.168.2.13:8000");
     var hourglass = document.querySelector("#hourglass");
     var gl = hourglass.getContext("webgl2");
-    var dt = 20;
+    var dt = 50;
     var expires;
     var round;
     var pause;

@@ -25,7 +25,8 @@ import Control.Concurrent
 import Control.Concurrent.STM.TVar
 import Control.Concurrent.STM
 
-import Text.Blaze.Html5 as H hiding (map,main)
+import Text.Blaze.Html5 as H hiding (map,main,head)
+import qualified Text.Blaze.Html5 as H (head)
 import Text.Blaze.Html.Renderer.Text
 import qualified Text.Blaze.Html5.Attributes as H hiding (form)
 
@@ -44,7 +45,7 @@ data Phase = Boggled | Scoring deriving (Eq)
 data Board = Board
   { _creationTime :: UTCTime
   , _letters :: Text
-  , _word'list :: Map Text Int }
+  , _word'list :: Map Text Text }
 data Player = Player
   { _connection :: Connection
   , _answers :: Map Text Int
@@ -60,19 +61,19 @@ makeLenses ''Board
 makeLenses ''Player
 makeLenses ''Gobble
 
-(.&) :: (Ord k, Ord a) => Map k a -> Map k a -> Map k a
 (.&) = M.intersection
 (.-) = M.difference
 
 gobbler :: IO [T.Text]
 gobbler = map T.pack . lines <$> readCreateProcess cmd "" where
-  cmd = (shell "scheme --script gobbler.ss") { cwd = Just ".." }
+  cmd = (shell "scheme --script gobbler.ss 5x5") { cwd = Just ".." }
 
 new'board :: IO Board
 new'board = do
   b:as <- gobbler
+  let ws = head . T.words <$> as
   t <- getCurrentTime
-  return $ Board t b (M.fromList $ zip as (repeat 1))
+  return $ Board t b $ M.fromList [ (w,T.unwords def) | w:def <- map T.words as ]
 
 start'state :: IO Gobble
 start'state = start <$> new'board where
@@ -218,7 +219,7 @@ score'round = liftIO $ do
           h4 "common words"
           ul $ mapM_ (li.text) $ dec'len
             [ w | (w,n) <- M.toList (all'subs.&a), n > 1 ]
-          h4 "missed words"
+          h4 "missed words" -- make these better. definitions/sort out types
           ul $ mapM_ (li.text) (dec'len $ M.keys $ sol.-a)
     reply'json c $ tag'thing "words" report
     
@@ -233,10 +234,12 @@ round'period = unsafeCoerce $ secondsToDiffTime $
   fromIntegral $ round'length + score'length
 
 html'of'board :: Board -> Html
-html'of'board b = table $ forM_ (b^.letters.to (T.chunksOf 4)) $
+html'of'board b = table $ forM_ (b^.letters.to (T.chunksOf n)) $
   \row -> tr $ mapM_ (td.text.tt) $ T.unpack row where
     tt 'Q' = "Qu"
     tt x = T.singleton x
+    ls = b^.letters
+    n = floor $ sqrt $ fromIntegral $ T.length ls
 
 fresh'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 fresh'round = liftIO $ do
