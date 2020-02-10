@@ -2,6 +2,10 @@ body {
     background-color: #CFE4FF;
 }
 
+h1 {
+    color: #FF429E;
+}
+
 #hourglass {
     padding: 10px;
 }

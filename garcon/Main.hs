@@ -66,7 +66,7 @@ makeLenses ''Gobble
 
 gobbler :: IO [T.Text]
 gobbler = map T.pack . lines <$> readCreateProcess cmd "" where
-  cmd = (shell "scheme --script gobbler.ss 4x4") { cwd = Just ".." }
+  cmd = (shell "scheme --script gobbler.ss 5x5") { cwd = Just ".." }
 
 new'board :: IO Board
 new'board = do
@@ -215,13 +215,13 @@ score'round = liftIO $ do
                tr $ do td "words"
                        forM_ [ M.keys $ sub .& sol | sub <- subs ] $ \ws ->
                          td $ ul $ mapM_ (li.text) ws
-    
+
 threadDelayS :: Int -> IO ()
 threadDelayS = threadDelay . (*10^6)
 
 round'length, score'length :: Int
-round'length = 5
-score'length = 5
+round'length = 90
+score'length = 90
 
 round'period :: NominalDiffTime
 round'period = unsafeCoerce $ secondsToDiffTime $
@@ -238,14 +238,17 @@ html'of'board b = table $ forM_ (b^.letters.to (T.chunksOf n)) $
 fresh'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 fresh'round = liftIO $ do
   b <- new'board
-  atomically $ modifyTVar' ?gobble $
-    (board .~ b) . (game'phase .~ Boggled) .
-    (players.traversed.answers .~ M.empty)
+  gob <- (board .~ b) . (game'phase .~ Boggled) . (players.traversed.answers .~ M.empty)
+    <$> readTVarIO ?gobble
+  atomically $ writeTVar ?gobble gob
   broadcast'val $ tag'thing "board" $ renderHtml $ html'of'board b
   broadcast'val $ A.object
     [ "time" A..= (b^.creationTime.to (addUTCTime round'period))
     , "pause" A..= score'length
     , "round" A..= round'length ]
+  broadcast'val $ tag'thing "peeps" $ renderHtml $ do
+    h3 "who's here?"
+    ul $ mapM_ (li.text) (gob^.players.to M.keys)
 
 run'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 run'round = liftIO $ do
