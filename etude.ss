@@ -1,5 +1,3 @@
-#!/usr/bin/env scheme
-
 (unless (assoc "~/code/gobble" (library-directories))
   (library-directories (cons "~/code/gobble" (library-directories))))
 

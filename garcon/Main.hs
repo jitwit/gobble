@@ -25,7 +25,7 @@ import Control.Concurrent
 import Control.Concurrent.STM.TVar
 import Control.Concurrent.STM
 
-import Text.Blaze.Html5 as H hiding (map,main,head)
+import Text.Blaze.Html5 as H hiding (map,main,head,style)
 import qualified Text.Blaze.Html5 as H (head)
 import Text.Blaze.Html.Renderer.Text
 import qualified Text.Blaze.Html5.Attributes as H hiding (form)
@@ -45,7 +45,7 @@ data Phase = Boggled | Scoring deriving (Eq)
 data Board = Board
   { _creationTime :: UTCTime
   , _letters :: Text
-  , _word'list :: Map Text Text }
+  , _word'list :: Map Text Text } deriving (Show)
 data Player = Player
   { _connection :: Connection
   , _answers :: Map Text Int
@@ -71,7 +71,6 @@ gobbler = map T.pack . lines <$> readCreateProcess cmd "" where
 new'board :: IO Board
 new'board = do
   b:as <- gobbler
-  let ws = head . T.words <$> as
   t <- getCurrentTime
   return $ Board t b $ M.fromList [ (w,T.unwords def) | w:def <- map T.words as ]
 
@@ -105,7 +104,7 @@ name'player :: (?gobble :: TVar Gobble, MonadIO m) => Connection -> m Name
 name'player conn = liftIO $ do
   uname <- receiveData conn
   is'name'free uname >>= \case
-    False -> reply'simply conn "name-is-taken" >> name'player conn
+    False -> reply'json @Text conn "name-is-taken" >> name'player conn
     True  -> new'player uname conn >> pure uname
 
 remove'player :: (?gobble :: TVar Gobble, MonadIO m) => Name -> m ()
@@ -117,9 +116,6 @@ remove'player who = liftIO $ do
           h3 "who's here?"
           ul $ mapM_ (li.text) (gob^.players.to M.keys)
     broadcast'val $ tag'thing "peeps" peeps
-
-reply'simply :: MonadIO m => Connection -> Text -> m ()
-reply'simply conn msg = liftIO $ sendTextData conn (A.encode msg)
 
 reply :: (?gobble :: TVar Gobble, WebSocketsData a, MonadIO m) => Connection -> a -> m ()
 reply conn = liftIO . sendTextData conn
@@ -168,8 +164,8 @@ handle'data who conn = liftIO . \case
   Delete w -> delete'word who w
   Query "who-else" -> reply'json conn =<< get'players
   Query "words" -> send'words conn who -- =<< get'persons'words who
-  Text msg _ -> print msg >> reply'simply conn "idk/text"
-  Binary msg -> print msg >> reply'simply conn "idk/bin"
+  Text msg _ -> print msg >> reply'json @Text conn "idk/text"
+  Binary msg -> print msg >> reply'json @Text conn "idk/bin"
 
 get'players :: (?gobble :: TVar Gobble) => IO [Name]
 get'players = M.keys . view players <$> readTVarIO ?gobble
@@ -190,45 +186,42 @@ send'words conn who = liftIO $ do
 score'submissions :: Gobble -> (Map Text Int, Gobble)
 score'submissions gob = (all'subs, gob') where
   gob' = gob & players.traversed %~ scr & game'phase .~ Scoring
-  solution = gob ^. board.word'list
+  solution = gob^.board.word'list
   score'word = ([0,0,0,1,1,2,3,5,11] !!) . min 8 . T.length
   all'subs = gob ^.. players.traversed.answers & M.unionsWith (+)
   scr (Player conn sol scr) = Player conn sol (sum pts - sum npts) where
     pts = [ score'word word | (word,1) <- M.toList (all'subs .& sol .& solution) ]
     npts = [ score'word word | (word,1) <- M.toList (all'subs .& (sol .- solution)) ]
 
-dec'len :: [Text] -> [Text]
-dec'len = sortBy (flip compare `on` T.length)
-
 score'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 score'round = liftIO $ do
   (all'subs,gob) <- score'submissions <$> readTVarIO ?gobble
   atomically $ writeTVar ?gobble gob
   let sol = gob ^. board.word'list
-      results = renderHtml $ do
-        h3 "scores"
-        ul $ mapM_ id [ li $ text $ who <> " got " <> T.pack (show scr)
-                      | (who, Player _ _ scr) <- M.toList (gob ^. players) ]
-  broadcast'val $ tag'thing "peeps" results
-  forM_ (gob^.players&M.toList) $ \(who,Player c a s) -> do
-    let report = renderHtml $ do
-          h4 "mistakes"
-          ul $ mapM_ (li.text) (dec'len $ M.keys $ a.-sol)
-          h4 "valid words"
-          ul $ mapM_ (li.text) (dec'len $ M.keys $ a.&sol)
-          h4 "common words"
-          ul $ mapM_ (li.text) $ dec'len
-            [ w | (w,n) <- M.toList (all'subs.&a), n > 1 ]
-          h4 "missed words" -- make these better. definitions/sort out types
-          ul $ mapM_ (li.text) (dec'len $ M.keys $ sol.-a)
-    reply'json c $ tag'thing "words" report
+      wl = sortBy (flip compare `on` T.length . fst) $ M.toList sol
+      subs = gob^..players.traversed.answers
+  broadcast'val $ tag'thing "peeps" $ renderHtml $ do
+    h3 "word list"
+    table $ forM_ wl $ \(w,d) -> tr $ td (text w) >> td (text d)
+  broadcast'val $ tag'thing "words" $ renderHtml $
+    table $ do thead $ do td $ ""
+                          mapM_ (th.text) (gob^.players.to M.keys)
+               tr $ do td "score"
+                       forM_ (gob^..players.traversed.score) $ \n ->
+                         td ! H.style "text-align:center;" $ text $ T.pack $ show n
+               tr $ do td "mistakes"
+                       forM_ [ M.keys $ sub .- sol | sub <- subs ] $ \ws ->
+                         td $ ul $ mapM_ (li.text) ws
+               tr $ do td "words"
+                       forM_ [ M.keys $ sub .& sol | sub <- subs ] $ \ws ->
+                         td $ ul $ mapM_ (li.text) ws
     
 threadDelayS :: Int -> IO ()
 threadDelayS = threadDelay . (*10^6)
 
 round'length, score'length :: Int
-round'length = 90
-score'length = 30
+round'length = 5
+score'length = 5
 
 round'period :: NominalDiffTime
 round'period = unsafeCoerce $ secondsToDiffTime $
@@ -281,7 +274,7 @@ instance ToMarkup GobblePage where
   toMarkup _ = html $ do
     H.head $ do
       title "gobble"
-      link ! H.rel "stylesheet" ! H.href "static/glibble.css"
+      link ! H.rel "stylesheet" ! H.href "static/gobble.css"
       script ! H.src "static/jquery-3.4.1.slim.js" $ ""
       script ! H.src "static/gobble.js" $ ""
     H.body $ do
@@ -289,14 +282,14 @@ instance ToMarkup GobblePage where
       H.div ! H.id "boggle" $ do
         H.div ! H.id "viz" $ do
           H.div ! H.id "gobble" $ ""
-          H.div ! H.id "scores" $ ""
+          H.div ! H.id "people" $ ""
         H.div ! H.id "words" $ do
           H.div ! H.id "timer" $ ""
-          H.canvas ! H.id "hourglass" ! H.height "100" ! H.width "100" $ ""
           H.form ! H.id "mush" $ do
             H.input ! H.type_ "text" ! H.id "scratch"
             H.input ! H.type_ "submit" ! H.value "mush!"
           H.ul ! H.id "submissions" $ ""
+      H.div ! H.id "word-list" $ ""
 
 type BoggleAPI = Get '[HTML] GobblePage :<|> "static" :> Raw
 
