@@ -1,9 +1,9 @@
 body {
-    background-color: #CFE4FF;
+    background-color: #FFFFDC;
 }
 
 h1 {
-    color: #FF429E;
+    color: #F50953;
 }
 
 #hourglass {
@@ -39,7 +39,7 @@ body {
 }
 
 #gobble > table {
-    background-color: pink;
+    background-color: #F1D0F3;
     border-collapse: collapse;
 }
 
