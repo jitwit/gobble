@@ -1,27 +1,36 @@
 (unless (assoc "~/code/gobble" (library-directories))
   (library-directories (cons "~/code/gobble" (library-directories))))
 
-(import (gobble) (only (euler) shuffle))
+(import (gobble)
+        (only (euler) shuffle)
+        (matchable))
 
 (random-seed (time-nanosecond (current-time)))
 (random-seed (random (time-nanosecond (current-time))))
 
-(let* ((args (cdr (command-line)))
-       (dice (cond
-              ((null? args)
-               (error 'gobbler
-                      "expecting command-line arguments \"5x5\" or \"4x4\""))
-              ((string=? (car args) "5x5") dice-5x5)
-              ((string=? (car args) "4x4") (list-head (shuffle dice-5x5) 16))
-              (else
-               (error 'gobbler
-                      "expecting command-line arguments \"5x5\" or \"4x4\" but got"
-                      args))))
-       (board (list->string (roll dice))))
-  (display-ln board)
-  (for-all (lambda (word)
-             (display word)
-             (display #\space)
-             (display (definition word))
-             (newline))
-           (gobble board)))
+(define (output-board dice)
+  (let ((board (list->string (roll dice))))
+    (display-ln board)
+    (for-all (lambda (word)
+               (display word)
+               (display #\space)
+               (display (definition word))
+               (newline))
+             (gobble board))))
+
+(define (generate n path)
+  (do ((i 1 (1+ i)))
+      ((> i n))
+    (format #t "board #~a~%" i)
+    (with-output-to-file (string-append path "/" (gensym->unique-string (gensym)))
+      (lambda ()
+        (output-board (list-head (shuffle dice-5x5) 16))))))
+
+(define (main)
+  (match (command-line)
+    ((_ "4x4") (output-board (list-head (shuffle dice-5x5) 16)))
+    ((_ "5x5") (output-board dice-5x5))
+    ((_ "-n" n "-d" dir) (generate (string->number n) dir))
+    (else (error 'gobbler "bad command line args" (command-line)))))
+
+(main)

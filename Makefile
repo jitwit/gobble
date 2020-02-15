@@ -1,4 +1,4 @@
-.PHONY : clean all input/frequencies.txt
+.PHONY : clean all boards input/frequencies.txt
 
 dictionary::= input/trie.fasl
 objs::= trie dictionary gobble
@@ -11,6 +11,9 @@ all : $(dictionary) $(libs)
 
 input/trie.fasl : $(libs)
 	$(scheme) --script load.scm
+
+boards : gobbler.ss $(libs) input/trie.fasl
+	$(scheme) --script $< -n 10000 -d garcon/boards
 
 gobble.so : code/*.scm dictionary.so trie.so *.sls
 	echo "(compile-library \"gobble.sls\")" | $(scheme)
