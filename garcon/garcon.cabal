@@ -27,10 +27,11 @@ common doggle
     blaze-html,
     aeson,
     lens-aeson,
-    containers
-                    
+    containers,
+    directory,
+    base
+
 executable gobble
   import: doggle
   main-is:             Main.hs
-  build-depends:       base
   default-language:    Haskell2010

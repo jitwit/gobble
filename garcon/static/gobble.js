@@ -1,5 +1,5 @@
 $(() => {
-    var boggle = new WebSocket ("ws://192.168.2.13:8000");
+    var boggle = new WebSocket ("ws://52.60.50.222");
     var dt = 1000;
 
     add_word = async (word) => { boggle.send('gobble ' + word); };

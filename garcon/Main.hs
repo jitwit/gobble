@@ -6,6 +6,7 @@ module Main where
 
 import Control.Lens
 import qualified Data.Text as T
+import qualified Data.Text.IO as T
 import qualified Data.ByteString.Lazy.Char8 as B
 import Data.Text (Text)
 import Data.List (union,(\\),sortBy)
@@ -18,7 +19,9 @@ import Unsafe.Coerce
 import Control.Exception
 import Control.Monad
 import Control.Monad.State
+import System.Environment
 import System.Process
+import System.Directory
 import Data.Time.Clock
 
 import Control.Concurrent
@@ -65,8 +68,12 @@ makeLenses ''Gobble
 (.-) = M.difference
 
 gobbler :: IO [T.Text]
-gobbler = map T.pack . lines <$> readCreateProcess cmd "" where
-  cmd = (shell "scheme --script gobbler.ss 4x4") { cwd = Just ".." }
+gobbler = do
+  let brds = "boards/"
+  board <- (brds <>) . head <$> listDirectory brds
+  contents <- T.lines <$> T.readFile board
+  removeFile board
+  return contents
 
 new'board :: IO Board
 new'board = do
@@ -307,5 +314,5 @@ main = do
   let back = serve boggle'api boggle'server
   let ?gobble = gobble
    in do timer'thread <- forkIO $ forever run'round
-         let bog = run 8000 $ websocketsOr defaultConnectionOptions boggle back
+         let bog = run 80 $ websocketsOr defaultConnectionOptions boggle back
          bog `finally` killThread timer'thread
