@@ -13,7 +13,9 @@ input/trie.fasl : $(libs)
 	$(scheme) --script load.scm
 
 boards : gobbler.ss $(libs) input/trie.fasl
-	$(scheme) --script $< -n 10000 -d garcon/boards
+	rm -rf garcon/boards
+	mkdir -p garcon/boards
+	$(scheme) --script $< -n 1000 -d garcon/boards
 
 gobble.so : code/*.scm dictionary.so trie.so *.sls
 	echo "(compile-library \"gobble.sls\")" | $(scheme)

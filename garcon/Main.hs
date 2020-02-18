@@ -16,7 +16,7 @@ import qualified Data.Map as M
 import Data.Map (Map)
 import Unsafe.Coerce
 
-import Control.Exception
+import Control.Exception (finally)
 import Control.Monad
 import Control.Monad.State
 import System.Environment
@@ -301,10 +301,19 @@ instance ToMarkup GobblePage where
           H.ul ! H.id "submissions" $ ""
       H.div ! H.id "word-list" $ ""
 
-type BoggleAPI = Get '[HTML] GobblePage :<|> "static" :> Raw
+type BoggleAPI =
+       Get '[HTML] GobblePage
+  :<|> "static" :> Raw
+  :<|> "boards" :> Get '[JSON] Int
+
+check'boards :: Handler Int
+check'boards = liftIO $ length <$> listDirectory "boards/"
 
 boggle'server :: Server BoggleAPI
-boggle'server = pure GobblePage :<|> serveDirectoryWebApp "static"
+boggle'server =
+       pure GobblePage
+  :<|> serveDirectoryWebApp "static"
+  :<|> check'boards
 
 todo = error "todo"
 

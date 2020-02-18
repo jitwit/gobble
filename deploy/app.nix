@@ -1,11 +1,10 @@
 {
   network.description = "gobble-net";
-  gobble-net =
-  { config, pkgs, ... }: let
+  gobble-net = { config, pkgs, ... }:
+  let
     gobbler  = import ../garcon/default.nix {};
     openssl  = pkgs.openssl;
     domain   = "mmoogle.ca";
-  
   in
   {
 
@@ -13,7 +12,7 @@
       allowedTCPPorts = [ 22 80 ];
       enable = false;
     };
-      
+
     environment.systemPackages =
       [ openssl
         gobbler
