@@ -39,6 +39,17 @@
             (else #f)))
     (aux 0 T)))
 
+(define (trie-ref* T xs)
+  (define (aux T xs)
+    (cond ((null? xs) T)
+          ((t:lookup (char->integer (car xs)) (trie-tries T))
+           => (lambda (x.ts) (aux (cdr x.ts) (cdr xs))))
+          (else #f)))
+  (aux T xs))
+
+(define (lookup-char T x)
+  (t:lookup (char->integer x) (trie-tries T)))
+
 (define (lookup s T)
   (cond ((trie-ref T s) => trie-element)
         (else #f)))

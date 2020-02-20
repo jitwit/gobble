@@ -2,8 +2,12 @@
 (eval-when (compile load) (optimize-level 3))
 (library (trie)
   (export trie?
-          trie-ref
+          trie-element
+          trie-tries
+          trie-ref  ; string
+          trie-ref* ; list
           lookup
+          lookup-char
           trie-prefix?
           trie-member?
           dictionary->trie
