@@ -112,7 +112,9 @@ name'player conn = liftIO $ do
   uname <- receiveData conn
   is'name'free uname >>= \case
     False -> reply'json @Text conn "name-is-taken" >> name'player conn
-    True  -> new'player uname conn >> pure uname
+    True  -> do print $ uname <> " joined the chat."
+                new'player uname conn
+                pure uname
 
 remove'player :: (?gobble :: TVar Gobble, MonadIO m) => Name -> m ()
 remove'player who = liftIO $ do
@@ -152,7 +154,7 @@ handle'control :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Connection -> C
 handle'control who conn = liftIO . \case
   Close{}  -> print (who <> " has left the chat") >> remove'player who
   Ping msg -> print (who <> " pinged")
-  Pong msg -> print (who <> " pinged")
+  Pong msg -> print (who <> " ponged")
 
 broadcast :: (?gobble :: TVar Gobble, WebSocketsData a, MonadIO m) => a -> m ()
 broadcast msg = liftIO $ readTVarIO ?gobble >>=
@@ -204,6 +206,7 @@ score'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 score'round = liftIO $ do
   (all'subs,gob) <- score'submissions <$> readTVarIO ?gobble
   atomically $ writeTVar ?gobble gob
+  putStrLn "Scored Round... "
   let sol = gob ^. board.word'list
       wl = sortBy (flip compare `on` T.length . fst) $ M.toList sol
       subs = gob^..players.traversed.answers
@@ -245,9 +248,11 @@ html'of'board b = table $ forM_ (b^.letters.to (T.chunksOf n)) $
 fresh'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 fresh'round = liftIO $ do
   b <- new'board
-  gob <- (board .~ b) . (game'phase .~ Boggled) . (players.traversed.answers .~ M.empty)
-    <$> readTVarIO ?gobble
+  gob <- (board .~ b) . (game'phase .~ Boggled) .
+         (players.traversed.answers .~ M.empty) <$>
+         readTVarIO ?gobble
   atomically $ writeTVar ?gobble gob
+  putStrLn "New Round"
   broadcast'val $ tag'thing "board" $ renderHtml $ html'of'board b
   broadcast'val $ A.object
     [ "time" A..= (b^.creationTime.to (addUTCTime round'period))
@@ -288,7 +293,7 @@ instance ToMarkup GobblePage where
       script ! H.src "static/jquery-3.4.1.slim.js" $ ""
       script ! H.src "static/gobble.js" $ ""
     H.body $ do
-      H.h1 "BOGGLE BITCH"
+      H.h1 "GOBBLE"
       H.div ! H.id "boggle" $ do
         H.div ! H.id "viz" $ do
           H.div ! H.id "gobble" $ ""
