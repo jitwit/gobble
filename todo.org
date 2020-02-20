@@ -3,6 +3,7 @@
 - set ws ip automatically/program difference between local/"production"
 - improve nix deployment
 - get scheme scripts on production machine?
+- fix sort order in anagrams
 
 
 
