@@ -53,7 +53,7 @@
   (lookup (string-upcase word) collins))
 
 (define (suffixes prefix)
-  (cond ((trie-ref collins prefix)
+  (cond ((lookup-string collins prefix)
          => (lambda (subtrie)
               (map (lambda (path)
                      (list->string (map integer->char path)))
@@ -65,10 +65,10 @@
          (string-append prefix suffix))
        (suffixes (string-upcase prefix))))
 
-(define (remove-one xs x)
+(define (remv1 x xs)
   (define (aux xs)
     (cond ((null? xs) '())
-          ((eq? (car xs) x) (cdr xs))
+          ((eqv? (car xs) x) (cdr xs))
           (else (cons (car xs) (aux (cdr xs))))))
   (aux xs))
 
@@ -80,7 +80,7 @@
     (for-all (lambda (letter)
                (let ((y.T (lookup-char T letter)))
                  (when (pair? y.T)
-                   (aux (cdr y.T) (cons letter path) (remove-one letters letter)))))
+                   (aux (cdr y.T) (cons letter path) (remv1 letter letters)))))
              (nub-eq letters)))
   (aux collins '() (string->list (string-upcase word)))
   (sort (lambda (x y)

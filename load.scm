@@ -1,13 +1,15 @@
-(unless (assoc "." (library-directories))
-  (library-directories (cons "." (library-directories))))
+(define (add-lib path)
+  (unless (assoc path (library-directories))
+    (library-directories (cons path (library-directories)))))
+
+(add-lib ".")
+(add-lib "~/code/chez-oleg")
 
 (import (dictionary)
-        (gobble))
-
-(define (run)
-  (define board (board!))
-  (for-all display-ln (boggle board))
-  (newline) (display-board board))
+        (gobble)
+        (oleg ssax)
+        (oleg sxml-tools)
+        (oleg sxml-tree-trans))
 
 (define (dump-collins)
   (define out-file "clns.txt")
@@ -22,6 +24,15 @@
         (write (cdr def) out)
         (display ")\n" out))
       (for-all put-def (get-collins)))))
+
+(define (get-dela-fr) ;; danger - large file
+  (define dict "input/dela-fr-public-u8.dic.xml")
+  (with-input-from-file dict
+    (lambda ()
+      (ssax:xml->sxml (current-input-port) '()))))
+
+(define (read-dela tree)
+  (map cadr (cadr tree)))
 
 (define example-board
   '#("FXIE"

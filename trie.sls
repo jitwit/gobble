@@ -4,10 +4,10 @@
   (export trie?
           trie-element
           trie-tries
-          trie-ref  ; string
           trie-ref* ; list
           lookup
           lookup-char
+          lookup-string
           trie-prefix?
           trie-member?
           dictionary->trie

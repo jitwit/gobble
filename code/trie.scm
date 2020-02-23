@@ -30,7 +30,7 @@
               (make-trie #f t:empty)
               definitions))
 
-(define (trie-ref T s)
+(define (lookup-string T s)
   (let ((n (string-length s)))
     (define (aux j T)
       (cond ((= j n) T)
@@ -51,15 +51,15 @@
   (t:lookup (char->integer x) (trie-tries T)))
 
 (define (lookup s T)
-  (cond ((trie-ref T s) => trie-element)
+  (cond ((lookup-string T s) => trie-element)
         (else #f)))
 
 (define (trie-member? s T)
-  (let ((T (trie-ref T s)))
+  (let ((T (lookup-string T s)))
     (and (trie? T) (trie-element T) #t)))
 
 (define (trie-prefix? s T)
-  (and (trie-ref T s) #t))
+  (and (lookup-string T s) #t))
 
 (define (trie-paths T)
   (let ((ts (t:tree->alist (trie-tries T))))
