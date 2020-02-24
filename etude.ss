@@ -73,3 +73,14 @@
                                (lambda (cs)
                                  (cons words cs))
                                '())))))))
+
+(define (dice-letter-freq)
+  (let* ((chars (string->list (apply string-append dice-4x4)))
+         (grouped (group-with char=? (sort char<? chars)))
+         (letters (map car grouped))
+         (freqs (map length grouped))
+         (n (apply + freqs)))
+    (for-all (lambda (letter freq)
+               (format #t "~a ~,2f~%" letter (/ freq n 1/100)))
+             letters
+             freqs)))

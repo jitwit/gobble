@@ -32,11 +32,12 @@ common doggle
     base,
     diagrams,
     diagrams-svg,
-    diagrams-lib
+    diagrams-lib,
+    color
 
 executable gobble
   import: doggle
   main-is:             Main.hs
-  other-modules:       Gobble.Render, Gobble.Outils
+  other-modules:       Gobble.Render, Gobble.Outils, Gobble.Kernel
   default-language:    Haskell2010
   hs-source-dirs:      code

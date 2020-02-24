@@ -1,7 +1,8 @@
-{ mkDerivation, aeson, base, blaze-html, bytestring, containers
-, directory, filepath, lens, lens-aeson, mtl, process, servant
-, servant-blaze, servant-client, servant-server, stdenv, stm, text
-, time, unix, wai, wai-websockets, warp, websockets
+{ mkDerivation, aeson, base, blaze-html, bytestring, color
+, containers, diagrams, diagrams-lib, diagrams-svg, directory
+, filepath, lens, lens-aeson, mtl, process, servant, servant-blaze
+, servant-client, servant-server, stdenv, stm, text, time, unix
+, wai, wai-websockets, warp, websockets
 }:
 mkDerivation {
   pname = "gobble";
@@ -10,10 +11,10 @@ mkDerivation {
   isLibrary = false;
   isExecutable = true;
   executableHaskellDepends = [
-    aeson base blaze-html bytestring containers directory filepath lens
-    lens-aeson mtl process servant servant-blaze servant-client
-    servant-server stm text time unix wai wai-websockets warp
-    websockets
+    aeson base blaze-html bytestring color containers diagrams
+    diagrams-lib diagrams-svg directory filepath lens lens-aeson mtl
+    process servant servant-blaze servant-client servant-server stm
+    text time unix wai wai-websockets warp websockets
   ];
   license = "unknown";
   hydraPlatforms = stdenv.lib.platforms.none;

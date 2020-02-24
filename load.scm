@@ -7,6 +7,7 @@
 
 (import (dictionary)
         (gobble)
+        (euler)
         (oleg ssax)
         (oleg sxml-tools)
         (oleg sxml-tree-trans))

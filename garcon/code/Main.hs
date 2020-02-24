@@ -14,7 +14,6 @@ import Data.Function
 import Data.Proxy
 import qualified Data.Map as M
 import Data.Map (Map)
-import Unsafe.Coerce
 
 import Control.Exception (finally)
 import Control.Monad
@@ -42,33 +41,9 @@ import Servant.API
 import Network.Wai.Handler.Warp
 import qualified Data.Aeson as A
 
+import Gobble.Kernel
 import Gobble.Outils
 import Gobble.Render
-
-type Name = Text
-
-data Phase = Boggled | Scoring deriving (Eq)
-data Board = Board
-  { _creationTime :: UTCTime
-  , _letters :: Text
-  , _word'list :: Map Text Text } deriving (Show)
-data Player = Player
-  { _connection :: Connection
-  , _answers :: Map Text Int
-  , _score :: Int }
-data Gobble = Gobble
-  { _board :: Board
-  , _players :: Map Name Player
-  , _game'phase :: Phase
-  , _round :: Int }
-
-makePrisms ''Phase
-makeLenses ''Board
-makeLenses ''Player
-makeLenses ''Gobble
-
-(.&) = M.intersection
-(.-) = M.difference
 
 gobbler :: IO [T.Text]
 gobbler = do
@@ -82,6 +57,7 @@ new'board :: IO Board
 new'board = do
   b:as <- gobbler
   t <- getCurrentTime
+  write'board b
   return $ Board t b $ M.fromList [ (w,T.unwords def) | w:def <- map T.words as ]
 
 start'state :: IO Gobble
@@ -115,7 +91,7 @@ name'player conn = liftIO $ do
   uname <- receiveData conn
   is'name'free uname >>= \case
     False -> reply'json @Text conn "name-is-taken" >> name'player conn
-    True  -> do print $ uname <> " joined the chat."
+    True  -> do T.putStrLn $ uname <> " joined the chat."
                 new'player uname conn
                 pure uname
 
@@ -155,9 +131,9 @@ delete'word who word = liftIO $ atomically $ do
 
 handle'control :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Connection -> ControlMessage -> m ()
 handle'control who conn = liftIO . \case
-  Close{}  -> print (who <> " has left the chat") >> remove'player who
-  Ping msg -> print (who <> " pinged")
-  Pong msg -> print (who <> " ponged")
+  Close{}  -> T.putStrLn (who <> " has left the chat") >> remove'player who
+  Ping msg -> T.putStrLn (who <> " pinged")
+  Pong msg -> T.putStrLn (who <> " ponged")
 
 broadcast :: (?gobble :: TVar Gobble, WebSocketsData a, MonadIO m) => a -> m ()
 broadcast msg = liftIO $ readTVarIO ?gobble >>=
@@ -195,6 +171,9 @@ send'words conn who = liftIO $ do
     reply'json conn $ tag'thing "words" $ renderHtml $
     mapM_ (li.text) $ gob^.players.ix who.answers.to M.keys
 
+(.&) = M.intersection
+(.-) = M.difference
+
 score'submissions :: Gobble -> (Map Text Int, Gobble)
 score'submissions gob = (all'subs, gob') where
   gob' = gob & players.traversed %~ scr & game'phase .~ Scoring
@@ -228,17 +207,6 @@ score'round = liftIO $ do
                tr $ do td "words"
                        forM_ [ M.keys $ sub .& sol | sub <- subs ] $ \ws ->
                          td $ ul $ mapM_ (li.text) ws
-
-threadDelayS :: Int -> IO ()
-threadDelayS = threadDelay . (*10^6)
-
-round'length, score'length :: Int
-round'length = 90
-score'length = 30
-
-round'period :: NominalDiffTime
-round'period = unsafeCoerce $ secondsToDiffTime $
-  fromIntegral $ round'length + score'length
 
 html'of'board :: Board -> Html
 html'of'board b = table $ forM_ (b^.letters.to (T.chunksOf n)) $
@@ -313,29 +281,32 @@ type BoggleAPI =
        Get '[HTML] GobblePage
   :<|> "static" :> Raw
   :<|> "boards" :> Get '[JSON] Int
+  :<|> "help" :> "show-players" :> Get '[PlainText] String
 
 check'boards :: Handler Int
 check'boards = liftIO $ length <$> listDirectory "boards/"
 
-boggle'server :: Server BoggleAPI
+naked'state :: (?gobble :: TVar Gobble) => Handler String 
+naked'state = liftIO $ show . view players <$> readTVarIO ?gobble
+
+boggle'server :: (?gobble :: TVar Gobble) => Server BoggleAPI
 boggle'server =
        pure GobblePage
   :<|> serveDirectoryWebApp "static"
   :<|> check'boards
+  :<|> naked'state
 
 launch'boggle :: Int -> IO ()
 launch'boggle port = do
   putStrLn $ "Starting GOBBLE on port " <> show port
   gobble <- newTVarIO =<< start'state
-  let back = serve boggle'api boggle'server
   let ?gobble = gobble
-   in do timer'thread <- forkIO $ forever run'round
+   in do let back = serve boggle'api boggle'server
+         timer'thread <- forkIO $ forever run'round
          let bog = run port $ websocketsOr defaultConnectionOptions boggle back
          bog `finally` killThread timer'thread
 
 main :: IO ()
 main = map read <$> getArgs >>= \case
-  [] -> launch'boggle 9009 -- ... ? 
+  [] -> launch'boggle 9009 -- ... ?
   x:_ -> launch'boggle x
-  
-  
