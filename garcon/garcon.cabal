@@ -29,9 +29,14 @@ common doggle
     lens-aeson,
     containers,
     directory,
-    base
+    base,
+    diagrams,
+    diagrams-svg,
+    diagrams-lib
 
 executable gobble
   import: doggle
   main-is:             Main.hs
+  other-modules:       Gobble.Render, Gobble.Outils
   default-language:    Haskell2010
+  hs-source-dirs:      code

@@ -42,6 +42,9 @@ import Servant.API
 import Network.Wai.Handler.Warp
 import qualified Data.Aeson as A
 
+import Gobble.Outils
+import Gobble.Render
+
 type Name = Text
 
 data Phase = Boggled | Scoring deriving (Eq)
@@ -243,7 +246,7 @@ html'of'board b = table $ forM_ (b^.letters.to (T.chunksOf n)) $
     tt 'Q' = "Qu"
     tt x = T.singleton x
     ls = b^.letters
-    n = floor $ sqrt $ fromIntegral $ T.length ls
+    n = isqrt $ T.length ls
 
 fresh'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 fresh'round = liftIO $ do
@@ -322,11 +325,19 @@ boggle'server =
 
 todo = error "todo"
 
-main :: IO ()
-main = do
+launch'boggle :: Int -> IO ()
+launch'boggle port = do
+  print $ "Starting GOBBLE on port " <> show port
   gobble <- newTVarIO =<< start'state
   let back = serve boggle'api boggle'server
   let ?gobble = gobble
    in do timer'thread <- forkIO $ forever run'round
-         let bog = run 80 $ websocketsOr defaultConnectionOptions boggle back
+         let bog = run port $ websocketsOr defaultConnectionOptions boggle back
          bog `finally` killThread timer'thread
+
+main :: IO ()
+main = map read <$> getArgs >>= \case
+  [] -> launch'boggle 80
+  x:_ -> launch'boggle x
+  
+  

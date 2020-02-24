@@ -1,6 +1,9 @@
 $(() => {
-    var boggle = new WebSocket ("ws://boggle-bitch.net");
+    var host = window.location.host;
+    var boggle = new WebSocket ("ws://" + host);
     var dt = 1000;
+
+    console.log(host);
 
     add_word = async (word) => { boggle.send('gobble ' + word); };
     del_word = async (word) => { boggle.send('dobble ' + word); };

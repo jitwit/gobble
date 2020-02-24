@@ -4,6 +4,8 @@
 - improve nix deployment
 - get scheme scripts on production machine?
 - fix sort order in anagrams
+- vertical layout?
+- debugging api endpoint (+ restart?)
 
 
 

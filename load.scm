@@ -45,3 +45,8 @@
      "DEMO"
      "DEMO"
      "DEMO"))
+
+(define (completes prefix cutoff)
+  (map string-downcase
+       (filter (compose (curry >= cutoff) string-length)
+               (completions prefix))))
