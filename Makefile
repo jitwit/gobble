@@ -1,11 +1,11 @@
-.PHONY : clean all boards input/frequencies.txt
+.PHONY : clean all boards input/frequencies.txt update-gobble update-boards update-static
 
 dictionary::= input/trie.fasl
 objs::= trie dictionary gobble
 lib-path::= .:$(CHEZSCHEMELIBDIRS)
 scheme::= scheme -q --libdirs $(lib-path)
 libs::= $(foreach lib,$(objs),$(lib).so)
-reps::= 1000
+boards::= 1000
 
 all : $(dictionary) $(libs)
 
@@ -15,7 +15,7 @@ input/trie.fasl : $(libs)
 boards : gobbler.ss $(libs) input/trie.fasl
 	rm -rf garcon/boards
 	mkdir -p garcon/boards
-	$(scheme) --script $< -n 1000 -d garcon/boards
+	$(scheme) --script $< -n $(boards) -d garcon/boards
 
 gobble.so : code/*.scm dictionary.so trie.so *.sls
 	echo "(compile-library \"gobble.sls\")" | $(scheme)
@@ -28,6 +28,16 @@ trie.so : code/*.scm *.sls
 
 input/frequencies.txt : etude.ss
 	$(scheme) --script $< $(reps) > $@
+
+update-gobble :
+	nixops modify deploy/aws.nix deploy/app.nix -d gobbler
+	nixops deploy -d gobbler
+
+update-boards : boards
+	nixops scp --to gobble-net garcon/boards/ /var/www/gobble
+
+update-static :
+	nixops scp --to gobble-net garcon/static/ /var/www/gobble
 
 clean :
 	find . -name "*~" -exec rm {} \;
