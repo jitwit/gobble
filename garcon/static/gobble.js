@@ -1,9 +1,6 @@
 $(() => {
-    var host = window.location.host;
-    var boggle = new WebSocket ("ws://" + host);
+    var boggle = new WebSocket ("ws://" + window.location.host);
     var dt = 1000;
-
-    console.log(host);
 
     add_word = async (word) => { boggle.send('gobble ' + word); };
     del_word = async (word) => { boggle.send('dobble ' + word); };
@@ -30,7 +27,7 @@ $(() => {
         var end = expires.getTime();
         var show = async () => {
             var now = (new Date ()).getTime();
-            var left = Math.floor(1+((end-now)/1000));
+            var left = Math.floor((end-now+999)/1000);
             if (left > 0) {
                 if (left > pause) { $("#timer").html("remaining " + (left-pause)); }
                 else { $("#timer").html("next " + left); }

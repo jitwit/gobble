@@ -327,7 +327,7 @@ todo = error "todo"
 
 launch'boggle :: Int -> IO ()
 launch'boggle port = do
-  print $ "Starting GOBBLE on port " <> show port
+  putStrLn $ "Starting GOBBLE on port " <> show port
   gobble <- newTVarIO =<< start'state
   let back = serve boggle'api boggle'server
   let ?gobble = gobble
@@ -337,7 +337,7 @@ launch'boggle port = do
 
 main :: IO ()
 main = map read <$> getArgs >>= \case
-  [] -> launch'boggle 80
+  [] -> launch'boggle 9009 -- ... ? 
   x:_ -> launch'boggle x
   
   

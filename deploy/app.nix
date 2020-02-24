@@ -24,7 +24,7 @@
       after = [ "network.target" ];
       serviceConfig =
       { WorkingDirectory = "/var/www/gobble";
-        ExecStart = "${gobbler}/bin/gobble";
+        ExecStart = "${gobbler}/bin/gobble 80";
       };
     };
     
