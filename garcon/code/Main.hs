@@ -323,8 +323,6 @@ boggle'server =
   :<|> serveDirectoryWebApp "static"
   :<|> check'boards
 
-todo = error "todo"
-
 launch'boggle :: Int -> IO ()
 launch'boggle port = do
   putStrLn $ "Starting GOBBLE on port " <> show port

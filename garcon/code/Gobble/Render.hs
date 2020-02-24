@@ -10,5 +10,10 @@ import Data.Text (Text)
 import Gobble.Outils
 
 board'dia :: Text -> Diagram B
-board'dia b = vcat [ hcat [ block x | x <- T.unpack r ] | r <- board'rows b ] where
-  block x = text [x] <> square 1
+board'dia b = vcat [ hcat [ square 1 <> snugCenter (pad 1 $ text [x])
+                          | x <- T.unpack r ]
+                   | r <- board'rows b ]
+
+run'board :: Text -> IO ()
+run'board = renderSVG "board.svg" (mkSizeSpec (Just <$> V2 500 500)) . board'dia
+  
