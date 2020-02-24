@@ -212,16 +212,9 @@ score'round = liftIO $ do
                        forM_ [ M.keys $ sub .& sol | sub <- subs ] $ \ws ->
                          td $ ul $ mapM_ (li.text) ws
 
---Strict.concat . Lazy.toChunks . 
---      renderSvg . renderDia SVG (SVGOptions (Width 400) Nothing)
+-- horrible way of avoiding browser cache
 html'of'board :: Int -> Board -> Html
 html'of'board r b = img ! H.src ("static/board.svg?" <> stringValue (show r))
--- table $ forM_ (b^.letters.to (T.chunksOf n)) $
---   \row -> tr $ mapM_ (td.text.tt) $ T.unpack row where
---     tt 'Q' = "Qu"
---     tt x = T.singleton x
---     ls = b^.letters
---     n = isqrt $ T.length ls
 
 fresh'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 fresh'round = liftIO $ do
@@ -241,6 +234,7 @@ fresh'round = liftIO $ do
     h3 "who's here?"
     ul $ mapM_ (li.text) (gob^.players.to M.keys)
 
+-- is this the problem?
 run'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 run'round = liftIO $ do
   fresh'round
@@ -290,6 +284,7 @@ type BoggleAPI =
   :<|> "static" :> Raw
   :<|> "boards" :> Get '[JSON] Int
   :<|> "help" :> "show-players" :> Get '[PlainText] String
+  :<|> "help" :> "kick" :> Get '[PlainText] String
 
 check'boards :: Handler Int
 check'boards = liftIO $ length <$> listDirectory "boards/"
@@ -297,12 +292,16 @@ check'boards = liftIO $ length <$> listDirectory "boards/"
 naked'state :: (?gobble :: TVar Gobble) => Handler String 
 naked'state = liftIO $ show . view players <$> readTVarIO ?gobble
 
+kick'y'all :: (?gobble :: TVar Gobble) => Handler String
+kick'y'all = todo
+
 boggle'server :: (?gobble :: TVar Gobble) => Server BoggleAPI
 boggle'server =
        pure GobblePage
   :<|> serveDirectoryWebApp "static"
   :<|> check'boards
   :<|> naked'state
+  :<|> kick'y'all
 
 launch'boggle :: Int -> IO ()
 launch'boggle port = do
