@@ -75,7 +75,8 @@ new'player :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Connection -> m ()
 new'player who conn = liftIO $ do
   gob <- (players.at who ?~ Player conn M.empty 0) <$> readTVarIO ?gobble
   atomically $ writeTVar ?gobble gob
-  reply'json conn $ tag'thing "board" $ renderHtml $ html'of'board (gob^.board)
+  let rnd = gob ^. current'round  
+  reply'json conn $ tag'thing "board" $ renderHtml $ html'of'board rnd (gob^.board)
   reply'json conn $ A.object
     [ "time" A..= (gob^.board.creationTime.to (addUTCTime round'period))
     , "pause" A..= score'length
@@ -176,7 +177,10 @@ send'words conn who = liftIO $ do
 
 score'submissions :: Gobble -> (Map Text Int, Gobble)
 score'submissions gob = (all'subs, gob') where
-  gob' = gob & players.traversed %~ scr & game'phase .~ Scoring
+  gob' = gob
+    & players.traversed %~ scr
+    & game'phase .~ Scoring
+    & current'round +~ 1
   solution = gob^.board.word'list
   score'word = ([0,0,0,1,1,2,3,5,11] !!) . min 8 . T.length
   all'subs = gob ^.. players.traversed.answers & M.unionsWith (+)
@@ -208,13 +212,16 @@ score'round = liftIO $ do
                        forM_ [ M.keys $ sub .& sol | sub <- subs ] $ \ws ->
                          td $ ul $ mapM_ (li.text) ws
 
-html'of'board :: Board -> Html
-html'of'board b = table $ forM_ (b^.letters.to (T.chunksOf n)) $
-  \row -> tr $ mapM_ (td.text.tt) $ T.unpack row where
-    tt 'Q' = "Qu"
-    tt x = T.singleton x
-    ls = b^.letters
-    n = isqrt $ T.length ls
+--Strict.concat . Lazy.toChunks . 
+--      renderSvg . renderDia SVG (SVGOptions (Width 400) Nothing)
+html'of'board :: Int -> Board -> Html
+html'of'board r b = img ! H.src ("static/board.svg?" <> stringValue (show r))
+-- table $ forM_ (b^.letters.to (T.chunksOf n)) $
+--   \row -> tr $ mapM_ (td.text.tt) $ T.unpack row where
+--     tt 'Q' = "Qu"
+--     tt x = T.singleton x
+--     ls = b^.letters
+--     n = isqrt $ T.length ls
 
 fresh'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 fresh'round = liftIO $ do
@@ -224,7 +231,8 @@ fresh'round = liftIO $ do
          readTVarIO ?gobble
   atomically $ writeTVar ?gobble gob
   putStrLn "New Round"
-  broadcast'val $ tag'thing "board" $ renderHtml $ html'of'board b
+  let rnd = gob ^. current'round
+  broadcast'val $ tag'thing "board" $ renderHtml $ html'of'board rnd b
   broadcast'val $ A.object
     [ "time" A..= (b^.creationTime.to (addUTCTime round'period))
     , "pause" A..= score'length
