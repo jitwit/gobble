@@ -1,6 +1,6 @@
 {-# language OverloadedStrings, ImplicitParams, TemplateHaskell, LambdaCase #-}
 
-module Gobble.Kernel where
+module Gobble.Core where
 
 import Data.Time.Clock
 import Network.WebSockets

@@ -26,4 +26,4 @@ board'dia b = vcat [ hcat [ block x | x <- T.unpack r ] | r <- board'rows b ] wh
      in fore <> back
 
 write'board :: Text -> IO ()
-write'board = renderSVG "static/board.svg" (mkSizeSpec (Just <$> V2 300 300)) . board'dia
+write'board = renderSVG "static/board.svg" (mkSizeSpec $ Just <$> V2 300 300) . board'dia

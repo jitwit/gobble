@@ -2,10 +2,10 @@ $(() => {
     var boggle = new WebSocket ("ws://" + window.location.host);
     var dt = 1000;
 
-    add_word = async (word) => { boggle.send('gobble ' + word); };
-    del_word = async (word) => { boggle.send('dobble ' + word); };
-    query_words = async () => { boggle.send('words'); };
-    set_name = async (msg="") => {
+    add_word = (word) => { boggle.send('gobble ' + word); };
+    del_word = (word) => { boggle.send('dobble ' + word); };
+    query_words = () => { boggle.send('words'); };
+    set_name = (msg="") => {
         name = prompt('name?' + msg);
         boggle.send(name);
         $("#scratch").focus();
@@ -17,6 +17,7 @@ $(() => {
         $("#scratch").val("");
         query_words();
     });
+    
     $("#submissions").on("click","li",(e) => {
         $("#scratch").focus();
         del_word($(e.target).text());
@@ -38,7 +39,7 @@ $(() => {
     }
 
     boggle.onopen = (e) => { set_name(); };
-    boggle.onmessage = async (msg) => {
+    boggle.onmessage = (msg) => {
         var res = JSON.parse(msg.data);
         if (res === "name-is-taken") { set_name(msg=" (previous one is taken)"); }
         else if (!(res['board'] == null)) { $("#gobble").html(res['board']); query_words(); }

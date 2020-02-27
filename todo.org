@@ -1,6 +1,7 @@
 - 10 round matches
 - improve nix deployment
-- get scheme scripts on production machine?
+- get scheme scripts on production machine? or compress folder containing boards
+- pre-render svgs?
 - fix sort order in anagrams
 - vertical layout?
 - debugging api endpoint (+ restart?)

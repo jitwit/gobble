@@ -41,7 +41,7 @@ import Servant.API
 import Network.Wai.Handler.Warp
 import qualified Data.Aeson as A
 
-import Gobble.Kernel
+import Gobble.Core
 import Gobble.Outils
 import Gobble.Render
 
@@ -84,7 +84,7 @@ new'player who conn = liftIO $ do
   when (gob ^. game'phase & isn't _Scoring) $ do
     let peeps = renderHtml $ do
           h3 "who's here?"
-          ul $ mapM_ (li.text) (gob^.players.to M.keys)
+          ul ! H.id "definitions" $ mapM_ (li.text) (gob^.players.to M.keys)
     broadcast'val $ tag'thing "peeps" peeps
 
 name'player :: (?gobble :: TVar Gobble, MonadIO m) => Connection -> m Name
@@ -268,16 +268,14 @@ instance ToMarkup GobblePage where
     H.body $ do
       H.h1 "GOBBLE"
       H.div ! H.id "boggle" $ do
-        H.div ! H.id "viz" $ do
-          H.div ! H.id "gobble" $ ""
-          H.div ! H.id "people" $ ""
-        H.div ! H.id "words" $ do
-          H.div ! H.id "timer" $ ""
-          H.form ! H.id "mush" $ do
-            H.input ! H.type_ "text" ! H.id "scratch"
-            H.input ! H.type_ "submit" ! H.value "mush!"
-          H.ul ! H.id "submissions" $ ""
-      H.div ! H.id "word-list" $ ""
+        H.div ! H.id "gobble" $ ""
+        H.div ! H.id "timer" $ ""
+        H.form ! H.id "mush" $ do
+          H.input ! H.type_ "text" ! H.id "scratch"
+          H.input ! H.type_ "submit" ! H.value "mush!"
+        H.ul ! H.id "submissions" $ ""
+        H.div ! H.id "word-list" $ ""
+        H.div ! H.id "people" $ ""
 
 type BoggleAPI =
        Get '[HTML] GobblePage
