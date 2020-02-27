@@ -115,9 +115,6 @@ reply'json conn = reply conn . A.encode
 send'json :: MonadIO m => A.Value -> Connection -> m ()
 send'json obj conn = liftIO $ sendTextData conn (A.encode obj)
 
-tag'thing :: (A.ToJSON v) => Text -> v -> A.Value
-tag'thing tag val = A.object [ tag A..= val ]
-
 submit'word :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Text -> m ()
 submit'word who word = liftIO $ atomically $ do
   gob <- readTVar ?gobble
@@ -147,7 +144,8 @@ pattern Query cmd <- Text cmd _
 pattern Word w <- Text (T.words.T.toUpper.T.pack.B.unpack -> "GOBBLE":w:[]) _
 pattern Delete w <- Text (T.words.T.toUpper.T.pack.B.unpack -> "DOBBLE":w:[]) _
 
-handle'data :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Connection -> DataMessage -> m ()
+handle'data :: (?gobble :: TVar Gobble, MonadIO m)
+  => Name -> Connection -> DataMessage -> m ()
 handle'data who conn = liftIO . \case
   Word w -> submit'word who w
   Delete w -> delete'word who w

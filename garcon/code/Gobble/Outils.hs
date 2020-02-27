@@ -7,8 +7,6 @@ import Control.Concurrent
 import qualified Data.Text as T
 import Data.Text (Text)
 
-todo = error "todo"
-
 isqrt :: Integral a => a -> a
 isqrt = floor . sqrt . fromIntegral
 
