@@ -266,14 +266,16 @@ instance ToMarkup GobblePage where
     H.body $ do
       H.h1 "GOBBLE"
       H.div ! H.id "boggle" $ do
-        H.div ! H.id "gobble" $ ""
-        H.div ! H.id "timer" $ ""
-        H.form ! H.id "mush" $ do
-          H.input ! H.type_ "text" ! H.id "scratch"
-          H.input ! H.type_ "submit" ! H.value "mush!"
-        H.ul ! H.id "submissions" $ ""
-        H.div ! H.id "word-list" $ ""
-        H.div ! H.id "people" $ ""
+        H.div ! H.id "viz" $ do
+          H.div ! H.id "gobble" $ ""
+          H.div ! H.id "people" $ ""
+        H.div ! H.id "words" $ do
+          H.div ! H.id "timer" $ ""
+          H.form ! H.id "mush" $ do
+            H.input ! H.type_ "text" ! H.id "scratch"
+            H.input ! H.type_ "submit" ! H.value "mush!"
+          H.ul ! H.id "submissions" $ ""
+      H.div ! H.id "word-list" $ ""
 
 type BoggleAPI =
        Get '[HTML] GobblePage

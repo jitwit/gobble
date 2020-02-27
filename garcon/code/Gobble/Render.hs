@@ -4,7 +4,7 @@ module Gobble.Render where
 
 import Diagrams.Prelude as D
 import Diagrams.Backend.SVG
-import qualified Data.Text.Lazy as T
+import qualified Data.Text as T
 import Data.Text (Text)
 import Data.Word
 import Data.Colour.SRGB
@@ -39,7 +39,8 @@ write'board = renderSVG "static/board.svg" (mkSizeSpec $ Just <$> V2 300 300) . 
 tag'thing :: A.ToJSON v => Text -> v -> A.Value
 tag'thing tag val = A.object [ tag A..= val ]
 
-instance WebSocketsData WhoElse where
-  toLazyByteString (WhoElse peeps) = B.pack $ T.unpack $ renderHtml $ do
-    h3 "who's here?"
-    ul ! H.id "definitions" $ mapM_ (li.H.text) peeps
+-- instance WebSocketsData WhoElse where
+--   toLazyByteString (WhoElse peeps) = B.pack $ T.unpack $ renderHtml $ do
+--     h3 "who's here?"
+--     ul ! H.id "definitions" $ mapM_ (li.H.text) peeps
+
