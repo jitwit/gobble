@@ -1,6 +1,12 @@
 
-#+BEGIN_SRC scheme :session :exports output :results output
-(load "load.scm")
+#+BEGIN_SRC j :session :exports both
+words=: 'b'freads<'~/code/gobble/input/collins.txt'
+nletter=: monad : 'words #~ >(y=#)&.>words'
+grp=: 1,2([:-.0&{::-:&(/:~)1&{::)\] NB. group anagrams together
+grpl=: 1,2([:-.0&{::-:&#1&{::)\]
+combos=: [: (/:#&.>) [: (a:-.~grp<;.1]) [: (/:/:~&.>) nletter
+combos3=: (grpl <;.1]) combos 3
+combos4=: (grpl <;.1]) combos 4
 #+END_SRC
 
 #+RESULTS:
@@ -13,160 +19,320 @@ dictionary shows that there are even two other words ~"eta", "tea"~
 that I was previously unaware of. What other useful three letter
 combinations are worth knowing?
 
+** 3 letter combinations
 
-#+BEGIN_SRC scheme :session :exports code
-(define (possible-combos letters)
-  (filter-map (lambda (ijk)
-                (let ((word (list->string (map integer->char ijk))))
-                  (and (definition word) word)))
-              (nub-equal (permutations letters))))
+*** 5 words
 
-(define (3-letter-combos)
-  (define combos (make-hash-table))
-  (do ((i 97 (1+ i)))
-      ((> i 122) combos)
-    (do ((j i (1+ j)))
-        ((> j 122))
-      (do ((k j (1+ k)))
-          ((> k 122))
-        (let* ((ijk (list i j k))
-               (words (possible-combos ijk))
-               (n (length words)))
-          (when (< 0 n)
-            (hashtable-update! combos
-                               (length words)
-                               (lambda (cs)
-                                 (cons words cs))
-                               '())))))))
+#+BEGIN_SRC j :session :exports both
+>> _1 { combos3
 #+END_SRC
 
 #+RESULTS:
-: #<void>
+: ┌───┬───┬───┬───┬───┐
+: │ATE│EAT│ETA│TAE│TEA│
+: └───┴───┴───┴───┴───┘
 
-There are no three letter combinations that form 6 words.  
+*** 4 words
 
-** 5 words
-
-#+BEGIN_SRC scheme :session :exports both :results output 
-(define combo-table
-  (3-letter-combos))
-
-(display (hashtable-ref combo-table 5 '()))
+#+BEGIN_SRC j :session :exports both
+>> _2 { combos3
 #+END_SRC
 
 #+RESULTS:
-| ate | tae | tea | eta | eat |
+#+begin_example
+┌───┬───┬───┬───┐
+│ABO│BAO│BOA│OBA│
+├───┼───┼───┼───┤
+│AHS│ASH│HAS│SHA│
+├───┼───┼───┼───┤
+│ASP│PAS│SAP│SPA│
+├───┼───┼───┼───┤
+│ARY│RAY│RYA│YAR│
+├───┼───┼───┼───┤
+│BOR│BRO│ORB│ROB│
+├───┼───┼───┼───┤
+│BRU│BUR│RUB│URB│
+├───┼───┼───┼───┤
+│DOS│DSO│ODS│SOD│
+├───┼───┼───┼───┤
+│HOS│OHS│SHO│SOH│
+├───┼───┼───┼───┤
+│OWT│TOW│TWO│WOT│
+└───┴───┴───┴───┘
+#+end_example
 
-** 4 words
+*** 3 words
 
-#+BEGIN_SRC scheme :session :exports both :results output
-(display (hashtable-ref combo-table 4 '()))
+#+BEGIN_SRC j :session :exports both
+>> _3 { combos3
 #+END_SRC
 
 #+RESULTS:
-| owt | wot | two | tow |
-| hos | sho | soh | ohs |
-| dos | dso | sod | ods |
-| bru | bur | urb | rub |
-| bor | bro | rob | orb |
-| ary | yar | rya | ray |
-| asp | sap | spa | pas |
-| ahs | ash | sha | has |
-| abo | oba | boa | bao |
+#+begin_example
+┌───┬───┬───┐
+│ALB│BAL│LAB│
+├───┼───┼───┤
+│ARB│BAR│BRA│
+├───┼───┼───┤
+│ABS│BAS│SAB│
+├───┼───┼───┤
+│ADS│DAS│SAD│
+├───┼───┼───┤
+│AKE│KAE│KEA│
+├───┼───┼───┤
+│ANE│EAN│NAE│
+├───┼───┼───┤
+│ARE│EAR│ERA│
+├───┼───┼───┤
+│EAS│SAE│SEA│
+├───┼───┼───┤
+│AYE│YAE│YEA│
+├───┼───┼───┤
+│ARF│FAR│FRA│
+├───┼───┼───┤
+│AGS│GAS│SAG│
+├───┼───┼───┤
+│AIR│RAI│RIA│
+├───┼───┼───┤
+│AIT│ITA│TAI│
+├───┼───┼───┤
+│KOA│OAK│OKA│
+├───┼───┼───┤
+│ASK│KAS│SKA│
+├───┼───┼───┤
+│ALP│LAP│PAL│
+├───┼───┼───┤
+│ALS│LAS│SAL│
+├───┼───┼───┤
+│MAN│MNA│NAM│
+├───┼───┼───┤
+│AMP│MAP│PAM│
+├───┼───┼───┤
+│ARM│MAR│RAM│
+├───┼───┼───┤
+│MAS│SAM│SMA│
+├───┼───┼───┤
+│ANS│NAS│SAN│
+├───┼───┼───┤
+│ANT│NAT│TAN│
+├───┼───┼───┤
+│AWN│NAW│WAN│
+├───┼───┼───┤
+│APO│OPA│POA│
+├───┼───┼───┤
+│APT│PAT│TAP│
+├───┼───┼───┤
+│PAY│PYA│YAP│
+├───┼───┼───┤
+│ARS│RAS│SAR│
+├───┼───┼───┤
+│ART│RAT│TAR│
+├───┼───┼───┤
+│ATS│SAT│TAS│
+├───┼───┼───┤
+│AYS│SAY│YAS│
+├───┼───┼───┤
+│TAW│TWA│WAT│
+├───┼───┼───┤
+│BIO│BOI│OBI│
+├───┼───┼───┤
+│BOS│OBS│SOB│
+├───┼───┼───┤
+│CHI│HIC│ICH│
+├───┼───┼───┤
+│COR│ORC│ROC│
+├───┼───┼───┤
+│CRU│CUR│RUC│
+├───┼───┼───┤
+│DEI│DIE│IDE│
+├───┼───┼───┤
+│DEL│ELD│LED│
+├───┼───┼───┤
+│DEN│END│NED│
+├───┼───┼───┤
+│DOL│LOD│OLD│
+├───┼───┼───┤
+│DOR│ORD│ROD│
+├───┼───┼───┤
+│DUO│OUD│UDO│
+├───┼───┼───┤
+│EEN│ENE│NEE│
+├───┼───┼───┤
+│EEW│EWE│WEE│
+├───┼───┼───┤
+│ERF│FER│REF│
+├───┼───┼───┤
+│EFT│FET│TEF│
+├───┼───┼───┤
+│ENG│GEN│NEG│
+├───┼───┼───┤
+│EGO│GEO│GOE│
+├───┼───┼───┤
+│ERG│GER│REG│
+├───┼───┼───┤
+│EHS│HES│SHE│
+├───┼───┼───┤
+│ETH│HET│THE│
+├───┼───┼───┤
+│HEY│HYE│YEH│
+├───┼───┼───┤
+│EUK│KUE│UKE│
+├───┼───┼───┤
+│ELS│LES│SEL│
+├───┼───┼───┤
+│ELT│LET│TEL│
+├───┼───┼───┤
+│EMU│MEU│UME│
+├───┼───┼───┤
+│ORE│REO│ROE│
+├───┼───┼───┤
+│PER│PRE│REP│
+├───┼───┼───┤
+│ERS│RES│SER│
+├───┼───┼───┤
+│EST│SET│TES│
+├───┼───┼───┤
+│SEY│SYE│YES│
+├───┼───┼───┤
+│EWT│TEW│WET│
+├───┼───┼───┤
+│WEY│WYE│YEW│
+├───┼───┼───┤
+│FOR│FRO│ORF│
+├───┼───┼───┤
+│GNU│GUN│NUG│
+├───┼───┼───┤
+│GUS│SUG│UGS│
+├───┼───┼───┤
+│HOM│MHO│OHM│
+├───┼───┼───┤
+│HOO│OHO│OOH│
+├───┼───┼───┤
+│HOP│PHO│POH│
+├───┼───┼───┤
+│KIS│SIK│SKI│
+├───┼───┼───┤
+│ISM│MIS│SIM│
+├───┼───┼───┤
+│INS│NIS│SIN│
+├───┼───┼───┤
+│IOS│ISO│OIS│
+├───┼───┼───┤
+│PIS│PSI│SIP│
+├───┼───┼───┤
+│ITS│SIT│TIS│
+├───┼───┼───┤
+│MOS│OMS│SOM│
+├───┼───┼───┤
+│MUS│SUM│UMS│
+├───┼───┼───┤
+│NOO│ONO│OON│
+├───┼───┼───┤
+│NOS│ONS│SON│
+├───┼───┼───┤
+│NOW│OWN│WON│
+├───┼───┼───┤
+│NOY│ONY│YON│
+├───┼───┼───┤
+│NUR│RUN│URN│
+├───┼───┼───┤
+│NUS│SUN│UNS│
+├───┼───┼───┤
+│NYS│SNY│SYN│
+├───┼───┼───┤
+│OPS│POS│SOP│
+├───┼───┼───┤
+│OPT│POT│TOP│
+├───┼───┼───┤
+│ORT│ROT│TOR│
+├───┼───┼───┤
+│PUS│SUP│UPS│
+└───┴───┴───┘
+#+end_example
 
-** 3 words
+** 4 letter combinations
 
-#+BEGIN_SRC scheme :session :exports both :results output
-(display (hashtable-ref combo-table 3 '()))
+*** 10 words
+
+#+BEGIN_SRC j :session :exports both
+>> _1 { combos4
 #+END_SRC
 
 #+RESULTS:
-| pus | ups | sup |
-| ort | tor | rot |
-| opt | top | pot |
-| ops | sop | pos |
-| nys | syn | sny |
-| nus | uns | sun |
-| nur | urn | run |
-| noy | yon | ony |
-| now | won | own |
-| nos | son | ons |
-| noo | oon | ono |
-| mus | ums | sum |
-| mos | som | oms |
-| its | tis | sit |
-| sip | psi | pis |
-| ios | iso | ois |
-| ins | sin | nis |
-| ism | sim | mis |
-| sik | ski | kis |
-| hop | pho | poh |
-| hoo | ooh | oho |
-| hom | ohm | mho |
-| gus | ugs | sug |
-| gnu | gun | nug |
-| for | fro | orf |
-| yew | wye | wey |
-| ewt | wet | tew |
-| yes | sye | sey |
-| est | tes | set |
-| ers | ser | res |
-| rep | pre | per |
-| reo | roe | ore |
-| emu | ume | meu |
-| elt | tel | let |
-| els | sel | les |
-| euk | uke | kue |
-| yeh | hye | hey |
-| eth | the | het |
-| ehs | she | hes |
-| erg | reg | ger |
-| ego | goe | geo |
-| eng | neg | gen |
-| eft | tef | fet |
-| erf | ref | fer |
-| wee | ewe | eew |
-| nee | ene | een |
-| duo | udo | oud |
-| dor | rod | ord |
-| dol | old | lod |
-| den | ned | end |
-| del | led | eld |
-| dei | die | ide |
-| cru | cur | ruc |
-| cor | roc | orc |
-| chi | ich | hic |
-| bos | sob | obs |
-| bio | boi | obi |
-| wat | twa | taw |
-| ays | yas | say |
-| ats | tas | sat |
-| art | tar | rat |
-| ars | sar | ras |
-| yap | pya | pay |
-| apt | tap | pat |
-| apo | poa | opa |
-| awn | wan | naw |
-| ant | tan | nat |
-| ans | san | nas |
-| sam | sma | mas |
-| arm | ram | mar |
-| amp | pam | map |
-| nam | mna | man |
-| als | sal | las |
-| alp | pal | lap |
-| ask | ska | kas |
-| oak | oka | koa |
-| ait | tai | ita |
-| air | rai | ria |
-| ags | sag | gas |
-| arf | fra | far |
-| aye | yae | yea |
-| sae | sea | eas |
-| are | era | ear |
-| ane | nae | ean |
-| ake | kae | kea |
-| ads | sad | das |
-| abs | sab | bas |
-| arb | bra | bar |
-| alb | lab | bal |
+: ┌────┬────┬────┬────┬────┬────┬────┬────┬────┬────┐
+: │ATES│EAST│EATS│ETAS│SATE│SEAT│SETA│TAES│TASE│TEAS│
+: └────┴────┴────┴────┴────┴────┴────┴────┴────┴────┘
+
+*** 7 words
+
+#+BEGIN_SRC j :session :exports both
+>> _2 { combos4
+#+END_SRC
+
+#+RESULTS:
+: ┌────┬────┬────┬────┬────┬────┬────┐
+: │ARLE│EARL│LAER│LARE│LEAR│RALE│REAL│
+: ├────┼────┼────┼────┼────┼────┼────┤
+: │ARES│ARSE│EARS│ERAS│RASE│SEAR│SERA│
+: ├────┼────┼────┼────┼────┼────┼────┤
+: │ARIL│LAIR│LARI│LIAR│LIRA│RAIL│RIAL│
+: ├────┼────┼────┼────┼────┼────┼────┤
+: │OWTS│STOW│SWOT│TOWS│TWOS│WOST│WOTS│
+: └────┴────┴────┴────┴────┴────┴────┘
+
+*** 6 words
+
+#+BEGIN_SRC j :session :exports both
+>> _3 { combos4
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+┌────┬────┬────┬────┬────┬────┐
+│ABLE│ALBE│BAEL│BALE│BEAL│BLAE│
+├────┼────┼────┼────┼────┼────┤
+│ARED│DARE│DEAR│EARD│RADE│READ│
+├────┼────┼────┼────┼────┼────┤
+│AIDS│DAIS│DISA│SADI│SAID│SIDA│
+├────┼────┼────┼────┼────┼────┤
+│ALME│LAME│LEAM│MALE│MEAL│MELA│
+├────┼────┼────┼────┼────┼────┤
+│ALES│LASE│LEAS│SALE│SEAL│SLAE│
+├────┼────┼────┼────┼────┼────┤
+│LATE│LEAT│TAEL│TALE│TEAL│TELA│
+├────┼────┼────┼────┼────┼────┤
+│AVEL│LAVE│LEVA│VALE│VEAL│VELA│
+├────┼────┼────┼────┼────┼────┤
+│AMES│MAES│MASE│MESA│SAME│SEAM│
+├────┼────┼────┼────┼────┼────┤
+│ANES│EANS│NAES│SANE│SEAN│SENA│
+├────┼────┼────┼────┼────┼────┤
+│AIRS│ARIS│RAIS│RIAS│SAIR│SARI│
+├────┼────┼────┼────┼────┼────┤
+│APTS│PAST│PATS│SPAT│STAP│TAPS│
+├────┼────┼────┼────┼────┼────┤
+│ARTS│RAST│RATS│STAR│TARS│TSAR│
+├────┼────┼────┼────┼────┼────┤
+│STAW│SWAT│TAWS│TWAS│WAST│WATS│
+├────┼────┼────┼────┼────┼────┤
+│DEER│DERE│DREE│ERED│REDE│REED│
+├────┼────┼────┼────┼────┼────┤
+│DEIL│DELI│DIEL│EILD│IDLE│LIED│
+├────┼────┼────┼────┼────┼────┤
+│DERO│DOER│DORE│REDO│RODE│ROED│
+├────┼────┼────┼────┼────┼────┤
+│EELS│ELSE│LEES│SEEL│SELE│SLEE│
+├────┼────┼────┼────┼────┼────┤
+│EMES│MEES│MESE│SEEM│SEME│SMEE│
+├────┼────┼────┼────┼────┼────┤
+│ENTS│NEST│NETS│SENT│STEN│TENS│
+├────┼────┼────┼────┼────┼────┤
+│EROS│ORES│REOS│ROES│ROSE│SORE│
+├────┼────┼────┼────┼────┼────┤
+│RUES│RUSE│SUER│SURE│URES│USER│
+├────┼────┼────┼────┼────┼────┤
+│HOPS│PHOS│POHS│POSH│SHOP│SOPH│
+├────┼────┼────┼────┼────┼────┤
+│OPTS│POST│POTS│SPOT│STOP│TOPS│
+└────┴────┴────┴────┴────┴────┘
+#+end_example

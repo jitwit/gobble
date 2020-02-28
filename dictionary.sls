@@ -7,7 +7,8 @@
           completions
           anagrams
           collins
-          get-collins)
+          get-collins
+          get-collins-word-list)
   (import (chezscheme)
           (only (euler) sort-on nub-eq)
           (trie)

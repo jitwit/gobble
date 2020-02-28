@@ -1,13 +1,3 @@
-(unless (assoc "~/code/gobble" (library-directories))
-  (library-directories (cons "~/code/gobble" (library-directories))))
-
-(import (gobble)
-        (trie)
-        (dictionary)
-        (chezscheme)
-        (euler)
-        (only (srfi :1) append-map))
-
 (random-seed (time-nanosecond (current-time)))
 (random-seed (random (time-nanosecond (current-time))))
 
@@ -84,3 +74,25 @@
                (format #t "~a ~,2f~%" letter (/ freq n 1/100)))
              letters
              freqs)))
+
+(define dict
+  (get-collins-word-list))
+
+(define (n-letter-words n)
+  (filter (compose (curry = n) string-length) dict))
+
+(define (string-sort s)
+  (list->string (sort char<? (string->list s))))
+
+(define (order-words words)
+  (group-with (lambda (s t)
+                (string=? (string-sort s) (string-sort t)))
+              (sort (lambda (s t)
+                      (string<? (string-sort s) (string-sort t)))
+                    words)))
+
+(define (useful-combos n amount)
+  (sort-on length
+           (filter (compose (curry <= amount) length)
+                   (order-words (n-letter-words n)))))
+
