@@ -1,3 +1,4 @@
+- J solver to support Qu
 - 10 round matches
 - improve nix deployment
 - get scheme scripts on production machine? or compress folder containing boards
