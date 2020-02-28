@@ -4,27 +4,21 @@ words=: 'b'freads<'~/code/gobble/input/collins.txt'
 nletter=: monad : 'words #~ >(y=#)&.>words'
 grp=: 1,2([:-.0&{::-:&(/:~)1&{::)\] NB. group anagrams together
 grpl=: 1,2([:-.0&{::-:&#1&{::)\]
-combos=: [: (/:#&.>) [: (a:-.~grp<;.1]) [: (/:/:~&.>) nletter
-combos3=: (grpl <;.1]) combos 3
-combos4=: (grpl <;.1]) combos 4
+combos=: [: (grpl <;.1]) [: (/:#&.>) [: (a:-.~grp<;.1]) [: (/:/:~&.>) nletter
 #+END_SRC
 
 #+RESULTS:
 
 * Boggle Bits
 
-It's useful to know groupings of letters that go together. For
-example, letters ~aet~ combine to form ~"ate", "eat", "tea"~ . The
-dictionary shows that there are even two other words ~"eta", "tea"~
-that I was previously unaware of. What other useful three letter
-combinations are worth knowing?
+Useful letter combinations based on how many words they form.
 
 ** 3 letter combinations
 
 *** 5 words
 
 #+BEGIN_SRC j :session :exports both
->> _1 { combos3
+>>_1{]combos3=: combos 3
 #+END_SRC
 
 #+RESULTS:
@@ -35,7 +29,7 @@ combinations are worth knowing?
 *** 4 words
 
 #+BEGIN_SRC j :session :exports both
->> _2 { combos3
+>>_2{combos3
 #+END_SRC
 
 #+RESULTS:
@@ -64,7 +58,7 @@ combinations are worth knowing?
 *** 3 words
 
 #+BEGIN_SRC j :session :exports both
->> _3 { combos3
+>>_3{combos3
 #+END_SRC
 
 #+RESULTS:
@@ -255,7 +249,7 @@ combinations are worth knowing?
 *** 10 words
 
 #+BEGIN_SRC j :session :exports both
->> _1 { combos4
+>>_1{]combos4=: combos 4
 #+END_SRC
 
 #+RESULTS:
@@ -266,7 +260,7 @@ combinations are worth knowing?
 *** 7 words
 
 #+BEGIN_SRC j :session :exports both
->> _2 { combos4
+>>_2{combos4
 #+END_SRC
 
 #+RESULTS:
@@ -283,7 +277,7 @@ combinations are worth knowing?
 *** 6 words
 
 #+BEGIN_SRC j :session :exports both
->> _3 { combos4
+>>_3{combos4
 #+END_SRC
 
 #+RESULTS:
@@ -335,4 +329,101 @@ combinations are worth knowing?
 ├────┼────┼────┼────┼────┼────┤
 │OPTS│POST│POTS│SPOT│STOP│TOPS│
 └────┴────┴────┴────┴────┴────┘
+#+end_example
+
+** 5 letter combinations
+
+*** 13 words
+
+#+BEGIN_SRC j :session :exports both
+>>_1{]combos5=: combos 5
+#+END_SRC
+
+#+RESULTS:
+: ┌─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┐
+: │APERS│APRES│ASPER│PARES│PARSE│PEARS│PRASE│PRESA│RAPES│REAPS│SPAER│SPARE│SPEAR│
+: ├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤
+: │ARETS│ASTER│EARST│RATES│REAST│RESAT│STARE│STEAR│STRAE│TARES│TASER│TEARS│TERAS│
+: └─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┘
+
+*** 12 words
+
+#+BEGIN_SRC j :session :exports both
+>>_2{combos5
+#+END_SRC
+
+#+RESULTS:
+: ┌─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┐
+: │LEAST│LEATS│SALET│SETAL│SLATE│STALE│STEAL│STELA│TAELS│TALES│TEALS│TESLA│
+: └─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┘
+
+*** 10 words
+
+#+BEGIN_SRC j :session :exports both
+>>_3{combos5
+#+END_SRC
+
+#+RESULTS:
+: ┌─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┐
+: │LAPSE│LEAPS│PALES│PEALS│PELAS│PLEAS│SALEP│SEPAL│SPALE│SPEAL│
+: ├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤
+: │DEILS│DELIS│DIELS│EILDS│IDLES│ISLED│SIDLE│SIELD│SILED│SLIDE│
+: ├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤
+: │DEROS│DOERS│DORES│DORSE│DOSER│REDOS│RESOD│RODES│ROSED│SORED│
+: └─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┘
+
+#+BEGIN_SRC j :session :exports both
+>>_4{combos5
+#+END_SRC
+
+*** 9 words
+
+#+RESULTS:
+#+begin_example
+┌─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┐
+│ACERS│ACRES│CARES│CARSE│ESCAR│RACES│SCARE│SCRAE│SERAC│
+├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤
+│ARLES│EARLS│LAERS│LARES│LASER│LEARS│RALES│REALS│SERAL│
+├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤
+│AVELS│LAVES│LEVAS│SALVE│SELVA│SLAVE│VALES│VALSE│VEALS│
+├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤
+│AIRTS│ARTIS│ASTIR│RAITS│SITAR│STAIR│STRIA│TARSI│TIARS│
+├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤
+│ESTER│REEST│RESET│STEER│STERE│TEERS│TERES│TERSE│TREES│
+├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤
+│EPRIS│PERIS│PIERS│PRIES│PRISE│RIPES│SPEIR│SPIER│SPIRE│
+├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤
+│RIOTS│ROIST│ROSIT│ROSTI│ROTIS│TIROS│TORSI│TRIOS│TROIS│
+└─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┘
+#+end_example
+
+*** 8 words
+
+#+BEGIN_SRC j :session :exports both
+>>_5{combos5
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+┌─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┐
+│ABETS│BASTE│BATES│BEAST│BEATS│BESAT│BETAS│TABES│
+├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤
+│ALMES│LAMES│LEAMS│MALES│MEALS│MELAS│MESAL│SAMEL│
+├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤
+│LEAPT│LEPTA│PALET│PELTA│PETAL│PLATE│PLEAT│TEPAL│
+├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤
+│AMENS│MANES│MANSE│MEANS│MENSA│NAMES│NEMAS│SAMEN│
+├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤
+│ASPEN│NAPES│NEAPS│PANES│PEANS│SNEAP│SPANE│SPEAN│
+├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤
+│APERT│APTER│PATER│PEART│PETAR│PRATE│TAPER│TRAPE│
+├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤
+│PASTE│PATES│PEATS│SEPTA│SPATE│SPEAT│TAPES│TEPAS│
+├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤
+│ANTIS│NATIS│SAINT│SATIN│STAIN│TAINS│TIANS│TINAS│
+├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤
+│HEROS│HOERS│HORSE│HOSER│ROHES│SHERO│SHOER│SHORE│
+├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤
+│INSET│NEIST│NITES│SENTI│SIENT│STEIN│TEINS│TINES│
+└─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┘
 #+end_example
