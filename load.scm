@@ -8,6 +8,9 @@
 (import (dictionary)
         (gobble)
         (euler)
+        (dictionary)
+        (trie)
+        (only (srfi :1) append-map filter-map)
         (oleg ssax)
         (oleg sxml-tools)
         (oleg sxml-tree-trans))
@@ -51,3 +54,5 @@
   (map string-downcase
        (filter (compose (curry >= cutoff) string-length)
                (completions prefix))))
+
+

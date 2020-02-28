@@ -1,0 +1,172 @@
+
+#+BEGIN_SRC scheme :session :exports output :results output
+(load "load.scm")
+#+END_SRC
+
+#+RESULTS:
+
+* Boggle Bits
+
+It's useful to know groupings of letters that go together. For
+example, letters ~aet~ combine to form ~"ate", "eat", "tea"~ . The
+dictionary shows that there are even two other words ~"eta", "tea"~
+that I was previously unaware of. What other useful three letter
+combinations are worth knowing?
+
+
+#+BEGIN_SRC scheme :session :exports code
+(define (possible-combos letters)
+  (filter-map (lambda (ijk)
+                (let ((word (list->string (map integer->char ijk))))
+                  (and (definition word) word)))
+              (nub-equal (permutations letters))))
+
+(define (3-letter-combos)
+  (define combos (make-hash-table))
+  (do ((i 97 (1+ i)))
+      ((> i 122) combos)
+    (do ((j i (1+ j)))
+        ((> j 122))
+      (do ((k j (1+ k)))
+          ((> k 122))
+        (let* ((ijk (list i j k))
+               (words (possible-combos ijk))
+               (n (length words)))
+          (when (< 0 n)
+            (hashtable-update! combos
+                               (length words)
+                               (lambda (cs)
+                                 (cons words cs))
+                               '())))))))
+#+END_SRC
+
+#+RESULTS:
+: #<void>
+
+There are no three letter combinations that form 6 words.  
+
+** 5 words
+
+#+BEGIN_SRC scheme :session :exports both :results output 
+(define combo-table
+  (3-letter-combos))
+
+(display (hashtable-ref combo-table 5 '()))
+#+END_SRC
+
+#+RESULTS:
+| ate | tae | tea | eta | eat |
+
+** 4 words
+
+#+BEGIN_SRC scheme :session :exports output :results value
+(hashtable-ref combo-table 4 '())
+#+END_SRC
+
+#+RESULTS:
+| owt | wot | two | tow |
+| hos | sho | soh | ohs |
+| dos | dso | sod | ods |
+| bru | bur | urb | rub |
+| bor | bro | rob | orb |
+| ary | yar | rya | ray |
+| asp | sap | spa | pas |
+| ahs | ash | sha | has |
+| abo | oba | boa | bao |
+
+** 3 words
+
+#+BEGIN_SRC scheme :session :exports output :results output
+(display (hashtable-ref combo-table 3 '()))
+#+END_SRC
+
+#+RESULTS:
+| pus | ups | sup |
+| ort | tor | rot |
+| opt | top | pot |
+| ops | sop | pos |
+| nys | syn | sny |
+| nus | uns | sun |
+| nur | urn | run |
+| noy | yon | ony |
+| now | won | own |
+| nos | son | ons |
+| noo | oon | ono |
+| mus | ums | sum |
+| mos | som | oms |
+| its | tis | sit |
+| sip | psi | pis |
+| ios | iso | ois |
+| ins | sin | nis |
+| ism | sim | mis |
+| sik | ski | kis |
+| hop | pho | poh |
+| hoo | ooh | oho |
+| hom | ohm | mho |
+| gus | ugs | sug |
+| gnu | gun | nug |
+| for | fro | orf |
+| yew | wye | wey |
+| ewt | wet | tew |
+| yes | sye | sey |
+| est | tes | set |
+| ers | ser | res |
+| rep | pre | per |
+| reo | roe | ore |
+| emu | ume | meu |
+| elt | tel | let |
+| els | sel | les |
+| euk | uke | kue |
+| yeh | hye | hey |
+| eth | the | het |
+| ehs | she | hes |
+| erg | reg | ger |
+| ego | goe | geo |
+| eng | neg | gen |
+| eft | tef | fet |
+| erf | ref | fer |
+| wee | ewe | eew |
+| nee | ene | een |
+| duo | udo | oud |
+| dor | rod | ord |
+| dol | old | lod |
+| den | ned | end |
+| del | led | eld |
+| dei | die | ide |
+| cru | cur | ruc |
+| cor | roc | orc |
+| chi | ich | hic |
+| bos | sob | obs |
+| bio | boi | obi |
+| wat | twa | taw |
+| ays | yas | say |
+| ats | tas | sat |
+| art | tar | rat |
+| ars | sar | ras |
+| yap | pya | pay |
+| apt | tap | pat |
+| apo | poa | opa |
+| awn | wan | naw |
+| ant | tan | nat |
+| ans | san | nas |
+| sam | sma | mas |
+| arm | ram | mar |
+| amp | pam | map |
+| nam | mna | man |
+| als | sal | las |
+| alp | pal | lap |
+| ask | ska | kas |
+| oak | oka | koa |
+| ait | tai | ita |
+| air | rai | ria |
+| ags | sag | gas |
+| arf | fra | far |
+| aye | yae | yea |
+| sae | sea | eas |
+| are | era | ear |
+| ane | nae | ean |
+| ake | kae | kea |
+| ads | sad | das |
+| abs | sab | bas |
+| arb | bra | bar |
+| alb | lab | bal |
