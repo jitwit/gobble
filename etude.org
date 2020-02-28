@@ -59,8 +59,8 @@ There are no three letter combinations that form 6 words.
 
 ** 4 words
 
-#+BEGIN_SRC scheme :session :exports output :results value
-(hashtable-ref combo-table 4 '())
+#+BEGIN_SRC scheme :session :exports both :results output
+(display (hashtable-ref combo-table 4 '()))
 #+END_SRC
 
 #+RESULTS:
@@ -76,7 +76,7 @@ There are no three letter combinations that form 6 words.
 
 ** 3 words
 
-#+BEGIN_SRC scheme :session :exports output :results output
+#+BEGIN_SRC scheme :session :exports both :results output
 (display (hashtable-ref combo-table 3 '()))
 #+END_SRC
 
