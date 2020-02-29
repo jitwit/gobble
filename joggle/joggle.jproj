@@ -5,3 +5,5 @@ NB. path defaults to project directory.
 
 gobble.ijs
 run.ijs
+test.ijs
+client.ijs

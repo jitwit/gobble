@@ -1,8 +1,6 @@
 coclass 'gobble'
 
-WORDS=: 'b'freads<'~/code/gobble/input/collins.txt'
-N=: #WORDS
-NB. DICT=: '@'readdsv<'~/code/gobble/input/clns.txt'
+N=:#]WORDS=: 'b'freads<'~/code/gobble/input/collins.txt' NB. DICT=: '@'readdsv<'~/code/gobble/input/clns.txt'
 dice4=: _6]\'NAEAEGEGNWEHCSOAHPLVERDYTOATOWPKAFFSHRVTWEHQUMNIEITSSORLTYETTITSYDLXEDIRTOIMCUBAOBOJNLNHZRENSIEU'
 roll=: ({~?~@#) {"0 1~ [: ? #"1
 
@@ -12,7 +10,7 @@ prefix=: monad : 'y e.(#>y)&{.&.>WORDS{~N|(,~<:)WORDS I. y'
 exact=: -:[:{&WORDS WORDS&I.
 
 gobble=: monad define
-graph=. reify_grid i. 2 # %: # y[board=. y[words=. ''[curr=. |:,:i.#y
+graph=. reify_grid i. 2 # %: # ]board=. y[words=. ''[curr=. |:,:i.#y
 while. #curr do. ws =. ''[next =. ,: 0,{.curr
   for_j. curr do.
     for_j. graph adj j do. w=. <('Q';'QU') stringreplace j{board
