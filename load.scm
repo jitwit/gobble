@@ -16,18 +16,17 @@
         (oleg sxml-tree-trans))
 
 (define (dump-collins)
-  (define out-file "clns.txt")
+  (define out-file "input/clns.txt")
   (delete-file out-file)
   (with-output-to-file out-file
     (lambda ()
       (define out (current-output-port))
       (define (put-def def)
-        (display "(" out)
-        (write (car def) out)
-        (display ", " out)
-        (write (cdr def) out)
-        (display ")\n" out))
-      (for-all put-def (get-collins)))))
+        (display (car def) out)
+        (display "@" out)
+        (display (cdr def) out)
+        (newline))
+      (for-all put-def (reverse (get-collins))))))
 
 (define (get-dela-fr) ;; danger - large file
   (define dict "input/dela-fr-public-u8.dic.xml")
