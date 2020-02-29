@@ -28,8 +28,7 @@ for_w. LIST do.
   wd'set wds block ',(":w_index),' 0'
   wd'set wds data ',>w
 end.
-score_list''
-echo SCORE
+echo update_score''
 )
 
 NB. type box, submitting words
@@ -61,10 +60,8 @@ end.
 glpaint''
 )
 
-score_list=: monad define
-ixs=. <: +: LIST e. SOLS
-scores=. > score_word &.> LIST
-SCORE=: ixs +/ .* scores
+update_score=: monad define
+SCORE=: LIST score SOLS
 )
 
 init=: monad define

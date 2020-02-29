@@ -4,6 +4,8 @@ N=:#]WORDS=: 'b'freads<'~/code/gobble/input/collins.txt' NB. DICT=: '@'readdsv<'
 dice4=: _6]\'NAEAEGEGNWEHCSOAHPLVERDYTOATOWPKAFFSHRVTWEHQUMNIEITSSORLTYETTITSYDLXEDIRTOIMCUBAOBOJNLNHZRENSIEU'
 roll=: ({~?~@#) {"0 1~ [: ? #"1
 score_word=: 0 0 0 1 1 2 3 5 11{~8<.#
+score=: ([:>score_word&.>@[) +/ .* [:<:[:+:e.
+show_board=: _4<"0\]
 
 reify_grid=: [:-.&_1&.>[:,[:<"_2[:,"_2/(0 0-.~,/,"0/~i:1)|.!._1]
 adj=: ],"_ 0]-.~[{::~[:{:]
