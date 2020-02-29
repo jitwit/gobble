@@ -22,33 +22,30 @@ wd'psel joggle;pclose;'
 )
 
 update_words=: monad define
+wd'psel joggle'
 wd'set wds shape ',(":#LIST),' 1'
 for_w. LIST do.
   wd'set wds block ',(":w_index),' 0'
   wd'set wds data ',>w
 end.
+score_list''
+echo SCORE
 )
 
 NB. type box, submitting words
 joggle_typ_button=: monad define
 wd'psel joggle'
-echo]LIST=: ~.LIST,~<wd 'get typ text'
+LIST=: ~.LIST,~<' '-.~toupper wd 'get typ text'
 wd'set typ text ""'
 update_words''
 )
 
-joggle_wds_mblup=: monad define
-NB. smoutput wdq
+joggle_wds_mblup=: monad define NB. smoutput wdq
+wd'psel joggle'
 ix=: {.".wds_select
 LIST=: (ix{.LIST) , (>:ix)}.LIST
 update_words''
 )
-
-NB. global variables
-SIZE=: 256
-BOARD=: ''
-LIST=: ''
-SOLS=: ''
 
 NB. draw the current board
 draw_board=: monad define
@@ -64,8 +61,18 @@ end.
 glpaint''
 )
 
+score_list=: monad define
+ixs=. <: +: LIST e. SOLS
+scores=. > score_word &.> LIST
+SCORE=: ixs +/ .* scores
+)
+
 init=: monad define
+SIZE=: 256
+BOARD=: ''
+SOLS=: ''
 LIST=: ''
+SCORE=: 0
 fresh_board''
 )
 
@@ -77,7 +84,7 @@ draw_board''
 mush=: verb define
 if. IFQT do.
   wd joggle_form[joggle_close^:(wdisparent'joggle')''
-  fresh_board''
+  init''
 else.
   echo 'no qt'
 end.
