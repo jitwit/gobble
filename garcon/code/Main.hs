@@ -11,6 +11,7 @@ import qualified Data.ByteString.Lazy.Char8 as B
 import Data.Text (Text)
 import Data.List (union,(\\),sortBy)
 import Data.Function
+import Data.Unique
 import Data.Proxy
 import qualified Data.Map as M
 import Data.Map (Map)
@@ -75,8 +76,9 @@ new'player :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Connection -> m ()
 new'player who conn = liftIO $ do
   gob <- (players.at who ?~ Player conn M.empty 0) <$> readTVarIO ?gobble
   atomically $ writeTVar ?gobble gob
-  let rnd = gob ^. current'round  
-  reply'json conn $ tag'thing "board" $ renderHtml $ html'of'board rnd (gob^.board)
+  let rnd = gob ^. current'round
+  board'html <- html'of'board (gob^.board)
+  reply'json conn $ tag'thing "board" $ renderHtml board'html
   reply'json conn $ A.object
     [ "time" A..= (gob^.board.creationTime.to (addUTCTime round'period))
     , "pause" A..= score'length
@@ -220,8 +222,10 @@ score'round = liftIO $ do
                          td $ ul $ mapM_ (li.text) ws
 
 -- horrible way of avoiding browser cache
-html'of'board :: Int -> Board -> Html
-html'of'board r b = img ! H.src ("static/board.svg?" <> stringValue (show r))
+html'of'board :: Board -> IO Html
+html'of'board b = do
+  board'id <- hashUnique <$> newUnique
+  return $ img ! H.src ("static/board.svg?" <> stringValue (show board'id))
 
 fresh'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 fresh'round = liftIO $ do
@@ -231,8 +235,8 @@ fresh'round = liftIO $ do
          readTVarIO ?gobble
   atomically $ writeTVar ?gobble gob
   putStrLn "New Round"
-  let rnd = gob ^. current'round
-  broadcast'val $ tag'thing "board" $ renderHtml $ html'of'board rnd b
+  board'html <- html'of'board b  
+  broadcast'val $ tag'thing "board" $ renderHtml board'html
   broadcast'val $ A.object
     [ "time" A..= (b^.creationTime.to (addUTCTime round'period))
     , "pause" A..= score'length
