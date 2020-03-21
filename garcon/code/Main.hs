@@ -81,11 +81,18 @@ new'player who conn = liftIO $ do
     [ "time" A..= (gob^.board.creationTime.to (addUTCTime round'period))
     , "pause" A..= score'length
     , "round" A..= round'length ]
-  when (gob ^. game'phase & isn't _Scoring) $ do
-    let peeps = renderHtml $ do
-          h3 "who's here?"
-          ul ! H.id "definitions" $ mapM_ (li.text) (gob^.players.to M.keys)
-    broadcast'val $ tag'thing "peeps" peeps
+  case gob ^. game'phase of
+    Scoring -> do
+      let sol = gob ^. board.word'list
+          wl = sortBy (flip compare `on` T.length . fst) $ M.toList sol
+      reply'json conn $ tag'thing "peeps" $ renderHtml $ do
+        h3 "word list"
+        table $ forM_ wl $ \(w,d) -> tr $ td (text w) >> td (text d)
+    Boggled -> do
+      let peeps = renderHtml $ do
+            h3 "who's here?"
+            ul ! H.id "definitions" $ mapM_ (li.text) (gob^.players.to M.keys)
+      broadcast'val $ tag'thing "peeps" peeps
 
 name'player :: (?gobble :: TVar Gobble, MonadIO m) => Connection -> m Name
 name'player conn = liftIO $ do
@@ -132,7 +139,7 @@ add'tweet who tweet = liftIO $ do
   now <- getCurrentTime
   atomically $ modifyTVar' ?gobble $
     (chat'room.messages.at now ?~ Chat'Message tweet who now) .
-    (chat'room.messages %~ \m -> M.drop (min 0 $ M.size m - 10) m)
+    (chat'room.messages %~ \m -> M.drop (M.size m - 10) m)
 
 handle'control :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Connection -> ControlMessage -> m ()
 handle'control who conn = liftIO . \case
@@ -299,7 +306,7 @@ check'boards = liftIO $ length <$> listDirectory "boards/"
 naked'state :: (?gobble :: TVar Gobble) => Handler String 
 naked'state = liftIO $ do
   gob <- readTVarIO ?gobble
-  return $ unlines [gob ^.. players & show,gob ^.. chat'room & show]
+  return $ unlines [gob ^. board & show, gob ^. players & show,gob ^. chat'room & show]
 
 boggle'server :: (?gobble :: TVar Gobble) => Server BoggleAPI
 boggle'server =

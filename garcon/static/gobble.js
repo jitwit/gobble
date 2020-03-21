@@ -1,5 +1,7 @@
+var boggle;
+
 $(() => {
-    var boggle = new WebSocket ("ws://" + window.location.host);
+    boggle = new WebSocket ("ws://" + window.location.host);
     var dt = 1000;
 
     add_word = (word) => { boggle.send('gobble ' + word); };
