@@ -246,7 +246,7 @@ boggle pend = liftIO $ do
   conn <- acceptRequest pend
   forkPingThread conn 30
   who <- name'player conn
-  forever $ receive conn >>= \case
+  flip finally (remove'player who) $ forever $ receive conn >>= \case
     ControlMessage ctl -> handle'control who conn ctl
     DataMessage _ _ _ msg -> handle'data who conn msg
 

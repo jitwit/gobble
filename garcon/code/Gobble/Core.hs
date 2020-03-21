@@ -29,6 +29,14 @@ data Player = Player
   , _answers :: Map Text Int
   , _score :: Int }
 
+data Chat'Message = Chat'Message
+  { _contents :: Text
+  , _author :: Text
+  , _time'spamp :: UTCTime }
+
+data Chat = Chat
+  { _messages :: Map UTCTime Chat'Message }
+
 instance Show Player where
   show (Player _ as n) =
     "Player { _answers = " <> show as <> ", _score = " <> show n <> " }"
@@ -43,6 +51,8 @@ makePrisms ''Phase
 makeLenses ''Board
 makeLenses ''Player
 makeLenses ''Gobble
+makeLenses ''Chat'Message
+makeLenses ''Chat
 
 score'word :: Text -> Int
 score'word = ([0,0,0,1,1,2,3,5,11] !!) . min 8 . T.length

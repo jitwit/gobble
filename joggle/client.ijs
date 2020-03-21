@@ -71,6 +71,7 @@ SOLS=: ''
 LIST=: ''
 SCORE=: 0
 fresh_board''
+update_words''
 )
 
 fresh_board=: monad define
@@ -83,7 +84,7 @@ if. IFQT do.
   wd joggle_form[joggle_close^:(wdisparent'joggle')''
   init''
 else.
-  echo 'no qt'
+  echo 'run through JQT'
 end.
 )
 

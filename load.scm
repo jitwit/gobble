@@ -53,5 +53,3 @@
   (map string-downcase
        (filter (compose (curry >= cutoff) string-length)
                (completions prefix))))
-
-
