@@ -297,7 +297,9 @@ check'boards :: Handler Int
 check'boards = liftIO $ length <$> listDirectory "boards/"
 
 naked'state :: (?gobble :: TVar Gobble) => Handler String 
-naked'state = liftIO $ show . view players <$> readTVarIO ?gobble
+naked'state = liftIO $ do
+  gob <- readTVarIO ?gobble
+  return $ unlines [gob ^.. players & show,gob ^.. chat'room & show]
 
 boggle'server :: (?gobble :: TVar Gobble) => Server BoggleAPI
 boggle'server =
