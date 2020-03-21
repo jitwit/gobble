@@ -32,10 +32,10 @@ data Player = Player
 data Chat'Message = Chat'Message
   { _contents :: Text
   , _author :: Text
-  , _time'spamp :: UTCTime }
+  , _time'stamp :: UTCTime } deriving Show
 
 data Chat = Chat
-  { _messages :: Map UTCTime Chat'Message }
+  { _messages :: Map UTCTime Chat'Message } deriving Show
 
 instance Show Player where
   show (Player _ as n) =
@@ -45,6 +45,7 @@ data Gobble = Gobble
   { _board :: Board
   , _players :: Map Name Player
   , _game'phase :: Phase
+  , _chat'room :: Chat
   , _current'round :: Int } deriving (Show)
 
 makePrisms ''Phase
@@ -61,7 +62,7 @@ round'length :: Int
 round'length = 90
 
 score'length :: Int
-score'length = 30
+score'length = 35
 
 round'period :: NominalDiffTime
 round'period = unsafeCoerce $ secondsToDiffTime $
@@ -79,7 +80,6 @@ data ScoreReport = ScoreReport
 
 -- reply :: (?gobble :: TVar Gobble, WebSocketsData a, MonadIO m) => Connection -> a -> m ()
 -- reply conn = liftIO . sendTextData conn
--- 
+
 -- reply'json :: (?gobble :: TVar Gobble, A.ToJSON j, MonadIO m) => Connection -> j -> m ()
 -- reply'json conn = reply conn . A.encode
-

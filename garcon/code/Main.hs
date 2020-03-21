@@ -62,7 +62,7 @@ new'board = do
 
 start'state :: IO Gobble
 start'state = start <$> new'board where
-  start b = Gobble b M.empty Scoring 0
+  start b = Gobble b M.empty Scoring (Chat M.empty) 0
 
 fetch'board :: (?gobble :: TVar Gobble, MonadIO m) => m Board
 fetch'board = liftIO $ view board <$> readTVarIO ?gobble
@@ -127,6 +127,13 @@ delete'word who word = liftIO $ atomically $ do
   when (gob ^. game'phase & isn't _Scoring) $ writeTVar ?gobble
     (gob & players.ix who.answers.at word .~ Nothing)
 
+add'tweet :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Text -> m ()
+add'tweet who tweet = liftIO $ do
+  now <- getCurrentTime
+  atomically $ modifyTVar' ?gobble $
+    (chat'room.messages.at now ?~ Chat'Message tweet who now) .
+    (chat'room.messages %~ \m -> M.drop (min 0 $ M.size m - 10) m)
+
 handle'control :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Connection -> ControlMessage -> m ()
 handle'control who conn = liftIO . \case
   Close{}  -> T.putStrLn (who <> " has left the chat") >> remove'player who
@@ -143,12 +150,14 @@ broadcast'val = broadcast . A.encode
 pattern Query cmd <- Text cmd _
 pattern Word w <- Text (T.words.T.toUpper.T.pack.B.unpack -> "GOBBLE":w:[]) _
 pattern Delete w <- Text (T.words.T.toUpper.T.pack.B.unpack -> "DOBBLE":w:[]) _
+pattern Chirp msg <- Text (T.stripPrefix "chirp ".T.pack.B.unpack -> Just msg) _
 
 handle'data :: (?gobble :: TVar Gobble, MonadIO m)
   => Name -> Connection -> DataMessage -> m ()
 handle'data who conn = liftIO . \case
   Word w -> submit'word who w
   Delete w -> delete'word who w
+  Chirp c -> add'tweet who c
   Query "who-else" -> reply'json conn =<< get'players
   Query "words" -> send'words conn who -- =<< get'persons'words who
   Text msg _ -> print msg >> reply'json @Text conn "idk/text"
@@ -272,7 +281,8 @@ instance ToMarkup GobblePage where
         H.div ! H.id "words" $ do
           H.div ! H.id "timer" $ ""
           H.form ! H.id "mush" $ do
-            H.input ! H.type_ "text" ! H.id "scratch"
+            H.input ! H.autocomplete "off" ! H.spellcheck "off"
+             ! H.type_ "text" ! H.id "scratch"
             H.input ! H.type_ "submit" ! H.value "mush!"
           H.ul ! H.id "submissions" $ ""
       H.div ! H.id "word-list" $ ""
@@ -281,8 +291,7 @@ type BoggleAPI =
        Get '[HTML] GobblePage
   :<|> "static" :> Raw
   :<|> "boards" :> Get '[JSON] Int
-  :<|> "help" :> "show-players" :> Get '[PlainText] String
-  :<|> "help" :> "kick" :> Get '[PlainText] String
+  :<|> "help" :> "naked" :> Get '[PlainText] String
 
 check'boards :: Handler Int
 check'boards = liftIO $ length <$> listDirectory "boards/"
@@ -290,16 +299,12 @@ check'boards = liftIO $ length <$> listDirectory "boards/"
 naked'state :: (?gobble :: TVar Gobble) => Handler String 
 naked'state = liftIO $ show . view players <$> readTVarIO ?gobble
 
-kick'y'all :: (?gobble :: TVar Gobble) => Handler String
-kick'y'all = todo
-
 boggle'server :: (?gobble :: TVar Gobble) => Server BoggleAPI
 boggle'server =
        pure GobblePage
   :<|> serveDirectoryWebApp "static"
   :<|> check'boards
   :<|> naked'state
-  :<|> kick'y'all
 
 launch'boggle :: Int -> IO ()
 launch'boggle port = do
