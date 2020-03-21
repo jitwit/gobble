@@ -11,7 +11,6 @@ import qualified Data.ByteString.Lazy.Char8 as B
 import Data.Text (Text)
 import Data.List (union,(\\),sortBy)
 import Data.Function
-import Data.Unique
 import Data.Proxy
 import qualified Data.Map as M
 import Data.Map (Map)
@@ -23,6 +22,7 @@ import System.Environment
 import System.Process
 import System.Directory
 import Data.Time.Clock
+import Data.Hashable
 
 import Control.Concurrent
 import Control.Concurrent.STM.TVar
@@ -224,8 +224,7 @@ score'round = liftIO $ do
 -- horrible way of avoiding browser cache
 html'of'board :: Board -> IO Html
 html'of'board b = do
-  board'id <- hashUnique <$> newUnique
-  return $ img ! H.src ("static/board.svg?" <> stringValue (show board'id))
+  return $ img ! H.src ("static/board.svg?" <> stringValue (b^.letters&hash&show))
 
 fresh'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 fresh'round = liftIO $ do
