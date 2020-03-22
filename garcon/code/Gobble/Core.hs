@@ -59,7 +59,7 @@ score'word = (fibs !!) . T.length where
   fibs = 0:zipWith (+) fibs (1:fibs)
 
 round'length :: Int
-round'length = 120
+round'length = 90
 
 score'length :: Int
 score'length = 30
