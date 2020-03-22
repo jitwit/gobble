@@ -70,7 +70,7 @@ fetch'board = liftIO $ view board <$> readTVarIO ?gobble
 
 is'name'free :: (?gobble :: TVar Gobble, MonadIO m) => Name -> m Bool
 is'name'free name = liftIO $
-  not . isn't _Nothing . preview (players.ix name) <$> readTVarIO ?gobble
+  (&&name/="").not.isn't _Nothing.preview (players.ix name) <$> readTVarIO ?gobble
 
 new'player :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Connection -> m ()
 new'player who conn = liftIO $ do
