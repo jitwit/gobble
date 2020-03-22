@@ -4,6 +4,7 @@ $(() => {
 
     add_word = (word) => { boggle.send('gobble ' + word); };
     del_word = (word) => { boggle.send('dobble ' + word); };
+    chirp = (tweet) => { boggle.send('chirp ' + tweet); };
     query_words = () => { boggle.send('words'); };
     set_name = (msg="") => {
         name = prompt('name?' + msg);
@@ -16,6 +17,12 @@ $(() => {
         add_word($("#scratch").val());
         $("#scratch").val("");
         query_words();
+    });
+    
+    $("#tweet").submit((e) => {
+        e.preventDefault();
+        chirp($("#scribble").val());
+        $("#scribble").val("");
     });
     
     $("#submissions").on("click","li",(e) => {
@@ -45,6 +52,7 @@ $(() => {
         else if (!(res['board'] == null)) { $("#gobble").html(res['board']); query_words(); }
         else if (!(res['words'] == null)) { $("#submissions").html(res['words']); }
         else if (!(res['peeps'] == null)) { $("#people").html(res['peeps']); }
+        else if (!(res['chirp'] == null)) { $("#tweets").html(res['chirp']); }
         else if (!(res['time'] == null)) { timer(new Date (res['time']),res['round'],res['pause']); }
         else if (!(res['word_list'] == null)) { $("#word-list").html(res['word_list']); }
         else { console.log(res); }

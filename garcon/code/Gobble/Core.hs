@@ -29,17 +29,16 @@ data Player = Player
   , _answers :: Map Text Int
   , _score :: Int }
 
-data Chat'Message = Chat'Message
-  { _contents :: Text
-  , _author :: Text
-  , _time'stamp :: UTCTime } deriving Show
-
-data Chat = Chat
-  { _messages :: Map UTCTime Chat'Message } deriving Show
-
 instance Show Player where
   show (Player _ as n) =
     "Player { _answers = " <> show as <> ", _score = " <> show n <> " }"
+
+data Chat'Message = Chat'Message
+  { _contents :: Text
+  , _author :: Name } deriving Show
+
+data Chat = Chat
+  { _messages :: Map UTCTime Chat'Message } deriving Show
 
 data Gobble = Gobble
   { _board :: Board

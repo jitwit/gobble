@@ -77,8 +77,7 @@ new'player who conn = liftIO $ do
   gob <- (players.at who ?~ Player conn M.empty 0) <$> readTVarIO ?gobble
   atomically $ writeTVar ?gobble gob
   let rnd = gob ^. current'round
-  board'html <- html'of'board (gob^.board)
-  reply'json conn $ tag'thing "board" $ renderHtml board'html
+  reply'json conn $ tag'thing "board" $ renderHtml $ html'of'board (gob^.board)
   reply'json conn $ A.object
     [ "time" A..= (gob^.board.creationTime.to (addUTCTime round'period))
     , "pause" A..= score'length
@@ -133,8 +132,14 @@ add'tweet :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Text -> m ()
 add'tweet who tweet = liftIO $ do
   now <- getCurrentTime
   atomically $ modifyTVar' ?gobble $
-    (chat'room.messages.at now ?~ Chat'Message tweet who now) .
-    (chat'room.messages %~ \m -> M.drop (min 0 $ M.size m - 10) m)
+    (chat'room.messages.at now ?~ Chat'Message tweet who) .
+    (chat'room.messages %~ \m -> M.drop (M.size m - 10) m)
+  tweet'chat
+
+tweet'chat :: (?gobble :: TVar Gobble, MonadIO m) => m ()
+tweet'chat = liftIO $ do
+  xs <- readTVarIO ?gobble
+  broadcast'val $ tag'thing "chirp" $ xs ^. chat'room & show
 
 handle'control :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Connection -> ControlMessage -> m ()
 handle'control who conn = liftIO . \case
@@ -222,9 +227,8 @@ score'round = liftIO $ do
                          td $ ul $ mapM_ (li.text) ws
 
 -- horrible way of avoiding browser cache
-html'of'board :: Board -> IO Html
-html'of'board b = do
-  return $ img ! H.src ("static/board.svg?" <> stringValue (b^.letters&hash&show))
+html'of'board :: Board -> Html
+html'of'board b = img ! H.src ("static/board.svg?" <> stringValue (b^.letters&hash&show))
 
 fresh'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 fresh'round = liftIO $ do
@@ -234,8 +238,7 @@ fresh'round = liftIO $ do
          readTVarIO ?gobble
   atomically $ writeTVar ?gobble gob
   putStrLn "New Round"
-  board'html <- html'of'board b  
-  broadcast'val $ tag'thing "board" $ renderHtml board'html
+  broadcast'val $ tag'thing "board" $ renderHtml $ html'of'board b
   broadcast'val $ A.object
     [ "time" A..= (b^.creationTime.to (addUTCTime round'period))
     , "pause" A..= score'length
@@ -276,19 +279,21 @@ instance ToMarkup GobblePage where
       script ! H.src "static/jquery-3.4.1.slim.js" $ ""
       script ! H.src "static/gobble.js" $ ""
     H.body $ do
-      H.h1 "GOBBLE"
-      H.div ! H.id "boggle" $ do
-        H.div ! H.id "viz" $ do
+          H.h1 "GOBBLE"
           H.div ! H.id "gobble" $ ""
-          H.div ! H.id "people" $ ""
-        H.div ! H.id "words" $ do
           H.div ! H.id "timer" $ ""
           H.form ! H.id "mush" $ do
             H.input ! H.autocomplete "off" ! H.spellcheck "off"
              ! H.type_ "text" ! H.id "scratch"
             H.input ! H.type_ "submit" ! H.value "mush!"
+          H.div ! H.id "twitter" $ do
+            H.div ! H.id "tweets" $ ""
+            H.form ! H.id "tweet" $ do
+              H.input ! H.type_ "text" ! H.autocomplete "off" ! H.id "scribble"
+              H.input ! H.type_ "submit" ! H.hidden ""
           H.ul ! H.id "submissions" $ ""
-      H.div ! H.id "word-list" $ ""
+          H.div ! H.id "word-list" $ ""
+          H.div ! H.id "people" $ ""
 
 type BoggleAPI =
        Get '[HTML] GobblePage
