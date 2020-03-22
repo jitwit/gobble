@@ -132,11 +132,11 @@ tweet'chat :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 tweet'chat = liftIO $ do
   gob <- readTVarIO ?gobble
   let whos'here = H.text $ T.intercalate ", " (gob^.players.to M.keys)
-  broadcast'val $ tag'thing "chirp" $ renderHtml $ table $ do
+  broadcast'val $ tag'thing "chirp" $ renderHtml $ table $ do -- ! H.style "width:300px" $ do
     thead whos'here
     forM_ (gob^..chat'room.messages.folded) $ \(Chat'Message tweet author) ->
       tr $ do td $ text author
-              td $ text tweet
+              td $ text tweet -- ! H.style "text-align:right" $ text tweet
 
 handle'control :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Connection -> ControlMessage -> m ()
 handle'control who conn = liftIO . \case
@@ -193,7 +193,6 @@ score'submissions gob = (all'subs, gob') where
     & game'phase .~ Scoring
     & current'round +~ 1
   solution = gob^.board.word'list
-  score'word = ([0,0,0,1,1,2,3,5,11] !!) . min 8 . T.length
   all'subs = gob ^.. players.traversed.answers & M.unionsWith (+)
   scr (Player conn sol scr) = Player conn sol (sum pts - sum npts) where
     pts = [ score'word word | (word,1) <- M.toList (all'subs .& sol .& solution) ]
@@ -271,9 +270,9 @@ instance ToMarkup GobblePage where
   toMarkup _ = html $ do
     H.head $ do
       title "gobble"
-      link ! H.rel "stylesheet" ! H.href "static/gobble.css"
+      link ! H.rel "stylesheet" ! H.href "static/gobble.css?0"
       script ! H.src "static/jquery-3.4.1.slim.js" $ ""
-      script ! H.src "static/gobble.js" $ ""
+      script ! H.src "static/gobble.js?0" $ ""
     H.body $ do
       H.h1 "GOBBLE"
       H.div ! H.class_ "row" $ do
@@ -300,7 +299,6 @@ instance ToMarkup GobblePage where
           H.div ! H.id "solution" $ ""
         H.div ! H.id "scores" $ ""
 
-
 type BoggleAPI =
        Get '[HTML] GobblePage
   :<|> "static" :> Raw
@@ -316,8 +314,7 @@ naked'state = liftIO $ do
   return $ unlines [gob ^.. players & show,gob ^.. chat'room & show]
 
 boggle'server :: (?gobble :: TVar Gobble) => Server BoggleAPI
-boggle'server =
-       pure GobblePage
+boggle'server = pure GobblePage
   :<|> serveDirectoryWebApp "static"
   :<|> check'boards
   :<|> naked'state

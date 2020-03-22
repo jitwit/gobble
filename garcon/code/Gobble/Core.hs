@@ -55,30 +55,15 @@ makeLenses ''Chat'Message
 makeLenses ''Chat
 
 score'word :: Text -> Int
-score'word = ([0,0,0,1,1,2,3,5,11] !!) . min 8 . T.length
+score'word = (fibs !!) . T.length where
+  fibs = 0:zipWith (+) fibs (1:fibs)
 
 round'length :: Int
 round'length = 120
 
 score'length :: Int
-score'length = 90
+score'length = 30
 
 round'period :: NominalDiffTime
 round'period = unsafeCoerce $ secondsToDiffTime $
   fromIntegral $ round'length + score'length
-
-newtype WhoElse = WhoElse { who'else :: [Name] }
-
-newtype Answers = Answers { answer'list :: [Text] }
-
-data ScoreReport = ScoreReport
-  { report'participants :: [Name]
-  , report'scores :: [Int]
-  , report'mistakes :: [[Text]]
-  , report'words :: [[Text]] }
-
--- reply :: (?gobble :: TVar Gobble, WebSocketsData a, MonadIO m) => Connection -> a -> m ()
--- reply conn = liftIO . sendTextData conn
-
--- reply'json :: (?gobble :: TVar Gobble, A.ToJSON j, MonadIO m) => Connection -> j -> m ()
--- reply'json conn = reply conn . A.encode
