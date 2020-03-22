@@ -6,6 +6,23 @@ h1 {
     color: #F50953;
 }
 
+.column {
+    float: left;
+    width: 33.33%;
+}
+
+.row:after {
+    content: "";
+    display: table;
+    clear: both;
+}
+
+@media screen and (max-width: 600px) {
+  .column {
+    width: 100%;
+  }
+}
+
 #hourglass {
     padding: 10px;
 }
@@ -43,14 +60,14 @@ body {
     border-collapse: collapse;
 }
 
-#submissions > table > tbody > tr > td {
+#scores > table > tbody > tr > td {
     padding: 15px;
 }
 
-#submissions > table > tbody > tr {
+#scores > table > tbody > tr {
     border-style: solid;
 }
 
-#submissions > table {
+#scores > table {
     border-collapse: collapse;
 }

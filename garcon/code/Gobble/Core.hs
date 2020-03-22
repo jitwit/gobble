@@ -58,10 +58,10 @@ score'word :: Text -> Int
 score'word = ([0,0,0,1,1,2,3,5,11] !!) . min 8 . T.length
 
 round'length :: Int
-round'length = 90
+round'length = 20
 
 score'length :: Int
-score'length = 35
+score'length = 10
 
 round'period :: NominalDiffTime
 round'period = unsafeCoerce $ secondsToDiffTime $

@@ -9,7 +9,7 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Data.ByteString.Lazy.Char8 as B
 import Data.Text (Text)
-import Data.List (union,(\\),sortBy)
+import Data.List (union,(\\),sortBy,intercalate)
 import Data.Function
 import Data.Proxy
 import qualified Data.Map as M
@@ -82,11 +82,7 @@ new'player who conn = liftIO $ do
     [ "time" A..= (gob^.board.creationTime.to (addUTCTime round'period))
     , "pause" A..= score'length
     , "round" A..= round'length ]
-  when (gob ^. game'phase & isn't _Scoring) $ do
-    let peeps = renderHtml $ do
-          h3 "who's here?"
-          ul ! H.id "definitions" $ mapM_ (li.text) (gob^.players.to M.keys)
-    broadcast'val $ tag'thing "peeps" peeps
+  add'tweet "GOBBLE" (who <> " joined the chat.")
 
 name'player :: (?gobble :: TVar Gobble, MonadIO m) => Connection -> m Name
 name'player conn = liftIO $ do
@@ -101,11 +97,7 @@ remove'player :: (?gobble :: TVar Gobble, MonadIO m) => Name -> m ()
 remove'player who = liftIO $ do
   gob <- (players . at who .~ Nothing) <$> readTVarIO ?gobble
   atomically $ writeTVar ?gobble gob
-  when (gob ^. game'phase & isn't _Scoring) $ do
-    let peeps = renderHtml $ do
-          h3 "who's here?"
-          ul $ mapM_ (li.text) (gob^.players.to M.keys)
-    broadcast'val $ tag'thing "peeps" peeps
+  add'tweet "GOBBLE" (who <> " left the chat.")
 
 reply :: (?gobble :: TVar Gobble, WebSocketsData a, MonadIO m) => Connection -> a -> m ()
 reply conn = liftIO . sendTextData conn
@@ -138,8 +130,13 @@ add'tweet who tweet = liftIO $ do
 
 tweet'chat :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 tweet'chat = liftIO $ do
-  xs <- readTVarIO ?gobble
-  broadcast'val $ tag'thing "chirp" $ xs ^. chat'room & show
+  gob <- readTVarIO ?gobble
+  let whos'here = H.text $ T.intercalate ", " (gob^.players.to M.keys)
+  broadcast'val $ tag'thing "chirp" $ renderHtml $ table $ do
+    thead whos'here
+    forM_ (gob^..chat'room.messages.folded) $ \(Chat'Message tweet author) ->
+      tr $ do td $ text author
+              td $ text tweet
 
 handle'control :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Connection -> ControlMessage -> m ()
 handle'control who conn = liftIO . \case
@@ -207,13 +204,14 @@ score'round = liftIO $ do
   (all'subs,gob) <- score'submissions <$> readTVarIO ?gobble
   atomically $ writeTVar ?gobble gob
   putStrLn "Scored Round... "
+  broadcast'val $ tag'thing "words" $ renderHtml mempty
   let sol = gob ^. board.word'list
       wl = sortBy (flip compare `on` T.length . fst) $ M.toList sol
       subs = gob^..players.traversed.answers
-  broadcast'val $ tag'thing "peeps" $ renderHtml $ do
+  broadcast'val $ tag'thing "solution" $ renderHtml $ do
     h3 "word list"
     table $ forM_ wl $ \(w,d) -> tr $ td (text w) >> td (text d)
-  broadcast'val $ tag'thing "words" $ renderHtml $
+  broadcast'val $ tag'thing "scores" $ renderHtml $
     table $ do thead $ do td $ ""
                           mapM_ (th.text) (gob^.players.to M.keys)
                tr $ do td "score"
@@ -243,11 +241,9 @@ fresh'round = liftIO $ do
     [ "time" A..= (b^.creationTime.to (addUTCTime round'period))
     , "pause" A..= score'length
     , "round" A..= round'length ]
-  broadcast'val $ tag'thing "peeps" $ renderHtml $ do
-    h3 "who's here?"
-    ul $ mapM_ (li.text) (gob^.players.to M.keys)
+  broadcast'val $ tag'thing "scores" $ renderHtml mempty
+  broadcast'val $ tag'thing "solution" $ renderHtml mempty
 
--- is this the problem?
 run'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 run'round = liftIO $ do
   fresh'round
@@ -279,21 +275,31 @@ instance ToMarkup GobblePage where
       script ! H.src "static/jquery-3.4.1.slim.js" $ ""
       script ! H.src "static/gobble.js" $ ""
     H.body $ do
-          H.h1 "GOBBLE"
+      H.h1 "GOBBLE"
+      H.div ! H.class_ "row" $ do
+        H.div ! H.class_ "column" $ do
           H.div ! H.id "gobble" $ ""
+          
+        H.div ! H.class_ "column" $ do
           H.div ! H.id "timer" $ ""
           H.form ! H.id "mush" $ do
             H.input ! H.autocomplete "off" ! H.spellcheck "off"
-             ! H.type_ "text" ! H.id "scratch"
+              ! H.type_ "text" ! H.id "scratch"
             H.input ! H.type_ "submit" ! H.value "mush!"
+          H.ul ! H.id "submissions" $ ""
+          
+        H.div ! H.class_ "column" $ do
           H.div ! H.id "twitter" $ do
             H.div ! H.id "tweets" $ ""
-            H.form ! H.id "tweet" $ do
-              H.input ! H.type_ "text" ! H.autocomplete "off" ! H.id "scribble"
-              H.input ! H.type_ "submit" ! H.hidden ""
-          H.ul ! H.id "submissions" $ ""
-          H.div ! H.id "word-list" $ ""
-          H.div ! H.id "people" $ ""
+          H.form ! H.id "tweet" $ do
+            H.input ! H.type_ "text" ! H.autocomplete "off" ! H.id "scribble"
+            H.input ! H.type_ "submit" ! H.hidden ""
+
+      H.div ! H.class_ "row" $ do
+        H.div ! H.class_ "column" $ do
+          H.div ! H.id "solution" $ ""
+        H.div ! H.id "scores" $ ""
+
 
 type BoggleAPI =
        Get '[HTML] GobblePage

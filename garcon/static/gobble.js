@@ -51,10 +51,11 @@ $(() => {
         if (res === "name-is-taken") { set_name(msg=" (previous one is taken)"); }
         else if (!(res['board'] == null)) { $("#gobble").html(res['board']); query_words(); }
         else if (!(res['words'] == null)) { $("#submissions").html(res['words']); }
-        else if (!(res['peeps'] == null)) { $("#people").html(res['peeps']); }
+        else if (!(res['peeps'] == null)) { $("#people").html(res['peeps']); } // defns, actually
         else if (!(res['chirp'] == null)) { $("#tweets").html(res['chirp']); }
         else if (!(res['time'] == null)) { timer(new Date (res['time']),res['round'],res['pause']); }
-        else if (!(res['word_list'] == null)) { $("#word-list").html(res['word_list']); }
+        else if (!(res['solution'] == null)) { $("#solution").html(res['solution']); }
+        else if (!(res['scores'] == null)) { $("#scores").html(res['scores']); }
         else { console.log(res); }
     };
     boggle.onclose = () => { alert("lost connection."); };
