@@ -2,7 +2,7 @@
 , containers, diagrams, diagrams-lib, diagrams-svg, directory
 , filepath, lens, lens-aeson, mtl, process, servant, servant-blaze
 , servant-client, servant-server, stdenv, stm, text, time, unix
-, wai, wai-websockets, warp, websockets
+, wai, wai-websockets, warp, websockets, hashable
 }:
 mkDerivation {
   pname = "gobble";
@@ -14,7 +14,7 @@ mkDerivation {
     aeson base blaze-html bytestring colour containers diagrams
     diagrams-lib diagrams-svg directory filepath lens lens-aeson mtl
     process servant servant-blaze servant-client servant-server stm
-    text time unix wai wai-websockets warp websockets
+    text time unix wai wai-websockets warp websockets hashable
   ];
   license = "unknown";
   hydraPlatforms = stdenv.lib.platforms.none;

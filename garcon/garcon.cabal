@@ -33,7 +33,8 @@ common doggle
     diagrams,
     diagrams-svg,
     diagrams-lib,
-    colour
+    colour,
+    hashable
 
 executable gobble
   import: doggle

@@ -9,7 +9,7 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Data.ByteString.Lazy.Char8 as B
 import Data.Text (Text)
-import Data.List (union,(\\),sortBy)
+import Data.List (union,(\\),sortBy,intercalate)
 import Data.Function
 import Data.Proxy
 import qualified Data.Map as M
@@ -22,6 +22,7 @@ import System.Environment
 import System.Process
 import System.Directory
 import Data.Time.Clock
+import Data.Hashable
 
 import Control.Concurrent
 import Control.Concurrent.STM.TVar
@@ -69,30 +70,19 @@ fetch'board = liftIO $ view board <$> readTVarIO ?gobble
 
 is'name'free :: (?gobble :: TVar Gobble, MonadIO m) => Name -> m Bool
 is'name'free name = liftIO $
-  not . isn't _Nothing . preview (players.ix name) <$> readTVarIO ?gobble
+  (&&name/="").not.isn't _Nothing.preview (players.ix name) <$> readTVarIO ?gobble
 
 new'player :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Connection -> m ()
 new'player who conn = liftIO $ do
   gob <- (players.at who ?~ Player conn M.empty 0) <$> readTVarIO ?gobble
   atomically $ writeTVar ?gobble gob
-  let rnd = gob ^. current'round  
-  reply'json conn $ tag'thing "board" $ renderHtml $ html'of'board rnd (gob^.board)
+  let rnd = gob ^. current'round
+  reply'json conn $ tag'thing "board" $ renderHtml $ html'of'board (gob^.board)
   reply'json conn $ A.object
     [ "time" A..= (gob^.board.creationTime.to (addUTCTime round'period))
     , "pause" A..= score'length
     , "round" A..= round'length ]
-  case gob ^. game'phase of
-    Scoring -> do
-      let sol = gob ^. board.word'list
-          wl = sortBy (flip compare `on` T.length . fst) $ M.toList sol
-      reply'json conn $ tag'thing "peeps" $ renderHtml $ do
-        h3 "word list"
-        table $ forM_ wl $ \(w,d) -> tr $ td (text w) >> td (text d)
-    Boggled -> do
-      let peeps = renderHtml $ do
-            h3 "who's here?"
-            ul ! H.id "definitions" $ mapM_ (li.text) (gob^.players.to M.keys)
-      broadcast'val $ tag'thing "peeps" peeps
+  add'tweet "GOBBLE" (who <> " joined the chat.")
 
 name'player :: (?gobble :: TVar Gobble, MonadIO m) => Connection -> m Name
 name'player conn = liftIO $ do
@@ -107,11 +97,6 @@ remove'player :: (?gobble :: TVar Gobble, MonadIO m) => Name -> m ()
 remove'player who = liftIO $ do
   gob <- (players . at who .~ Nothing) <$> readTVarIO ?gobble
   atomically $ writeTVar ?gobble gob
-  when (gob ^. game'phase & isn't _Scoring) $ do
-    let peeps = renderHtml $ do
-          h3 "who's here?"
-          ul $ mapM_ (li.text) (gob^.players.to M.keys)
-    broadcast'val $ tag'thing "peeps" peeps
 
 reply :: (?gobble :: TVar Gobble, WebSocketsData a, MonadIO m) => Connection -> a -> m ()
 reply conn = liftIO . sendTextData conn
@@ -138,8 +123,19 @@ add'tweet :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Text -> m ()
 add'tweet who tweet = liftIO $ do
   now <- getCurrentTime
   atomically $ modifyTVar' ?gobble $
-    (chat'room.messages.at now ?~ Chat'Message tweet who now) .
+    (chat'room.messages.at now ?~ Chat'Message tweet who) .
     (chat'room.messages %~ \m -> M.drop (M.size m - 10) m)
+  tweet'chat
+
+tweet'chat :: (?gobble :: TVar Gobble, MonadIO m) => m ()
+tweet'chat = liftIO $ do
+  gob <- readTVarIO ?gobble
+  let whos'here = H.text $ T.intercalate ", " (gob^.players.to M.keys)
+  broadcast'val $ tag'thing "chirp" $ renderHtml $ table $ do -- ! H.style "width:300px" $ do
+    thead whos'here
+    forM_ (gob^..chat'room.messages.folded) $ \(Chat'Message tweet author) ->
+      tr $ do td $ text author
+              td $ text tweet -- ! H.style "text-align:right" $ text tweet
 
 handle'control :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Connection -> ControlMessage -> m ()
 handle'control who conn = liftIO . \case
@@ -196,7 +192,6 @@ score'submissions gob = (all'subs, gob') where
     & game'phase .~ Scoring
     & current'round +~ 1
   solution = gob^.board.word'list
-  score'word = ([0,0,0,1,1,2,3,5,11] !!) . min 8 . T.length
   all'subs = gob ^.. players.traversed.answers & M.unionsWith (+)
   scr (Player conn sol scr) = Player conn sol (sum pts - sum npts) where
     pts = [ score'word word | (word,1) <- M.toList (all'subs .& sol .& solution) ]
@@ -207,13 +202,14 @@ score'round = liftIO $ do
   (all'subs,gob) <- score'submissions <$> readTVarIO ?gobble
   atomically $ writeTVar ?gobble gob
   putStrLn "Scored Round... "
+  broadcast'val $ tag'thing "words" $ renderHtml mempty
   let sol = gob ^. board.word'list
       wl = sortBy (flip compare `on` T.length . fst) $ M.toList sol
       subs = gob^..players.traversed.answers
-  broadcast'val $ tag'thing "peeps" $ renderHtml $ do
+  broadcast'val $ tag'thing "solution" $ renderHtml $ do
     h3 "word list"
     table $ forM_ wl $ \(w,d) -> tr $ td (text w) >> td (text d)
-  broadcast'val $ tag'thing "words" $ renderHtml $
+  broadcast'val $ tag'thing "scores" $ renderHtml $
     table $ do thead $ do td $ ""
                           mapM_ (th.text) (gob^.players.to M.keys)
                tr $ do td "score"
@@ -227,8 +223,8 @@ score'round = liftIO $ do
                          td $ ul $ mapM_ (li.text) ws
 
 -- horrible way of avoiding browser cache
-html'of'board :: Int -> Board -> Html
-html'of'board r b = img ! H.src ("static/board.svg?" <> stringValue (show r))
+html'of'board :: Board -> Html
+html'of'board b = img ! H.src ("static/board.svg?" <> stringValue (b^.letters&hash&show))
 
 fresh'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 fresh'round = liftIO $ do
@@ -238,17 +234,14 @@ fresh'round = liftIO $ do
          readTVarIO ?gobble
   atomically $ writeTVar ?gobble gob
   putStrLn "New Round"
-  let rnd = gob ^. current'round
-  broadcast'val $ tag'thing "board" $ renderHtml $ html'of'board rnd b
+  broadcast'val $ tag'thing "board" $ renderHtml $ html'of'board b
   broadcast'val $ A.object
     [ "time" A..= (b^.creationTime.to (addUTCTime round'period))
     , "pause" A..= score'length
     , "round" A..= round'length ]
-  broadcast'val $ tag'thing "peeps" $ renderHtml $ do
-    h3 "who's here?"
-    ul $ mapM_ (li.text) (gob^.players.to M.keys)
+  broadcast'val $ tag'thing "scores" $ renderHtml mempty
+  broadcast'val $ tag'thing "solution" $ renderHtml mempty
 
--- is this the problem?
 run'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 run'round = liftIO $ do
   fresh'round
@@ -276,23 +269,34 @@ instance ToMarkup GobblePage where
   toMarkup _ = html $ do
     H.head $ do
       title "gobble"
-      link ! H.rel "stylesheet" ! H.href "static/gobble.css"
+      link ! H.rel "stylesheet" ! H.href "static/gobble.css?0"
       script ! H.src "static/jquery-3.4.1.slim.js" $ ""
-      script ! H.src "static/gobble.js" $ ""
+      script ! H.src "static/gobble.js?0" $ ""
     H.body $ do
       H.h1 "GOBBLE"
-      H.div ! H.id "boggle" $ do
-        H.div ! H.id "viz" $ do
+      H.div ! H.class_ "row" $ do
+        H.div ! H.class_ "column" $ do
           H.div ! H.id "gobble" $ ""
-          H.div ! H.id "people" $ ""
-        H.div ! H.id "words" $ do
+          
+        H.div ! H.class_ "column" $ do
           H.div ! H.id "timer" $ ""
           H.form ! H.id "mush" $ do
             H.input ! H.autocomplete "off" ! H.spellcheck "off"
-             ! H.type_ "text" ! H.id "scratch"
+              ! H.type_ "text" ! H.id "scratch"
             H.input ! H.type_ "submit" ! H.value "mush!"
           H.ul ! H.id "submissions" $ ""
-      H.div ! H.id "word-list" $ ""
+          
+        H.div ! H.class_ "column" $ do
+          H.div ! H.id "twitter" $ do
+            H.div ! H.id "tweets" $ ""
+          H.form ! H.id "tweet" $ do
+            H.input ! H.type_ "text" ! H.autocomplete "off" ! H.id "scribble"
+            H.input ! H.type_ "submit" ! H.hidden ""
+
+      H.div ! H.class_ "row" $ do
+        H.div ! H.class_ "column" $ do
+          H.div ! H.id "solution" $ ""
+        H.div ! H.id "scores" $ ""
 
 type BoggleAPI =
        Get '[HTML] GobblePage
@@ -309,8 +313,7 @@ naked'state = liftIO $ do
   return $ unlines [gob ^. board & show, gob ^. players & show,gob ^. chat'room & show]
 
 boggle'server :: (?gobble :: TVar Gobble) => Server BoggleAPI
-boggle'server =
-       pure GobblePage
+boggle'server = pure GobblePage
   :<|> serveDirectoryWebApp "static"
   :<|> check'boards
   :<|> naked'state
