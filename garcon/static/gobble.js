@@ -51,7 +51,7 @@ $(() => {
     boggle.onmessage = (msg) => {
         var res = JSON.parse(msg.data);
         if (res === "name-is-taken") { set_name(msg=" (previous one is taken)"); }
-        else if (!(res['board'] == null)) { $("#gobble").html(res['board']); query_words(); }
+        else if (!(res['board'] == null)) { $("#gobble").html(res['board']); $("#scratch").focus(); query_words(); }
         else if (!(res['words'] == null)) { $("#submissions").html(res['words']); }
         else if (!(res['peeps'] == null)) { $("#people").html(res['peeps']); } // defns, actually
         else if (!(res['chirp'] == null)) { $("#tweets").html(res['chirp']); }
