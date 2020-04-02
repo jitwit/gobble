@@ -235,7 +235,7 @@ new'pinou = do
   let img'dir = "static/images/"
   imgs <- listDirectory img'dir
   j <- randomRIO (0,length imgs - 1)
-  return $ H.img ! H.src (stringValue $ img'dir <> (imgs !! j)) ! H.height "400"
+  return $ H.img ! H.src (stringValue $ img'dir <> (imgs !! j))-- ! H.width "400"
 
 fresh'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 fresh'round = liftIO $ do

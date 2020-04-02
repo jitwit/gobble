@@ -43,6 +43,9 @@ update-boards : boards
 update-static :
 	nixops scp --to gobble-net garcon/static/ /var/www/gobble
 
+update-images :
+	nixops scp --to gobble-net garcon/images/ /var/www/gobble/static
+
 ghcid-gobble :
 	cd garcon && nix-shell --command 'ghcid -c "cabal repl gobble" -s ":l Main" -r'
 

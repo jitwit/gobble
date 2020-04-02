@@ -32,7 +32,8 @@ h1 {
 }
 
 #pinou > img {
-    clear: both;
+    max-width: 400px;
+    max-height: 400px;
 }
 
 body {

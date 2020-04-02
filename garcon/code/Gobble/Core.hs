@@ -58,7 +58,7 @@ score'word :: Text -> Int
 score'word = ([0,0,0,1,1,2,3,5,11] !!) . min 8 . T.length
 
 round'length :: Int
-round'length = 5
+round'length = 3
 
 score'length :: Int
 score'length = 10
