@@ -31,9 +31,14 @@ h1 {
     padding: 10px;
 }
 
+#pinou > img {
+    clear: both;
+}
+
 body {
     text-align: center;
     height: 100%;
+    position: relative;
 }
 
 #gobble > table > tbody > tr > td {
@@ -47,6 +52,9 @@ body {
 #gobble > table {
     background-color: #F1D0F3;
     border-collapse: collapse;
+}
+
+#scores {
 }
 
 #scores > table > tbody > tr > td {

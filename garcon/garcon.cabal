@@ -34,7 +34,8 @@ common doggle
     diagrams-svg,
     diagrams-lib,
     colour,
-    hashable
+    hashable,
+    random
 
 executable gobble
   import: doggle

@@ -21,6 +21,7 @@ import Control.Monad.State
 import System.Environment
 import System.Process
 import System.Directory
+import System.Random
 import Data.Time.Clock
 import Data.Hashable
 
@@ -95,8 +96,10 @@ name'player conn = liftIO $ do
 
 remove'player :: (?gobble :: TVar Gobble, MonadIO m) => Name -> m ()
 remove'player who = liftIO $ do
+  -- todo bug?
   gob <- (players . at who .~ Nothing) <$> readTVarIO ?gobble
   atomically $ writeTVar ?gobble gob
+  add'tweet "GOBBLE" (who <> " left the chat.")
 
 reply :: (?gobble :: TVar Gobble, WebSocketsData a, MonadIO m) => Connection -> a -> m ()
 reply conn = liftIO . sendTextData conn
@@ -139,7 +142,7 @@ tweet'chat = liftIO $ do
 
 handle'control :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Connection -> ControlMessage -> m ()
 handle'control who conn = liftIO . \case
-  Close{}  -> T.putStrLn (who <> " has left the chat") >> remove'player who
+  Close{}  -> T.putStrLn (who <> " pinged")
   Ping msg -> T.putStrLn (who <> " pinged")
   Pong msg -> T.putStrLn (who <> " ponged")
 
@@ -199,10 +202,12 @@ score'submissions gob = (all'subs, gob') where
 
 score'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 score'round = liftIO $ do
+  img <- new'pinou
   (all'subs,gob) <- score'submissions <$> readTVarIO ?gobble
   atomically $ writeTVar ?gobble gob
   putStrLn "Scored Round... "
   broadcast'val $ tag'thing "words" $ renderHtml mempty
+  broadcast'val $ tag'thing "pinou" $ renderHtml $ img
   let sol = gob ^. board.word'list
       wl = sortBy (flip compare `on` T.length . fst) $ M.toList sol
       subs = gob^..players.traversed.answers
@@ -222,9 +227,15 @@ score'round = liftIO $ do
                        forM_ [ M.keys $ sub .& sol | sub <- subs ] $ \ws ->
                          td $ ul $ mapM_ (li.text) ws
 
--- horrible way of avoiding browser cache
 html'of'board :: Board -> Html
 html'of'board b = img ! H.src ("static/board.svg?" <> stringValue (b^.letters&hash&show))
+
+new'pinou :: IO Html
+new'pinou = do
+  let img'dir = "static/images/"
+  imgs <- listDirectory img'dir
+  j <- randomRIO (0,length imgs - 1)
+  return $ H.img ! H.src (stringValue $ img'dir <> (imgs !! j)) ! H.height "400"
 
 fresh'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 fresh'round = liftIO $ do
@@ -235,6 +246,7 @@ fresh'round = liftIO $ do
   atomically $ writeTVar ?gobble gob
   putStrLn "New Round"
   broadcast'val $ tag'thing "board" $ renderHtml $ html'of'board b
+  broadcast'val $ tag'thing "pinou" $ renderHtml mempty
   broadcast'val $ A.object
     [ "time" A..= (b^.creationTime.to (addUTCTime round'period))
     , "pause" A..= score'length
@@ -269,15 +281,14 @@ instance ToMarkup GobblePage where
   toMarkup _ = html $ do
     H.head $ do
       title "gobble"
-      link ! H.rel "stylesheet" ! H.href "static/gobble.css?1"
+      link ! H.rel "stylesheet" ! H.href "static/gobble.css?2"
       script ! H.src "static/jquery-3.4.1.slim.js" $ ""
-      script ! H.src "static/gobble.js?1" $ ""
+      script ! H.src "static/gobble.js?2" $ ""
     H.body $ do
       H.h1 "GOBBLE"
       H.div ! H.class_ "row" $ do
         H.div ! H.class_ "column" $ do
           H.div ! H.id "gobble" $ ""
-          
         H.div ! H.class_ "column" $ do
           H.div ! H.id "timer" $ ""
           H.form ! H.id "mush" $ do
@@ -285,14 +296,13 @@ instance ToMarkup GobblePage where
               ! H.type_ "text" ! H.id "scratch"
             H.input ! H.type_ "submit" ! H.value "mush!"
           H.ul ! H.id "submissions" $ ""
-          
+          H.div ! H.id "pinou" $ ""
         H.div ! H.class_ "column" $ do
           H.div ! H.id "twitter" $ do
             H.div ! H.id "tweets" $ ""
           H.form ! H.id "tweet" $ do
             H.input ! H.type_ "text" ! H.autocomplete "off" ! H.id "scribble"
             H.input ! H.type_ "submit" ! H.hidden ""
-
       H.div ! H.class_ "row" $ do
         H.div ! H.class_ "column" $ do
           H.div ! H.id "solution" $ ""

@@ -1,6 +1,6 @@
 { mkDerivation, aeson, base, blaze-html, bytestring, colour
 , containers, diagrams, diagrams-lib, diagrams-svg, directory
-, filepath, lens, lens-aeson, mtl, process, servant, servant-blaze
+, filepath, lens, lens-aeson, mtl, process, random, servant, servant-blaze
 , servant-client, servant-server, stdenv, stm, text, time, unix
 , wai, wai-websockets, warp, websockets, hashable
 }:
@@ -13,7 +13,7 @@ mkDerivation {
   executableHaskellDepends = [
     aeson base blaze-html bytestring colour containers diagrams
     diagrams-lib diagrams-svg directory filepath lens lens-aeson mtl
-    process servant servant-blaze servant-client servant-server stm
+    process random servant servant-blaze servant-client servant-server stm
     text time unix wai wai-websockets warp websockets hashable
   ];
   license = "unknown";

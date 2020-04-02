@@ -55,6 +55,7 @@ $(() => {
         else if (!(res['words'] == null)) { $("#submissions").html(res['words']); }
         else if (!(res['peeps'] == null)) { $("#people").html(res['peeps']); } // defns, actually
         else if (!(res['chirp'] == null)) { $("#tweets").html(res['chirp']); }
+        else if (!(res['pinou'] == null)) { $("#pinou").html(res['pinou']); }
         else if (!(res['time'] == null)) { timer(new Date (res['time']),res['round'],res['pause']); }
         else if (!(res['solution'] == null)) { $("#solution").html(res['solution']); }
         else if (!(res['scores'] == null)) { $("#scores").html(res['scores']); }
