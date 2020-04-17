@@ -8,7 +8,9 @@ import Control.Lens
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Data.ByteString.Lazy.Char8 as B
+import qualified Data.ByteString.Lazy.UTF8 as B8
 import Data.Text (Text)
+import Data.Text.Encoding (decodeUtf8')
 import Data.List (union,(\\),sortBy,intercalate)
 import Data.Function
 import Data.Proxy
@@ -124,8 +126,12 @@ delete'word who word = liftIO $ atomically $ do
   when (gob ^. game'phase & isn't _Scoring) $ writeTVar ?gobble
     (gob & players.ix who.answers.at word .~ Nothing)
 
+sanitize :: Text -> Text
+sanitize = id where
+  banned = ["keyboard"]
+
 add'tweet :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Text -> m ()
-add'tweet who tweet = liftIO $ do
+add'tweet who (sanitize -> tweet) = liftIO $ do
   now <- getCurrentTime
   atomically $ modifyTVar' ?gobble $
     (chat'room.messages.at now ?~ Chat'Message tweet who) .
@@ -158,7 +164,7 @@ broadcast'val = broadcast . A.encode
 pattern Query cmd <- Text cmd _
 pattern Words ws <- Text (T.words.T.toUpper.T.pack.B.unpack -> "GOBBLE":ws) _
 pattern Delete w <- Text (T.words.T.toUpper.T.pack.B.unpack -> "DOBBLE":w:[]) _
-pattern Chirp msg <- Text (T.stripPrefix "chirp ".T.pack.B.unpack -> Just msg) _
+pattern Chirp msg <- Text (T.stripPrefix "chirp ".T.pack.B8.toString -> Just msg) _
 
 handle'data :: (?gobble :: TVar Gobble, MonadIO m)
   => Name -> Connection -> DataMessage -> m ()

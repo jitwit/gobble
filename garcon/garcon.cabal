@@ -35,7 +35,8 @@ common doggle
     diagrams-lib,
     colour,
     hashable,
-    random
+    random,
+    utf8-string
 
 executable gobble
   import: doggle
