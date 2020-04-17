@@ -9,7 +9,7 @@ $(() => {
     chirp = (tweet) => { boggle.send('chirp ' + tweet); };
     query_words = () => { boggle.send('words'); };
     set_name = (msg="") => {
-        name = prompt('name?' + msg);
+        var name = prompt('name?' + msg);
         boggle.send(name);
         $("#scratch").focus();
     };

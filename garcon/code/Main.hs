@@ -70,8 +70,9 @@ fetch'board :: (?gobble :: TVar Gobble, MonadIO m) => m Board
 fetch'board = liftIO $ view board <$> readTVarIO ?gobble
 
 is'name'free :: (?gobble :: TVar Gobble, MonadIO m) => Name -> m Bool
-is'name'free name = liftIO $
-  (&&name/="").not.isn't _Nothing.preview (players.ix name) <$> readTVarIO ?gobble
+is'name'free name = liftIO $ do
+  check'1 <- not.isn't _Nothing.preview (players.ix name) <$> readTVarIO ?gobble
+  return $ name /= "" && name /= "null" && check'1
 
 new'player :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Connection -> m ()
 new'player who conn = liftIO $ do
@@ -99,7 +100,6 @@ remove'player who = liftIO $ do
   -- todo bug?
   gob <- (players . at who .~ Nothing) <$> readTVarIO ?gobble
   atomically $ writeTVar ?gobble gob
-  add'tweet "GOBBLE" (who <> " left the chat.")
 
 reply :: (?gobble :: TVar Gobble, WebSocketsData a, MonadIO m) => Connection -> a -> m ()
 reply conn = liftIO . sendTextData conn
@@ -110,11 +110,13 @@ reply'json conn = reply conn . A.encode
 send'json :: MonadIO m => A.Value -> Connection -> m ()
 send'json obj conn = liftIO $ sendTextData conn (A.encode obj)
 
-submit'word :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Text -> m ()
-submit'word who word = liftIO $ atomically $ do
+submit'words :: (?gobble :: TVar Gobble, MonadIO m) => Name -> [Text] -> m ()
+submit'words who words = liftIO $ atomically $ do
   gob <- readTVar ?gobble
-  when (gob ^. game'phase & isn't _Scoring) $ writeTVar ?gobble
-    (gob & players.ix who.answers.at word ?~ 1)
+  when (gob ^. game'phase & isn't _Scoring) $
+    let gob' = gob & players . ix who . answers %~ \m ->
+          foldr (\w m -> m & at w ?~ 1) m words
+     in writeTVar ?gobble gob'
 
 delete'word :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Text -> m ()
 delete'word who word = liftIO $ atomically $ do
@@ -142,7 +144,7 @@ tweet'chat = liftIO $ do
 
 handle'control :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Connection -> ControlMessage -> m ()
 handle'control who conn = liftIO . \case
-  Close{}  -> T.putStrLn (who <> " pinged")
+  Close{}  -> remove'player who >> add'tweet "GOBBLE" (who <> " left the chat.")
   Ping msg -> T.putStrLn (who <> " pinged")
   Pong msg -> T.putStrLn (who <> " ponged")
 
@@ -154,14 +156,14 @@ broadcast'val :: (?gobble :: TVar Gobble, A.ToJSON a, MonadIO m) => a -> m ()
 broadcast'val = broadcast . A.encode
 
 pattern Query cmd <- Text cmd _
-pattern Word w <- Text (T.words.T.toUpper.T.pack.B.unpack -> "GOBBLE":w:[]) _
+pattern Words ws <- Text (T.words.T.toUpper.T.pack.B.unpack -> "GOBBLE":ws) _
 pattern Delete w <- Text (T.words.T.toUpper.T.pack.B.unpack -> "DOBBLE":w:[]) _
 pattern Chirp msg <- Text (T.stripPrefix "chirp ".T.pack.B.unpack -> Just msg) _
 
 handle'data :: (?gobble :: TVar Gobble, MonadIO m)
   => Name -> Connection -> DataMessage -> m ()
 handle'data who conn = liftIO . \case
-  Word w -> submit'word who w
+  Words ws -> submit'words who ws
   Delete w -> delete'word who w
   Chirp c -> add'tweet who c
   Query "who-else" -> reply'json conn =<< get'players
@@ -234,8 +236,10 @@ new'pinou :: IO Html
 new'pinou = do
   let img'dir = "static/images/"
   imgs <- listDirectory img'dir
-  j <- randomRIO (0,length imgs - 1)
-  return $ H.img ! H.src (stringValue $ img'dir <> (imgs !! j))-- ! H.width "400"
+  if null imgs
+    then pure mempty
+    else do j <- randomRIO (0,length imgs - 1)
+            return $ H.img ! H.src (stringValue $ img'dir <> (imgs !! j))-- ! H.width "400"
 
 fresh'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 fresh'round = liftIO $ do
@@ -281,9 +285,9 @@ instance ToMarkup GobblePage where
   toMarkup _ = html $ do
     H.head $ do
       title "gobble"
-      link ! H.rel "stylesheet" ! H.href "static/gobble.css?2"
+      link ! H.rel "stylesheet" ! H.href "static/gobble.css?3"
       script ! H.src "static/jquery-3.4.1.slim.js" $ ""
-      script ! H.src "static/gobble.js?2" $ ""
+      script ! H.src "static/gobble.js?3" $ ""
     H.body $ do
       H.h1 "GOBBLE"
       H.div ! H.class_ "row" $ do
@@ -340,5 +344,5 @@ launch'boggle port = do
 
 main :: IO ()
 main = map read <$> getArgs >>= \case
-  [] -> launch'boggle 9009 -- ... ?
+  [] -> launch'boggle 8080 -- ... ?
   x:_ -> launch'boggle x
