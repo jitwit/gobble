@@ -12,5 +12,7 @@
   (import (chezscheme)
           (only (euler) sort-on nub-eq)
           (trie)
-          (only (srfi :13) string-join string-tokenize))
+          (only (srfi :13) string-join string-tokenize)
+          (only (srfi :14) char-set char-set-complement))
+  
   (include "code/dictionary.scm"))

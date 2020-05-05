@@ -1,11 +1,18 @@
 coclass 'gobble'
 
-N=:#]WORDS=: 'b'freads<'~/code/gobble/input/collins.txt'
+init=: 3 : 0
+COLN=: 1!:1 < jpath '~/code/gobble/input/definitions.txt'
+COLN=: ([: <;._1 (9{a.)&,);._2 COLN
+N=:#]WORDS=: {."1 COLN
+(9!:43) 0
+)
+
 dice4=: _6]\'NAEAEGEGNWEHCSOAHPLVERDYTOATOWPKAFFSHRVTWEHQUMNIEITSSORLTYETTITSYDLXEDIRTOIMCUBAOBOJNLNHZRENSIEU'
 roll=: ({~?~@#) {"0 1~ [: ? #"1
 score_word=: 0 0 0 1 1 2 3 5 11{~8<.#
 score=: ([:>score_word&.>@[) +/ .* [:<:[:+:e.
 show_board=: -@%:@#<"0\]
+definition=: [: {: COLN {~ WORDS&I.
 
 reify_grid=: [:-.&_1&.>[:,[:<"_2[:,"_2/(0 0-.~,/,"0/~i:1)|.!._1]
 adj=: ],"_ 0]-.~[{::~[:{:]
@@ -23,3 +30,5 @@ while. #curr do. ws =. ''[next =. ,: 0,{.curr
   end. curr=. }.next[words=. words,~.ws
 end. (/: #&.>) /:~ words
 )
+
+init''
