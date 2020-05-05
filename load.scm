@@ -3,7 +3,6 @@
     (library-directories (cons path (library-directories)))))
 
 (add-lib ".")
-(add-lib "~/code/chez-oleg")
 
 (import (dictionary)
         (gobble)
@@ -11,9 +10,7 @@
         (dictionary)
         (trie)
         (only (srfi :1) append-map filter-map)
-        (oleg ssax)
-        (oleg sxml-tools)
-        (oleg sxml-tree-trans))
+	)
 
 (define (dump-collins)
   (define out-file "input/clns.txt")
@@ -28,14 +25,14 @@
         (newline))
       (for-all put-def (reverse (get-collins))))))
 
-(define (get-dela-fr) ;; danger - large file
-  (define dict "input/dela-fr-public-u8.dic.xml")
-  (with-input-from-file dict
-    (lambda ()
-      (ssax:xml->sxml (current-input-port) '()))))
+;; (define (get-dela-fr) ;; danger - large file
+;;   (define dict "input/dela-fr-public-u8.dic.xml")
+;;   (with-input-from-file dict
+;;     (lambda ()
+;;       (ssax:xml->sxml (current-input-port) '()))))
 
-(define (read-dela tree)
-  (map cadr (cadr tree)))
+;; (define (read-dela tree)
+;;   (map cadr (cadr tree)))
 
 (define example-board
   '#("FXIE"
