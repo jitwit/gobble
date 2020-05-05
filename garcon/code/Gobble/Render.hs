@@ -25,12 +25,8 @@ board'dia b = vcat [ hcat [ block x | x <- T.unpack r ] | r <- board'rows b ] wh
     let ls = case x of
           'Q' -> "Qu"
           _ -> [x]
-        back = square 1
-          & bg (sRGB24 0xF1 0xD0 0xF3)
-        fore = D.text ls
-          & scale 0.45
-          & translate (V2 0 (-0.025))
-          & font "Georgia"
+        back = square 1 & bg (sRGB24 0xF1 0xD0 0xF3)
+        fore = D.text ls & scale 0.45 & translate (V2 0 (-0.025)) & font "Georgia"
      in fore <> back
 
 write'board :: Text -> IO ()
@@ -38,9 +34,3 @@ write'board = renderSVG "static/board.svg" (mkSizeSpec $ Just <$> V2 300 300) . 
 
 tag'thing :: A.ToJSON v => Text -> v -> A.Value
 tag'thing tag val = A.object [ tag A..= val ]
-
--- instance WebSocketsData WhoElse where
---   toLazyByteString (WhoElse peeps) = B.pack $ T.unpack $ renderHtml $ do
---     h3 "who's here?"
---     ul ! H.id "definitions" $ mapM_ (li.H.text) peeps
-

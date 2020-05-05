@@ -27,7 +27,8 @@ data Board = Board
 data Player = Player
   { _connection :: Connection
   , _answers :: Map Text Int
-  , _score :: Int }
+  , _score :: Int
+  }
 
 instance Show Player where
   show (Player _ as n) =
