@@ -16,7 +16,7 @@
       (let loop ((x (get-line in)) (words '()))
         (if (eof-object? x)
             words
-            (loop (get-line in) (cons (parse-definition x) words)))))))
+            (loop (get-line in) (cons (apply cons (parse-definition x)) words)))))))
 
 (define collins
   (call/cc
