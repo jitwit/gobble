@@ -46,7 +46,6 @@ import Network.Wai.Handler.Warp
 import qualified Data.Aeson as A
 
 import Gobble.Core
-import Gobble.Outils
 import Gobble.Render
 
 gobbler :: IO [T.Text]
@@ -301,7 +300,7 @@ instance ToMarkup GobblePage where
           H.form ! H.id "mush" $ do
             H.input ! H.autocomplete "off" ! H.spellcheck "off"
               ! H.type_ "text" ! H.id "scratch"
-            H.input ! H.type_ "submit" ! H.value "mush!"
+            H.input ! H.type_ "submit" ! H.hidden "mush!"
           H.ul ! H.id "submissions" $ ""
           H.div ! H.id "pinou" $ ""
         H.div ! H.class_ "column" $ do
@@ -347,5 +346,5 @@ launch'boggle port = do
 
 main :: IO ()
 main = map read <$> getArgs >>= \case
-  [] -> launch'boggle 8080 -- ... ?
+  [] -> launch'boggle 8080
   x:_ -> launch'boggle x

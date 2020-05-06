@@ -10,6 +10,7 @@ import qualified Data.Text as T
 import Data.Text (Text)
 import Control.Lens
 import Unsafe.Coerce
+import Control.Concurrent
 
 todo = error "todo"
 
@@ -67,3 +68,12 @@ score'length = 45
 round'period :: NominalDiffTime
 round'period = unsafeCoerce $ secondsToDiffTime $
   fromIntegral $ round'length + score'length
+
+isqrt :: Integral a => a -> a
+isqrt = floor . sqrt . fromIntegral
+
+board'rows :: Text -> [Text]
+board'rows b = T.chunksOf (isqrt $ T.length b) b
+
+threadDelayS :: Int -> IO ()
+threadDelayS = threadDelay . (*10^6)

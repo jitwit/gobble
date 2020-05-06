@@ -17,7 +17,6 @@ import qualified Data.ByteString.Lazy.Char8 as B
 import Network.WebSockets
 
 import Gobble.Core
-import Gobble.Outils
 
 board'dia :: Text -> Diagram B
 board'dia b = vcat [ hcat [ block x | x <- T.unpack r ] | r <- board'rows b ] where
