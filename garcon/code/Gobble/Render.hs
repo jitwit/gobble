@@ -1,3 +1,4 @@
+{-# language OverloadedStrings, ImplicitParams, TemplateHaskell, LambdaCase #-}
 {-# language FlexibleContexts #-}
 
 module Gobble.Render where

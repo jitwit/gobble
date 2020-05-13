@@ -42,17 +42,18 @@ import qualified Data.Aeson as A
 import Gobble.Core
 import Gobble.Render
 
-gobbler :: IO [T.Text]
+gobbler :: IO (T.Text, [T.Text])
 gobbler = do
-  let boards = "boards/"
-  board <- (boards <>) . head <$> listDirectory boards
-  contents <- T.lines <$> T.readFile board
-  removeFile board
-  return contents
+  let board'dir = "boards/"
+  boards <- listDirectory board'dir
+  board <- (boards!!) <$> randomRIO (0,length boards - 1)
+  wds <- T.readFile (board'dir <> board)
+  removeFile (board'dir <> board)
+  return (T.pack board,T.lines wds)
 
 new'board :: IO Board
 new'board = do
-  b:as <- gobbler
+  (b,as) <- gobbler
   t <- getCurrentTime
   write'board b
   return $ Board t b $ M.fromList [ (w,T.unwords def) | w:def <- map T.words as ]
