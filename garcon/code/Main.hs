@@ -46,13 +46,12 @@ import Network.Wai.Handler.Warp
 import qualified Data.Aeson as A
 
 import Gobble.Core
-import Gobble.Outils
 import Gobble.Render
 
 gobbler :: IO [T.Text]
 gobbler = do
-  let brds = "boards/"
-  board <- (brds <>) . head <$> listDirectory brds
+  let boards = "boards/"
+  board <- (boards <>) . head <$> listDirectory boards
   contents <- T.lines <$> T.readFile board
   removeFile board
   return contents
@@ -99,7 +98,6 @@ name'player conn = liftIO $ do
 
 remove'player :: (?gobble :: TVar Gobble, MonadIO m) => Name -> m ()
 remove'player who = liftIO $ do
-  -- todo bug?
   gob <- (players . at who .~ Nothing) <$> readTVarIO ?gobble
   atomically $ writeTVar ?gobble gob
 
@@ -115,10 +113,8 @@ send'json obj conn = liftIO $ sendTextData conn (A.encode obj)
 submit'words :: (?gobble :: TVar Gobble, MonadIO m) => Name -> [Text] -> m ()
 submit'words who words = liftIO $ atomically $ do
   gob <- readTVar ?gobble
-  when (gob ^. game'phase & isn't _Scoring) $
-    let gob' = gob & players . ix who . answers %~ \m ->
-          foldr (\w m -> m & at w ?~ 1) m words
-     in writeTVar ?gobble gob'
+  when (gob ^. game'phase & isn't _Scoring) $ writeTVar ?gobble $
+    gob & players.ix who.answers %~ flip (foldr (\w -> at w?~1)) words
 
 delete'word :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Text -> m ()
 delete'word who word = liftIO $ atomically $ do
@@ -126,15 +122,11 @@ delete'word who word = liftIO $ atomically $ do
   when (gob ^. game'phase & isn't _Scoring) $ writeTVar ?gobble
     (gob & players.ix who.answers.at word .~ Nothing)
 
-sanitize :: Text -> Text
-sanitize = id where
-  banned = ["keyboard"]
-
 add'tweet :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Text -> m ()
-add'tweet who (sanitize -> tweet) = liftIO $ do
+add'tweet who tweet = liftIO $ do
   now <- getCurrentTime
   atomically $ modifyTVar' ?gobble $
-    (chat'room.messages.at now ?~ Chat'Message tweet who) .
+    (chat'room.messages.at now?~Chat'Message tweet who) .
     (chat'room.messages %~ \m -> M.drop (M.size m - 10) m)
   tweet'chat
 
@@ -228,6 +220,12 @@ score'round = liftIO $ do
                tr $ do td "score"
                        forM_ (gob^..players.traversed.score) $ \n ->
                          td ! H.style "text-align:center;" $ text $ T.pack $ show n
+               when (1 < length subs) $
+                 tr $ do td "solo"
+                         forM_ [ sum (map score'word (M.keys (sub .& sol))) -
+                                 sum (map score'word (M.keys (sub .- sol)))
+                               | sub <- subs ] $ \ n ->
+                           td ! H.style "text-align:center;" $ text $ T.pack $ show n
                tr $ do td "mistakes"
                        forM_ [ M.keys $ sub .- sol | sub <- subs ] $ \ws ->
                          td $ ul $ mapM_ (li.text) ws
@@ -242,10 +240,8 @@ new'pinou :: IO Html
 new'pinou = do
   let img'dir = "static/images/"
   imgs <- listDirectory img'dir
-  if null imgs
-    then pure mempty
-    else do j <- randomRIO (0,length imgs - 1)
-            return $ H.img ! H.src (stringValue $ img'dir <> (imgs !! j))-- ! H.width "400"
+  j <- randomRIO (0,length imgs - 1)
+  return $ H.img ! H.src (stringValue $ img'dir <> (imgs !! j))
 
 fresh'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 fresh'round = liftIO $ do
@@ -291,9 +287,9 @@ instance ToMarkup GobblePage where
   toMarkup _ = html $ do
     H.head $ do
       title "gobble"
-      link ! H.rel "stylesheet" ! H.href "static/gobble.css?3"
+      link ! H.rel "stylesheet" ! H.href "static/gobble.css?4"
       script ! H.src "static/jquery-3.4.1.slim.js" $ ""
-      script ! H.src "static/gobble.js?3" $ ""
+      script ! H.src "static/gobble.js?4" $ ""
     H.body $ do
       H.h1 "GOBBLE"
       H.div ! H.class_ "row" $ do
@@ -304,7 +300,7 @@ instance ToMarkup GobblePage where
           H.form ! H.id "mush" $ do
             H.input ! H.autocomplete "off" ! H.spellcheck "off"
               ! H.type_ "text" ! H.id "scratch"
-            H.input ! H.type_ "submit" ! H.value "mush!"
+            H.input ! H.type_ "submit" ! H.hidden "mush!"
           H.ul ! H.id "submissions" $ ""
           H.div ! H.id "pinou" $ ""
         H.div ! H.class_ "column" $ do
@@ -350,5 +346,5 @@ launch'boggle port = do
 
 main :: IO ()
 main = map read <$> getArgs >>= \case
-  [] -> launch'boggle 8080 -- ... ?
+  [] -> launch'boggle 8080
   x:_ -> launch'boggle x
