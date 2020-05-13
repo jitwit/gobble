@@ -25,16 +25,10 @@ import System.Process
 import System.Directory
 import System.Random
 import Data.Time.Clock
-import Data.Hashable
 
 import Control.Concurrent
 import Control.Concurrent.STM.TVar
 import Control.Concurrent.STM
-
-import Text.Blaze.Html5 as H hiding (map,main,head,style)
-import qualified Text.Blaze.Html5 as H (head)
-import Text.Blaze.Html.Renderer.Text
-import qualified Text.Blaze.Html5.Attributes as H hiding (form)
 
 import Network.Wai.Handler.WebSockets
 import Network.WebSockets
@@ -77,12 +71,14 @@ is'name'free name = liftIO $ do
 
 new'player :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Connection -> m ()
 new'player who conn = liftIO $ do
-  gob <- (players.at who ?~ Player conn M.empty 0) <$> readTVarIO ?gobble
-  atomically $ writeTVar ?gobble gob
+  gob <- atomically $ do
+    g <- (players.at who ?~ Player conn M.empty 0) <$> readTVar ?gobble
+    writeTVar ?gobble g
+    return g
   let rnd = gob ^. current'round
-  reply'json conn $ tag'thing "board" $ renderHtml $ html'of'board (gob^.board)
+  reply'json conn $ tag'thing "board" $ html'of'board (gob^.board)
   reply'json conn $ A.object
-    [ "time" A..= (gob^.board.creationTime.to (addUTCTime round'period))
+    [ "time" A..= (gob^.board.creation'time.to (addUTCTime round'period))
     , "pause" A..= score'length
     , "round" A..= round'length ]
   add'tweet "GOBBLE" (who <> " joined the chat.")
@@ -131,14 +127,7 @@ add'tweet who tweet = liftIO $ do
   tweet'chat
 
 tweet'chat :: (?gobble :: TVar Gobble, MonadIO m) => m ()
-tweet'chat = liftIO $ do
-  gob <- readTVarIO ?gobble
-  let whos'here = H.text $ T.intercalate ", " (gob^.players.to M.keys)
-  broadcast'val $ tag'thing "chirp" $ renderHtml $ table $ do -- ! H.style "width:300px" $ do
-    thead whos'here
-    forM_ (gob^..chat'room.messages.folded) $ \(Chat'Message tweet author) ->
-      tr $ do td $ text author
-              td $ text tweet -- ! H.style "text-align:right" $ text tweet
+tweet'chat = liftIO $ tagged'broadcast "chirp" =<< render'chat <$> readTVarIO ?gobble
 
 handle'control :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Connection -> ControlMessage -> m ()
 handle'control who conn = liftIO . \case
@@ -152,6 +141,12 @@ broadcast msg = liftIO $ readTVarIO ?gobble >>=
 
 broadcast'val :: (?gobble :: TVar Gobble, A.ToJSON a, MonadIO m) => a -> m ()
 broadcast'val = broadcast . A.encode
+
+tagged'broadcast :: (?gobble :: TVar Gobble, A.ToJSON a, MonadIO m) => Text -> a -> m ()
+tagged'broadcast tag =  broadcast'val . tag'thing tag
+
+broadcast'clear :: (?gobble :: TVar Gobble, MonadIO m) => Text -> m ()
+broadcast'clear what = tagged'broadcast what clear'html
 
 pattern Query cmd <- Text cmd _
 pattern Words ws <- Text (T.words.T.toUpper.T.pack.B.unpack -> "GOBBLE":ws) _
@@ -182,11 +177,7 @@ send'words :: (?gobble :: TVar Gobble, MonadIO m) => Connection -> Name -> m ()
 send'words conn who = liftIO $ do
   gob <- readTVarIO ?gobble
   when (gob ^. game'phase & isn't _Scoring) $
-    reply'json conn $ tag'thing "words" $ renderHtml $
-    mapM_ (li.text) $ gob^.players.ix who.answers.to M.keys
-
-(.&) = M.intersection
-(.-) = M.difference
+    reply'json conn $ tag'thing "words" $ render'words who gob
 
 score'submissions :: Gobble -> (Map Text Int, Gobble)
 score'submissions gob = (all'subs, gob') where
@@ -202,46 +193,21 @@ score'submissions gob = (all'subs, gob') where
 
 score'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 score'round = liftIO $ do
-  img <- new'pinou
-  (all'subs,gob) <- score'submissions <$> readTVarIO ?gobble
-  atomically $ writeTVar ?gobble gob
+  (all'subs,gob) <- atomically $ do
+    xy@(_,y) <- score'submissions <$> readTVar ?gobble
+    writeTVar ?gobble y
+    return xy
   putStrLn "Scored Round... "
-  broadcast'val $ tag'thing "words" $ renderHtml mempty
-  broadcast'val $ tag'thing "pinou" $ renderHtml $ img
-  let sol = gob ^. board.word'list
-      wl = sortBy (flip compare `on` T.length . fst) $ M.toList sol
-      subs = gob^..players.traversed.answers
-  broadcast'val $ tag'thing "solution" $ renderHtml $ do
-    h3 "word list"
-    table $ forM_ wl $ \(w,d) -> tr $ td (text w) >> td (text d)
-  broadcast'val $ tag'thing "scores" $ renderHtml $
-    table $ do thead $ do td $ ""
-                          mapM_ (th.text) (gob^.players.to M.keys)
-               tr $ do td "score"
-                       forM_ (gob^..players.traversed.score) $ \n ->
-                         td ! H.style "text-align:center;" $ text $ T.pack $ show n
-               when (1 < length subs) $
-                 tr $ do td "solo"
-                         forM_ [ sum (map score'word (M.keys (sub .& sol))) -
-                                 sum (map score'word (M.keys (sub .- sol)))
-                               | sub <- subs ] $ \ n ->
-                           td ! H.style "text-align:center;" $ text $ T.pack $ show n
-               tr $ do td "mistakes"
-                       forM_ [ M.keys $ sub .- sol | sub <- subs ] $ \ws ->
-                         td $ ul $ mapM_ (li.text) ws
-               tr $ do td "words"
-                       forM_ [ M.keys $ sub .& sol | sub <- subs ] $ \ws ->
-                         td $ ul $ mapM_ (li.text) ws
+  broadcast'clear "words"
+  tagged'broadcast "pinou" . html'of'pinou =<< new'pinou
+  forM_ (render'scores gob) $ uncurry tagged'broadcast
 
-html'of'board :: Board -> Html
-html'of'board b = img ! H.src ("static/board.svg?" <> stringValue (b^.letters&hash&show))
-
-new'pinou :: IO Html
+new'pinou :: IO String
 new'pinou = do
   let img'dir = "static/images/"
   imgs <- listDirectory img'dir
   j <- randomRIO (0,length imgs - 1)
-  return $ H.img ! H.src (stringValue $ img'dir <> (imgs !! j))
+  return $ img'dir <> imgs !! j
 
 fresh'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 fresh'round = liftIO $ do
@@ -251,17 +217,17 @@ fresh'round = liftIO $ do
          readTVarIO ?gobble
   atomically $ writeTVar ?gobble gob
   putStrLn "New Round"
-  broadcast'val $ tag'thing "board" $ renderHtml $ html'of'board b
-  broadcast'val $ tag'thing "pinou" $ renderHtml mempty
+  tagged'broadcast "board" $ html'of'board b
+  broadcast'clear "pinou"
   broadcast'val $ A.object
-    [ "time" A..= (b^.creationTime.to (addUTCTime round'period))
+    [ "time" A..= (b^.creation'time.to (addUTCTime round'period))
     , "pause" A..= score'length
     , "round" A..= round'length ]
-  broadcast'val $ tag'thing "scores" $ renderHtml mempty
-  broadcast'val $ tag'thing "solution" $ renderHtml mempty
+  broadcast'clear "scores"
+  broadcast'clear "solution"
 
-run'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
-run'round = liftIO $ do
+run'gobble :: (?gobble :: TVar Gobble, MonadIO m) => m ()
+run'gobble = liftIO $ forever $ do
   fresh'round
   threadDelayS round'length
   score'round
@@ -280,39 +246,6 @@ boggle pend = liftIO $ do
 -- "frontend"
 boggle'api :: Proxy BoggleAPI
 boggle'api = Proxy
-
-data GobblePage = GobblePage
-
-instance ToMarkup GobblePage where
-  toMarkup _ = html $ do
-    H.head $ do
-      title "gobble"
-      link ! H.rel "stylesheet" ! H.href "static/gobble.css?4"
-      script ! H.src "static/jquery-3.4.1.slim.js" $ ""
-      script ! H.src "static/gobble.js?4" $ ""
-    H.body $ do
-      H.h1 "GOBBLE"
-      H.div ! H.class_ "row" $ do
-        H.div ! H.class_ "column" $ do
-          H.div ! H.id "gobble" $ ""
-        H.div ! H.class_ "column" $ do
-          H.div ! H.id "timer" $ ""
-          H.form ! H.id "mush" $ do
-            H.input ! H.autocomplete "off" ! H.spellcheck "off"
-              ! H.type_ "text" ! H.id "scratch"
-            H.input ! H.type_ "submit" ! H.hidden "mush!"
-          H.ul ! H.id "submissions" $ ""
-          H.div ! H.id "pinou" $ ""
-        H.div ! H.class_ "column" $ do
-          H.div ! H.id "twitter" $ do
-            H.div ! H.id "tweets" $ ""
-          H.form ! H.id "tweet" $ do
-            H.input ! H.type_ "text" ! H.autocomplete "off" ! H.id "scribble"
-            H.input ! H.type_ "submit" ! H.hidden ""
-      H.div ! H.class_ "row" $ do
-        H.div ! H.class_ "column" $ do
-          H.div ! H.id "solution" $ ""
-        H.div ! H.id "scores" $ ""
 
 type BoggleAPI =
        Get '[HTML] GobblePage
@@ -340,9 +273,9 @@ launch'boggle port = do
   gobble <- newTVarIO =<< start'state
   let ?gobble = gobble
    in do let back = serve boggle'api boggle'server
-         timer'thread <- forkIO $ forever run'round
+         control'thread <- forkIO run'gobble
          let bog = run port $ websocketsOr defaultConnectionOptions boggle back
-         bog `finally` killThread timer'thread
+         bog `finally` killThread control'thread
 
 main :: IO ()
 main = map read <$> getArgs >>= \case

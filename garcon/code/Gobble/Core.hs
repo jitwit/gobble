@@ -12,6 +12,7 @@ import Control.Lens
 import Unsafe.Coerce
 import Control.Concurrent
 
+todo :: todo
 todo = error "todo"
 
 type Name = Text
@@ -20,7 +21,7 @@ data Phase = Boggled | Scoring
   deriving (Eq,Show)
 
 data Board = Board
-  { _creationTime :: UTCTime
+  { _creation'time :: UTCTime
   , _letters :: Text
   , _word'list :: Map Text Text
   } deriving (Show)
