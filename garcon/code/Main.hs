@@ -30,11 +30,6 @@ import Control.Concurrent
 import Control.Concurrent.STM.TVar
 import Control.Concurrent.STM
 
-import Text.Blaze.Html5 as H hiding (map,main,head,style)
-import qualified Text.Blaze.Html5 as H (head)
-import Text.Blaze.Html.Renderer.Text
-import qualified Text.Blaze.Html5.Attributes as H hiding (form)
-
 import Network.Wai.Handler.WebSockets
 import Network.WebSockets
 import Servant.HTML.Blaze
@@ -150,6 +145,9 @@ broadcast'val = broadcast . A.encode
 tagged'broadcast :: (?gobble :: TVar Gobble, A.ToJSON a, MonadIO m) => Text -> a -> m ()
 tagged'broadcast tag =  broadcast'val . tag'thing tag
 
+broadcast'clear :: (?gobble :: TVar Gobble, MonadIO m) => Text -> m ()
+broadcast'clear what = tagged'broadcast what clear'html
+
 pattern Query cmd <- Text cmd _
 pattern Words ws <- Text (T.words.T.toUpper.T.pack.B.unpack -> "GOBBLE":ws) _
 pattern Delete w <- Text (T.words.T.toUpper.T.pack.B.unpack -> "DOBBLE":w:[]) _
@@ -200,16 +198,16 @@ score'round = liftIO $ do
     writeTVar ?gobble y
     return xy
   putStrLn "Scored Round... "
-  broadcast'val $ tag'thing "words" $ renderHtml mempty
-  tagged'broadcast "pinou" =<< renderHtml <$> new'pinou
+  broadcast'clear "words"
+  tagged'broadcast "pinou" . html'of'pinou =<< new'pinou
   forM_ (render'scores gob) $ uncurry tagged'broadcast
 
-new'pinou :: IO Html
+new'pinou :: IO String
 new'pinou = do
   let img'dir = "static/images/"
   imgs <- listDirectory img'dir
   j <- randomRIO (0,length imgs - 1)
-  return $ H.img ! H.src (stringValue $ img'dir <> (imgs !! j))
+  return $ img'dir <> imgs !! j
 
 fresh'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 fresh'round = liftIO $ do
@@ -220,13 +218,13 @@ fresh'round = liftIO $ do
   atomically $ writeTVar ?gobble gob
   putStrLn "New Round"
   tagged'broadcast "board" $ html'of'board b
-  broadcast'val $ tag'thing "pinou" $ renderHtml mempty
+  broadcast'clear "pinou"
   broadcast'val $ A.object
     [ "time" A..= (b^.creation'time.to (addUTCTime round'period))
     , "pause" A..= score'length
     , "round" A..= round'length ]
-  broadcast'val $ tag'thing "scores" $ renderHtml mempty
-  broadcast'val $ tag'thing "solution" $ renderHtml mempty
+  broadcast'clear "scores"
+  broadcast'clear "solution"
 
 run'gobble :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 run'gobble = liftIO $ forever $ do
@@ -248,39 +246,6 @@ boggle pend = liftIO $ do
 -- "frontend"
 boggle'api :: Proxy BoggleAPI
 boggle'api = Proxy
-
-data GobblePage = GobblePage
-
-instance ToMarkup GobblePage where
-  toMarkup _ = html $ do
-    H.head $ do
-      title "gobble"
-      link ! H.rel "stylesheet" ! H.href "static/gobble.css?4"
-      script ! H.src "static/jquery-3.4.1.slim.js" $ ""
-      script ! H.src "static/gobble.js?4" $ ""
-    H.body $ do
-      H.h1 "GOBBLE"
-      H.div ! H.class_ "row" $ do
-        H.div ! H.class_ "column" $ do
-          H.div ! H.id "gobble" $ ""
-        H.div ! H.class_ "column" $ do
-          H.div ! H.id "timer" $ ""
-          H.form ! H.id "mush" $ do
-            H.input ! H.autocomplete "off" ! H.spellcheck "off"
-              ! H.type_ "text" ! H.id "scratch"
-            H.input ! H.type_ "submit" ! H.hidden "mush!"
-          H.ul ! H.id "submissions" $ ""
-          H.div ! H.id "pinou" $ ""
-        H.div ! H.class_ "column" $ do
-          H.div ! H.id "twitter" $ do
-            H.div ! H.id "tweets" $ ""
-          H.form ! H.id "tweet" $ do
-            H.input ! H.type_ "text" ! H.autocomplete "off" ! H.id "scribble"
-            H.input ! H.type_ "submit" ! H.hidden ""
-      H.div ! H.class_ "row" $ do
-        H.div ! H.class_ "column" $ do
-          H.div ! H.id "solution" $ ""
-        H.div ! H.id "scores" $ ""
 
 type BoggleAPI =
        Get '[HTML] GobblePage

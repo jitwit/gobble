@@ -87,6 +87,46 @@ html'of'board :: Board -> H
 html'of'board b = renderHtml $ img ! H.src board'source where
   board'source = "static/board.svg?" <> stringValue (b^.letters&show)
 
+html'of'pinou :: String -> H
+html'of'pinou src = renderHtml $ H.img ! H.src (stringValue src)
+
 render'words :: Name -> Gobble -> H
 render'words who gob = renderHtml $
   mapM_ (li.H.text) $ gob^.players.ix who.answers.to M.keys
+
+clear'html :: H
+clear'html = renderHtml mempty
+
+---- HOME PAGE
+data GobblePage = GobblePage
+
+instance ToMarkup GobblePage where
+  toMarkup _ = html $ do
+    H.head $ do
+      title "gobble"
+      link ! H.rel "stylesheet" ! H.href "static/gobble.css?4"
+      script ! H.src "static/jquery-3.4.1.slim.js" $ ""
+      script ! H.src "static/gobble.js?4" $ ""
+    H.body $ do
+      H.h1 "GOBBLE"
+      H.div ! H.class_ "row" $ do
+        H.div ! H.class_ "column" $ do
+          H.div ! H.id "gobble" $ ""
+        H.div ! H.class_ "column" $ do
+          H.div ! H.id "timer" $ ""
+          H.form ! H.id "mush" $ do
+            H.input ! H.autocomplete "off" ! H.spellcheck "off"
+              ! H.type_ "text" ! H.id "scratch"
+            H.input ! H.type_ "submit" ! H.hidden "mush!"
+          H.ul ! H.id "submissions" $ ""
+          H.div ! H.id "pinou" $ ""
+        H.div ! H.class_ "column" $ do
+          H.div ! H.id "twitter" $ do
+            H.div ! H.id "tweets" $ ""
+          H.form ! H.id "tweet" $ do
+            H.input ! H.type_ "text" ! H.autocomplete "off" ! H.id "scribble"
+            H.input ! H.type_ "submit" ! H.hidden ""
+      H.div ! H.class_ "row" $ do
+        H.div ! H.class_ "column" $ do
+          H.div ! H.id "solution" $ ""
+        H.div ! H.id "scores" $ ""
