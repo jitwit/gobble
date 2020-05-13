@@ -1,3 +1,4 @@
+Original:
 
 #+BEGIN_SRC j :session :exports both
 words=: 'b'freads<'~/code/gobble/input/collins.txt'
@@ -7,9 +8,37 @@ grpl=: 1,2([:-.0&{::-:&#1&{::)\]
 combos=: [: (grpl <;.1]) [: (/:#&.>) [: (a:-.~grp<;.1]) [: (/:/:~&.>) nletter
 #+END_SRC
 
+A few months later:
+
+#+begin_src j :session :exports both
+W=: (<@}:);._2(1!:1)<'../input/collins.txt'
+
+NB. words of given length
+NLet=: (W#~=&(#&>W))
+
+NB. words that have anagrams in dictionary
+Anag=: (#~1<#&>)@:(</.)~([:i.~(/:~&>))
+AnagN=: Anag@NLet
+
+NB. valid backwards words
+Back=: #~(e.|.&.>)
+BackN=: Back@NLet
+#+end_src
+
 #+RESULTS:
 
 * Boggle Bits
+
+Useful words which are the valid backwards and forwards
+
+#+begin_src j :session :exports both
+BackN 5
+#+end_src
+
+#+RESULTS:
+: ┌─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬───...
+: │AIDER│AIRTS│ALULA│AMAHS│AMENE│AMMAN│ANANA│ANGER│ANNAT│ARBAS│ARRET│ARRIS│ARVAL│ASSAM│ASSES│AYAHS│AYAYA│BLITS│BOBAC│BOBAK│BOORD│CABOB│CAMUS│CARES│CIRES│CIVIC│DARAF│DARTS│DEBUT│DECAF│DECAL│DEDAL│DEENS│DEEPS│DEETS│DEFER│DEFFO│DEKED│DELED│DELIS│DELOS│DEMAN│DEM...
+: └─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴───...
 
 Useful letter combinations based on how many words they form.
 

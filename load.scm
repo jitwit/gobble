@@ -9,8 +9,7 @@
         (euler)
         (dictionary)
         (trie)
-        (only (srfi :1) append-map filter-map)
-	)
+        (only (srfi :1) append-map filter-map))
 
 (define (dump-collins)
   (define out-file "input/clns.txt")
