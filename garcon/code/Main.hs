@@ -10,18 +10,13 @@ import qualified Data.Text.IO as T
 import qualified Data.ByteString.Lazy.Char8 as B
 import qualified Data.ByteString.Lazy.UTF8 as B8
 import Data.Text (Text)
-import Data.Text.Encoding (decodeUtf8')
-import Data.List (union,(\\),sortBy,intercalate)
-import Data.Function
 import Data.Proxy
 import qualified Data.Map as M
-import Data.Map (Map)
 
 import Control.Exception (finally)
 import Control.Monad
 import Control.Monad.State
 import System.Environment
-import System.Process
 import System.Directory
 import System.Random
 import Data.Time.Clock
@@ -73,10 +68,9 @@ is'name'free name = liftIO $ do
 new'player :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Connection -> m ()
 new'player who conn = liftIO $ do
   gob <- atomically $ do
-    g <- (players.at who ?~ Player conn M.empty 0) <$> readTVar ?gobble
+    g <- (players.at who ?~ Player conn M.empty 0 0) <$> readTVar ?gobble
     writeTVar ?gobble g
     return g
-  let rnd = gob ^. current'round
   reply'json conn $ tag'thing "board" $ html'of'board (gob^.board)
   reply'json conn $ A.object
     [ "time" A..= (gob^.board.creation'time.to (addUTCTime round'period))
@@ -180,24 +174,23 @@ send'words conn who = liftIO $ do
   when (gob ^. game'phase & isn't _Scoring) $
     reply'json conn $ tag'thing "words" $ render'words who gob
 
-score'submissions :: Gobble -> (Map Text Int, Gobble)
-score'submissions gob = (all'subs, gob') where
-  gob' = gob
-    & players.traversed %~ scr
-    & game'phase .~ Scoring
-    & current'round +~ 1
+score'submissions :: Gobble -> Gobble
+score'submissions gob = gob
+  & players.traversed %~ scr
+  & game'phase .~ Scoring
+  & current'round +~ 1 where
   solution = gob^.board.word'list
   all'subs = gob ^.. players.traversed.answers & M.unionsWith (+)
-  scr (Player conn sol scr) = Player conn sol (sum pts - sum npts) where
+  scr (Player conn sol scr tot) = Player conn sol (sum pts - sum npts) tot where
     pts = [ score'word word | (word,1) <- M.toList (all'subs .& sol .& solution) ]
     npts = [ score'word word | (word,1) <- M.toList (all'subs .& (sol .- solution)) ]
 
 score'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 score'round = liftIO $ do
-  (all'subs,gob) <- atomically $ do
-    xy@(_,y) <- score'submissions <$> readTVar ?gobble
-    writeTVar ?gobble y
-    return xy
+  gob <- atomically $ do
+    g <- score'submissions <$> readTVar ?gobble
+    writeTVar ?gobble g
+    return g
   putStrLn "Scored Round... "
   broadcast'clear "words"
   tagged'broadcast "pinou" . html'of'pinou =<< new'pinou

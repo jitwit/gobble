@@ -11,15 +11,12 @@ import Diagrams.Backend.SVG
 import qualified Data.Text as T
 import qualified Data.Text.Internal.Lazy as TLI
 import Data.Text (Text)
-import Data.Word
 import Data.Colour.SRGB
 import Text.Blaze.Html5 as H hiding (map,main,head,style)
 import qualified Text.Blaze.Html5 as H (head)
 import Text.Blaze.Html.Renderer.Text
 import qualified Text.Blaze.Html5.Attributes as H hiding (form)
 import qualified Data.Aeson as A
-import qualified Data.ByteString.Lazy.Char8 as B
-import Network.WebSockets
 import qualified Data.Map as M
 import Data.List
 import Data.Function

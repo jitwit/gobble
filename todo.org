@@ -1,8 +1,7 @@
-- J solver to support Qu
 - 10 round matches
 - improve nix deployment
-- get scheme scripts on production machine? or compress folder containing boards
 - pre-render svgs?
 - fix sort order in anagrams
-- vertical layout?
-- debugging api endpoint (+ restart?)
+- better debugging
+- rework game loop. detect when no one's there and sit ready
+- check and throw away dead connections

@@ -4,7 +4,6 @@ module Gobble.Core where
 
 import Data.Time.Clock
 import Network.WebSockets
-import qualified Data.Map as M
 import Data.Map (Map)
 import qualified Data.Text as T
 import Data.Text (Text)
@@ -16,8 +15,9 @@ todo :: todo
 todo = error "todo"
 
 type Name = Text
+type Reason = String
 
-data Phase = Boggled | Scoring
+data Phase = Boggled | Scoring | Ready | Broken Reason
   deriving (Eq,Show)
 
 data Board = Board
@@ -30,11 +30,12 @@ data Player = Player
   { _connection :: Connection
   , _answers :: Map Text Int
   , _score :: Int
+  , _total'score :: Int
   }
 
 instance Show Player where
-  show (Player _ as n) =
-    "Player { _answers = " <> show as <> ", _score = " <> show n <> " }"
+  show (Player _ as n t) =
+    "Player { _answers = " <> show as <> ", _score = " <> show n <> ", " <> show t <> " }"
 
 data Chat'Message = Chat'Message
   { _contents :: Text
