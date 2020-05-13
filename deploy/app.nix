@@ -4,19 +4,16 @@
   let
     gobbler  = import ../garcon/default.nix {};
     openssl  = pkgs.openssl;
-    domain   = "mmoogle.ca";
   in
   {
 
     networking.firewall = {
       allowedTCPPorts = [ 22 80 ];
-      enable = false;
-    };
+      enable = false; };
 
     environment.systemPackages =
       [ openssl
-        gobbler
-      ];
+        gobbler ];
 
     systemd.services.gobble =
     { description = "gobble";
@@ -24,9 +21,6 @@
       after = [ "network.target" ];
       serviceConfig =
       { WorkingDirectory = "/var/www/gobble";
-        ExecStart = "${gobbler}/bin/gobble 80";
-      };
-    };
-    
+        ExecStart = "${gobbler}/bin/gobble 80"; }; };   
   };
 }
