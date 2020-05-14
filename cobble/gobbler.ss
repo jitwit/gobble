@@ -1,5 +1,6 @@
-(unless (assoc "~/code/gobble" (library-directories))
-  (library-directories (cons "~/code/gobble" (library-directories))))
+#!/home/jo/.nix-profile/bin/scheme --script
+
+(library-directories (cons "." (library-directories)))
 
 (import (gobble)
         (only (euler) shuffle)

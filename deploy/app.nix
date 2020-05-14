@@ -4,8 +4,7 @@ let gobbler = import ../garcon/default.nix {};
     hemlock = pkgs.callPackage ./chez-hemlock.nix {} ;
     euler   = pkgs.callPackage ./chez-euler.nix { chez-hemlock = hemlock; };
     cobble   = pkgs.callPackage ./chez-gobble.nix { chez-hemlock = hemlock;
-                                                    chez-euler = euler;
-                                                  };
+                                                    chez-euler = euler; };
 in
 { networking.firewall = {
     allowedTCPPorts = [ 22 80 ];
