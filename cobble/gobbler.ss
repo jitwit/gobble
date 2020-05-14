@@ -19,12 +19,19 @@
              (newline))
            (gobble board)))
 
+;; fill directory to have n boards
 (define (generate n dir)
+  (define n* (length (directory-list dir)))
+  (define N (- n n*))
+  (format #t "there are ~a board(s), making ~a more~%" n* N)
   (do ((i 1 (1+ i)))
-      ((> i n))
-    (let ((board (list->string (roll (list-head (shuffle dice-5x5) 16)))))
-      (format #t "board #~a~%" i)
-      (with-output-to-file (string-append dir "/" board)
+      ((> i N))
+    (let* ((board (list->string (roll (list-head (shuffle dice-5x5) 16))))
+           (board-file (string-append dir "/" board)))
+      (when (file-exists? board-file)
+        (error 'generate "time to make better randoms, eh?"))
+      (format #t "board ~4d/~d~%" i N)
+      (with-output-to-file board-file
         (lambda ()
           (output-board board))))))
 
