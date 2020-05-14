@@ -1,7 +1,12 @@
-- 10 round matches
-- improve nix deployment
-- pre-render svgs?
-- fix sort order in anagrams
+- 10 round matches/cumulative scores
 - better debugging
-- rework game loop. detect when no one's there and sit ready
+- rework game loop. eg detect when no one's there and sit ready
 - check and throw away dead connections
+- record results
+- flavicon
+- help/about/better chat
+- tooptips/way to see times in chat
+- improve amazon config/understand firewall
+- use more typeclasses and make js/haskell interface better (or at
+  all) typed
+- css/flex-grid?

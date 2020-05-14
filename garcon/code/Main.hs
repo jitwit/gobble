@@ -135,7 +135,7 @@ broadcast'val :: (?gobble :: TVar Gobble, A.ToJSON a, MonadIO m) => a -> m ()
 broadcast'val = broadcast . A.encode
 
 tagged'broadcast :: (?gobble :: TVar Gobble, A.ToJSON a, MonadIO m) => Text -> a -> m ()
-tagged'broadcast tag =  broadcast'val . tag'thing tag
+tagged'broadcast tag = broadcast'val . tag'thing tag
 
 broadcast'clear :: (?gobble :: TVar Gobble, MonadIO m) => Text -> m ()
 broadcast'clear what = tagged'broadcast what clear'html
@@ -191,8 +191,9 @@ score'round = liftIO $ do
   putStrLn "Scored Round... "
   broadcast'clear "words"
   tagged'broadcast "pinou" . html'of'pinou =<< new'pinou
-  tagged'broadcast "solution" $ render'solution gob
-  tagged'broadcast "scores" $ render'scores gob
+  broadcast'val $ A.object
+    [ "solution" A..= render'solution gob
+    , "scores"   A..= render'scores gob ]
 
 new'pinou :: IO String
 new'pinou = do
@@ -212,11 +213,11 @@ fresh'round = liftIO $ do
   tagged'broadcast "board" $ html'of'board b
   broadcast'clear "pinou"
   broadcast'val $ A.object
-    [ "time" A..= (b^.creation'time.to (addUTCTime round'period))
-    , "pause" A..= score'length
-    , "round" A..= round'length ]
-  broadcast'clear "scores"
-  broadcast'clear "solution"
+    [ "time"     A..= (b^.creation'time.to (addUTCTime round'period))
+    , "pause"    A..= score'length
+    , "round"    A..= round'length
+    , "scores"   A..= clear'html
+    , "solution" A..= clear'html ]
 
 run'gobble :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 run'gobble = liftIO $ forever $ do

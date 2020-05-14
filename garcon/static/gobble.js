@@ -48,18 +48,23 @@ $(() => {
     }
 
     boggle.onopen = (e) => { set_name(); };
+    
     boggle.onmessage = (msg) => {
         var res = JSON.parse(msg.data);
         if (res === "name-is-taken") { set_name(msg=" (previous one is taken)"); }
-        else if (!(res['board'] == null)) { $("#gobble").html(res['board']); $("#scratch").focus(); query_words(); }
-        else if (!(res['words'] == null)) { $("#submissions").html(res['words']); }
-        else if (!(res['peeps'] == null)) { $("#people").html(res['peeps']); } // defns, actually
-        else if (!(res['chirp'] == null)) { $("#tweets").html(res['chirp']); }
-        else if (!(res['pinou'] == null)) { $("#pinou").html(res['pinou']); }
-        else if (!(res['time'] == null)) { timer(new Date (res['time']),res['round'],res['pause']); }
-        else if (!(res['solution'] == null)) { $("#solution").html(res['solution']); }
-        else if (!(res['scores'] == null)) { $("#scores").html(res['scores']); }
-        else { console.log(res); }
+        if (!(res['board'] == null)) { $("#gobble").html(res['board']); $("#scratch").focus(); query_words(); }
+        if (!(res['words'] == null)) { $("#submissions").html(res['words']); }
+        if (!(res['peeps'] == null)) { $("#people").html(res['peeps']); } // defns, actually
+        if (!(res['chirp'] == null)) { $("#tweets").html(res['chirp']); }
+        if (!(res['pinou'] == null)) { $("#pinou").html(res['pinou']); }
+        if (!(res['time'] == null)) { timer(new Date (res['time']),res['round'],res['pause']); }
+        if (!(res['solution'] == null)) { $("#solution").html(res['solution']); }
+        if (!(res['scores'] == null)) { $("#scores").html(res['scores']); }
+        // idk: { console.log(res); }
     };
+    boggle.onerror = (e) => {
+        console.log(e);
+    };
+        
     boggle.onclose = () => { alert("lost connection."); };
 });
