@@ -10,5 +10,5 @@ Boggle on the net.
   run games
 + [[file:joggle/][joggle]] - J script that also solves boggle boards. it loads much
   faster than the scheme program, but solves slower
-+ [[file:deploy/][deploy]] - nix expressions to get it all going in the _cloud_
++ [[file:nibble/][nibble]] - nix expressions to get it all going in the _cloud_
 

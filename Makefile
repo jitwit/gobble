@@ -4,11 +4,11 @@ actions::= dry-update-gobble update-gobble update-boards update-static ghcid-gob
 
 # shortcuts
 dry-update-gobble :
-	nixops modify deploy/aws.nix deploy/app.nix -d gobbler
+	nixops modify nibble/aws.nix nibble/app.nix -d gobbler
 	nixops deploy -d gobbler --dry-run
 
 update-gobble :
-	nixops modify deploy/aws.nix deploy/app.nix -d gobbler
+	nixops modify nibble/aws.nix nibble/app.nix -d gobbler
 	nixops deploy -d gobbler
 
 update-boards : boards
