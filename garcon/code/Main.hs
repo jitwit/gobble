@@ -173,12 +173,14 @@ send'words conn who = liftIO $ do
 
 score'submissions :: Gobble -> Gobble
 score'submissions gob = gob
-  & players.traversed %~ scr
+  & players.traversed %~ scr'rnd
+  & players.traversed %~ scr'tot
   & game'phase .~ Scoring
   & current'round +~ 1 where
   solution = gob^.board.word'list
   all'subs = gob ^.. players.traversed.answers & M.unionsWith (+)
-  scr (Player conn sol scr tot) = Player conn sol (sum pts - sum npts) tot where
+  scr'tot (Player conn sol scr tot) = Player conn sol scr (scr + tot)
+  scr'rnd (Player conn sol scr tot) = Player conn sol (sum pts - sum npts) tot where
     pts = [ score'word word | (word,1) <- M.toList (all'subs .& sol .& solution) ]
     npts = [ score'word word | (word,1) <- M.toList (all'subs .& (sol .- solution)) ]
 
