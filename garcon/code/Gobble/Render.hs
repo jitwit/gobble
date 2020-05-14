@@ -45,8 +45,8 @@ classify'words = \case
 
 instance ToMarkup WordResult where
   toMarkup = \case
-    Unique w   -> H.div ! H.style "color:#2E5DE4;" $ H.text w
-    Shared w   -> H.div ! H.style "color:#777777;" $ H.text w
+    Unique w   -> H.div $ H.text w
+    Shared w   -> H.div ! H.style "color:#969696;" $ H.text w
     Mistake w  -> H.div ! H.style "color:#FE160E;" $ H.text w
     Gaffe w    -> H.div ! H.style "color:#EE8509;" $ H.text w
     Idk'Oops w -> H.div ! H.style "color:#854B21;" $ H.text w

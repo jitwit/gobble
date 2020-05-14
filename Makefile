@@ -37,6 +37,10 @@ update-gobble :
 	nixops modify deploy/aws.nix deploy/app.nix -d gobbler
 	nixops deploy -d gobbler
 
+dry-update-gobble :
+	nixops modify deploy/aws.nix deploy/app.nix -d gobbler
+	nixops deploy -d gobbler --dry-run
+
 update-boards : boards
 	nixops scp --to gobble-net garcon/boards/ /var/www/gobble
 

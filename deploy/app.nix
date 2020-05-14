@@ -1,10 +1,10 @@
 {
   network.description = "gobble-net";
   gobble-net = { config, pkgs, ... }:
-  let
-    gobbler  = import ../garcon/default.nix {};
-    openssl  = pkgs.openssl;
-  in
+    let gobbler = import ../garcon/default.nix {};
+        hemlock = pkgs.callPackage ./chez-hemlock.nix {} ;
+        euler   = pkgs.callPackage ./chez-euler.nix { chez-hemlock = hemlock; };
+    in
   {
 
     networking.firewall = {
@@ -12,8 +12,12 @@
       enable = false; };
 
     environment.systemPackages =
-      [ openssl
-        gobbler ];
+      [ gobbler
+        pkgs.chez
+        pkgs.chez-srfi
+        hemlock
+        euler
+      ];
 
     systemd.services.gobble =
     { description = "gobble";

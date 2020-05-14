@@ -98,9 +98,6 @@ reply conn = liftIO . sendTextData conn
 reply'json :: (?gobble :: TVar Gobble, A.ToJSON j, MonadIO m) => Connection -> j -> m ()
 reply'json conn = reply conn . A.encode
 
-send'json :: MonadIO m => A.Value -> Connection -> m ()
-send'json obj conn = liftIO $ sendTextData conn (A.encode obj)
-
 submit'words :: (?gobble :: TVar Gobble, MonadIO m) => Name -> [Text] -> m ()
 submit'words who words = liftIO $ atomically $ do
   gob <- readTVar ?gobble
@@ -196,7 +193,6 @@ score'round = liftIO $ do
   tagged'broadcast "pinou" . html'of'pinou =<< new'pinou
   tagged'broadcast "solution" $ render'solution gob
   tagged'broadcast "scores" $ render'scores gob
---  forM_ (render'scores gob) $ uncurry tagged'broadcast
 
 new'pinou :: IO String
 new'pinou = do
@@ -255,7 +251,9 @@ check'boards = liftIO $ length <$> listDirectory "boards/"
 naked'state :: (?gobble :: TVar Gobble) => Handler String 
 naked'state = liftIO $ do
   gob <- readTVarIO ?gobble
-  return $ unlines [gob ^. board & show, gob ^. players & show,gob ^. chat'room & show]
+  return $ unlines [gob ^. board & show,"",
+                    gob ^. players & show,"",
+                    gob ^. chat'room & show]
 
 boggle'server :: (?gobble :: TVar Gobble) => Server BoggleAPI
 boggle'server = pure GobblePage
