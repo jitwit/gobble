@@ -194,7 +194,9 @@ score'round = liftIO $ do
   putStrLn "Scored Round... "
   broadcast'clear "words"
   tagged'broadcast "pinou" . html'of'pinou =<< new'pinou
-  forM_ (render'scores gob) $ uncurry tagged'broadcast
+  tagged'broadcast "solution" $ render'solution gob
+  tagged'broadcast "scores" $ render'scores gob
+--  forM_ (render'scores gob) $ uncurry tagged'broadcast
 
 new'pinou :: IO String
 new'pinou = do

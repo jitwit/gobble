@@ -18,12 +18,38 @@ import Text.Blaze.Html.Renderer.Text
 import qualified Text.Blaze.Html5.Attributes as H hiding (form)
 import qualified Data.Aeson as A
 import qualified Data.Map as M
+import Data.Map (Map)
 import Data.List
 import Data.Function
 
 import Gobble.Core
 
 type H = TLI.Text
+
+data WordResult = Unique Text | Shared Text | Mistake Text | Gaffe Text | Idk'Oops Text
+data RoundResult = RoundResult (Map Text Text) (Map Text Int)
+
+word'result :: Text -> Int -> WordResult
+word'result w n | n == 1  = Unique w
+                | n > 1   = Shared w
+                | n == -1 = Mistake w
+                | n < -1  = Gaffe w
+                | otherwise = Idk'Oops w
+
+classify'words :: RoundResult -> Map Text WordResult
+classify'words = \case
+  RoundResult sol subs ->
+    let misses = negate <$> subs .- sol
+        hits   = subs .& sol
+     in M.mapWithKey word'result (misses `M.union` hits)
+
+instance ToMarkup WordResult where
+  toMarkup = \case
+    Unique w   -> H.div ! H.style "color:#2E5DE4;" $ H.text w
+    Shared w   -> H.div ! H.style "color:#777777;" $ H.text w
+    Mistake w  -> H.div ! H.style "color:#FE160E;" $ H.text w
+    Gaffe w    -> H.div ! H.style "color:#EE8509;" $ H.text w
+    Idk'Oops w -> H.div ! H.style "color:#854B21;" $ H.text w
 
 board'dia :: Text -> Diagram B
 board'dia b = D.vcat [ D.hcat [ block x | x <- T.unpack r ] | r <- board'rows b ] where
@@ -53,14 +79,19 @@ render'chat gob = renderHtml chat'html where
 (.&) = M.intersection
 (.-) = M.difference
 
-render'scores :: Gobble -> [(Text,H)]
-render'scores gob = [("solution",solution),("scores",report)] where
-  sol = gob ^. board.word'list
-  wl = sortBy (flip compare `on` T.length . fst) $ M.toList sol
-  subs = gob^..players.traversed.answers
-  solution = renderHtml $ do
+render'solution :: Gobble -> H
+render'solution gob = 
+  let sol = gob ^. board.word'list
+      wl = sortBy (flip compare `on` T.length . fst) $ M.toList sol
+   in renderHtml $ do
     h3 "word list"
     table $ forM_ wl $ \(w,d) -> tr $ td (H.text w) >> td (H.text d)
+
+render'scores :: Gobble -> H
+render'scores gob = report where
+  sol = gob ^. board.word'list
+  subs = gob^..players.traversed.answers
+  res = classify'words $ RoundResult sol $ M.unionsWith (+) subs
   report = renderHtml $ table $ do
     thead $ do td $ ""
                mapM_ (th.H.text) (gob^.players.to M.keys)
@@ -74,12 +105,9 @@ render'scores gob = [("solution",solution),("scores",report)] where
                       sum (map score'word (M.keys (sub .- sol)))
                     | sub <- subs ] $ \ n ->
                 td ! H.style "text-align:center;" $ H.text $ T.pack $ show n
-    tr $ do td "mistakes"
-            forM_ [ M.keys $ sub .- sol | sub <- subs ] $
-              \ws -> td $ ul $ mapM_ (li.H.text) ws
     tr $ do td "words"
-            forM_ [ M.keys $ sub .& sol | sub <- subs ] $ \ws ->
-              td $ ul $ mapM_ (li.H.text) ws
+            forM_ (M.keys <$> subs) $ \ws ->
+              td $ ul $ mconcat [ toMarkup $ res M.! w | w <- ws ]
 
 html'of'board :: Board -> H
 html'of'board b = renderHtml $ img ! H.src board'source where
