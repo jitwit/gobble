@@ -83,11 +83,6 @@ tag'thing tag val = A.object [ tag A..= val ]
 
 render'chat :: Gobble -> H
 render'chat = renderHtml . toMarkup . ChatView
---   chat'html = table $ do
---     thead whos'here
---     forM_ (gob^..chat'room.messages.folded) $ \(Chat'Message tweet author) ->
---       tr $ do td $ H.text author
---               td $ H.text tweet
 
 (.&) = M.intersection
 (.-) = M.difference
@@ -110,7 +105,12 @@ render'scores gob = report where
                mapM_ (th.H.text) (gob^.players.to M.keys)
     tr $ do
       td "score"
-      forM_ (gob^..players.traversed.score) $ \n ->
+      gob & forMOf_ (players.traversed.score) $ \n ->
+        td ! H.style "text-align:center;" $ H.text $ T.pack $ show n
+    tr $ do
+      let r = ((gob^.current'round)`mod`5)+1
+      td $ H.string ("total (" <> (show r) <> "/5)")
+      gob & forMOf_ (players.traversed.total'score) $ \n ->
         td ! H.style "text-align:center;" $ H.text $ T.pack $ show n
     when (1 < length subs) $
       tr $ do td "solo"
@@ -143,7 +143,7 @@ instance ToMarkup GobblePage where
   toMarkup _ = html $ do
     H.head $ do
       title "gobble"
-      link ! H.rel "stylesheet" ! H.href "static/gobble.css?6"
+      link ! H.rel "stylesheet" ! H.href "static/gobble.css?6y"
       script ! H.src "static/jquery-3.4.1.slim.js" $ ""
       script ! H.src "static/gobble.js?6" $ ""
     H.body $ do

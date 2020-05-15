@@ -176,10 +176,11 @@ score'submissions gob = gob
   & players.traversed %~ scr'rnd
   & players.traversed %~ scr'tot
   & game'phase .~ Scoring
-  & current'round +~ 1 where
+  & current'round %~ ((`mod`5).succ) where
+  new = if gob ^. current'round.to(==4) then 0 else 1
   solution = gob^.board.word'list
   all'subs = gob ^.. players.traversed.answers & M.unionsWith (+)
-  scr'tot (Player conn sol scr tot) = Player conn sol scr (scr + tot)
+  scr'tot (Player conn sol scr tot) = Player conn sol scr (scr + tot*new)
   scr'rnd (Player conn sol scr tot) = Player conn sol (sum pts - sum npts) tot where
     pts = [ score'word word | (word,1) <- M.toList (all'subs .& sol .& solution) ]
     npts = [ score'word word | (word,1) <- M.toList (all'subs .& (sol .- solution)) ]

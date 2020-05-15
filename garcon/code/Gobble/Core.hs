@@ -35,7 +35,7 @@ data Player = Player
 
 instance Show Player where
   show (Player _ as n t) =
-    "Player { _answers = " <> show as <> ", _score = " <> show n <> ", " <> show t <> " }"
+    "Player { _answers = " <> show as <> ", _score = " <> show n <> ", _total'score = " <> show t <> " }"
 
 data Chat'Message = Chat'Message
   { _contents :: Text
