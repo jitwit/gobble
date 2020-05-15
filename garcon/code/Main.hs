@@ -68,7 +68,7 @@ is'name'free name = liftIO $ do
 new'player :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Connection -> m ()
 new'player who conn = liftIO $ do
   gob <- atomically $ do
-    g <- (players.at who ?~ Player conn M.empty 0 0) <$> readTVar ?gobble
+    g <- (players.at who ?~ Player conn M.empty 0 0 0) <$> readTVar ?gobble
     writeTVar ?gobble g
     return g
   reply'json conn $ tag'thing "board" $ html'of'board (gob^.board)
@@ -174,15 +174,16 @@ send'words conn who = liftIO $ do
 score'submissions :: Gobble -> Gobble
 score'submissions gob = gob
   & players.traversed %~ scr'rnd
-  & players.traversed %~ scr'tot
   & game'phase .~ Scoring
   & current'round %~ ((`mod`5).succ) where
   new = if gob ^. current'round.to(==4) then 0 else 1
+  wgt b = if b then 1 else -1
   solution = gob^.board.word'list
   all'subs = gob ^.. players.traversed.answers & M.unionsWith (+)
-  scr'tot (Player conn sol scr tot) = Player conn sol scr (scr + tot*new)
-  scr'rnd (Player conn sol scr tot) = Player conn sol (sum pts - sum npts) tot where
-    pts = [ score'word word | (word,1) <- M.toList (all'subs .& sol .& solution) ]
+  scr'rnd (Player conn sol scr ssr tot) = Player conn sol pts spts (pts+tot*new) where
+    pts = sum ppts - sum npts
+    spts = sum [ score'word word * (wgt (word `M.member` solution)) | word <- M.keys sol ]
+    ppts = [ score'word word | (word,1) <- M.toList (all'subs .& sol .& solution) ]
     npts = [ score'word word | (word,1) <- M.toList (all'subs .& (sol .- solution)) ]
 
 score'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()

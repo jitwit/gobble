@@ -53,8 +53,15 @@ instance ToMarkup WordResult where
     Gaffe w    -> H.div ! H.style "color:#EE8509;" $ H.text w
     Idk'Oops w -> H.div ! H.style "color:#854B21;" $ H.text w
 
-instance ToMarkup ChatView where
-  toMarkup (ChatView gob) = table $ do
+instance ToMarkup Word'List'View where
+  toMarkup (Word'List'View gob) = 
+    let sol = gob ^. board.word'list
+        wl = sortBy (flip compare `on` T.length . fst) $ M.toList sol
+     in do h3 "word list"
+           table $ forM_ wl $ \(w,d) -> tr $ td (H.text w) >> td (H.text d)
+
+instance ToMarkup Chat'View where
+  toMarkup (Chat'View gob) = table $ do
     thead $ H.text $ T.intercalate ", " (gob^.players.to M.keys)
     gob & iforMOf_ (chat'room.messages.ifolded) $ \t (Chat'Message tweet author) ->
       tr $ do td $ H.text author
@@ -64,6 +71,31 @@ instance ToMarkup ChatView where
       where loc = defaultTimeLocale
             zon = hoursToTimeZone (-4)
             fmt = formatTime loc "%H:%M:%S" . utcToZonedTime zon
+
+instance ToMarkup Score'View where
+  toMarkup (Score'View gob) = report where
+    sol = gob ^. board.word'list
+    subs = gob^..players.traversed.answers
+    res = classify'words $ RoundResult sol $ M.unionsWith (+) subs
+    report = table $ do
+      thead $ do td $ ""
+                 gob & mapMOf_ (players.to M.keys.folded) (th.H.text)
+      tr $ do
+        td "score"
+        gob & forMOf_ (players.traversed.score) $ \n ->
+          td ! H.style "text-align:center;" $ H.text $ T.pack $ show n
+      tr $ do
+        let r = ((gob^.current'round)`mod`5)+1
+        td $ H.string ("total (" <> (show r) <> "/5)")
+        gob & forMOf_ (players.traversed.total'score) $ \n ->
+          td ! H.style "text-align:center;" $ H.text $ T.pack $ show n
+      when (1 < length subs) $
+        tr $ do td "solo"
+                gob & forMOf_ (players.traversed.solo'score) $ \n ->
+                  td ! H.style "text-align:center;" $ H.text $ T.pack $ show n
+      tr $ do td "words"
+              forM_ (M.keys <$> subs) $ \ws ->
+                td $ ul $ mconcat [ toMarkup $ res M.! w | w <- ws ]
 
 board'dia :: Text -> Diagram B
 board'dia b = D.vcat [ D.hcat [ block x | x <- T.unpack r ] | r <- board'rows b ] where
@@ -82,45 +114,16 @@ tag'thing :: A.ToJSON v => Text -> v -> A.Value
 tag'thing tag val = A.object [ tag A..= val ]
 
 render'chat :: Gobble -> H
-render'chat = renderHtml . toMarkup . ChatView
+render'chat = renderHtml . toMarkup . Chat'View
 
 (.&) = M.intersection
 (.-) = M.difference
 
 render'solution :: Gobble -> H
-render'solution gob = 
-  let sol = gob ^. board.word'list
-      wl = sortBy (flip compare `on` T.length . fst) $ M.toList sol
-   in renderHtml $ do
-    h3 "word list"
-    table $ forM_ wl $ \(w,d) -> tr $ td (H.text w) >> td (H.text d)
+render'solution = renderHtml . toMarkup . Word'List'View
 
 render'scores :: Gobble -> H
-render'scores gob = report where
-  sol = gob ^. board.word'list
-  subs = gob^..players.traversed.answers
-  res = classify'words $ RoundResult sol $ M.unionsWith (+) subs
-  report = renderHtml $ table $ do
-    thead $ do td $ ""
-               mapM_ (th.H.text) (gob^.players.to M.keys)
-    tr $ do
-      td "score"
-      gob & forMOf_ (players.traversed.score) $ \n ->
-        td ! H.style "text-align:center;" $ H.text $ T.pack $ show n
-    tr $ do
-      let r = ((gob^.current'round)`mod`5)+1
-      td $ H.string ("total (" <> (show r) <> "/5)")
-      gob & forMOf_ (players.traversed.total'score) $ \n ->
-        td ! H.style "text-align:center;" $ H.text $ T.pack $ show n
-    when (1 < length subs) $
-      tr $ do td "solo"
-              forM_ [ sum (map score'word (M.keys (sub .& sol))) -
-                      sum (map score'word (M.keys (sub .- sol)))
-                    | sub <- subs ] $ \ n ->
-                td ! H.style "text-align:center;" $ H.text $ T.pack $ show n
-    tr $ do td "words"
-            forM_ (M.keys <$> subs) $ \ws ->
-              td $ ul $ mconcat [ toMarkup $ res M.! w | w <- ws ]
+render'scores = renderHtml . toMarkup . Score'View
 
 html'of'board :: Board -> H
 html'of'board b = renderHtml $ img ! H.src board'source where

@@ -30,18 +30,20 @@ data Player = Player
   { _connection :: Connection
   , _answers :: Map Text Int
   , _score :: Int
-  , _total'score :: Int
-  }
+  , _solo'score :: Int
+  , _total'score :: Int }
 
 instance Show Player where
-  show (Player _ as n t) =
+  show (Player _ as n s t) =
     "Player { _answers = " <> show as <> ", _score = " <> show n <> ", _total'score = " <> show t <> " }"
 
 data Chat'Message = Chat'Message
   { _contents :: Text
   , _author :: Name } deriving Show
 
-newtype ChatView = ChatView Gobble
+newtype Chat'View = Chat'View Gobble
+newtype Score'View = Score'View Gobble
+newtype Word'List'View = Word'List'View Gobble
 
 data Chat = Chat { _messages :: Map UTCTime Chat'Message } deriving Show
 
