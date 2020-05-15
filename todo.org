@@ -5,7 +5,7 @@
 - record results
 - flavicon
 - help/about/better chat
-- tooptips/way to see times in chat
+- tooptips/way to see times in chat (abuse divs? to make easier?)
 - improve amazon config/understand firewall
 - use more typeclasses and make js/haskell interface better (or at
   all) typed

@@ -1,4 +1,5 @@
 actions::= dry-update-gobble update-gobble update-boards update-static ghcid-gobble update-images
+static-dir::= /var/www/gobble/static
 
 .PHONY : clean $(actions)
 
@@ -11,14 +12,12 @@ update-gobble :
 	nixops modify nibble/aws.nix nibble/app.nix -d gobbler
 	nixops deploy -d gobbler
 
-update-boards : boards
-	nixops scp --to gobble-net garcon/boards/ /var/www/gobble
-
 update-static :
-	nixops scp --to gobble-net garcon/static/ /var/www/gobble
+	nixops scp --to gobble-net garcon/static/gobble.css $(static-dir)
+	nixops scp --to gobble-net garcon/static/gobble.js $(static-dir)
 
 update-images :
-	nixops scp --to gobble-net garcon/images/ /var/www/gobble/static
+	nixops scp --to gobble-net garcon/images/ $(static-dir)
 
 ghcid-gobble :
 	cd garcon && nix-shell --command 'ghcid -c "cabal repl gobble" -s ":l Main" -r'

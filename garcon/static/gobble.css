@@ -11,6 +11,24 @@ h1 {
     width: 33.33%;
 }
 
+.occurrence {
+    position: relative;
+    display: inline-block;
+}
+
+.occurrence .happening {
+    visibility: hidden;
+    width: 80px;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px 0;
+    position: relative;
+}
+
+.occurrence:hover .happening {
+    visibility: visible;
+}
+
 .row:after {
     content: "";
     display: table;

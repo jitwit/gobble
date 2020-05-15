@@ -41,8 +41,9 @@ data Chat'Message = Chat'Message
   { _contents :: Text
   , _author :: Name } deriving Show
 
-data Chat = Chat
-  { _messages :: Map UTCTime Chat'Message } deriving Show
+newtype ChatView = ChatView Gobble
+
+data Chat = Chat { _messages :: Map UTCTime Chat'Message } deriving Show
 
 data Gobble = Gobble
   { _board :: Board

@@ -10,12 +10,14 @@ import Diagrams.Prelude (Diagram,V2 (..))
 import Diagrams.Backend.SVG
 import qualified Data.Text as T
 import qualified Data.Text.Internal.Lazy as TLI
+import Data.Time.LocalTime
+import Data.Time.Format
 import Data.Text (Text)
 import Data.Colour.SRGB
 import Text.Blaze.Html5 as H hiding (map,main,head,style)
 import qualified Text.Blaze.Html5 as H (head)
 import Text.Blaze.Html.Renderer.Text
-import qualified Text.Blaze.Html5.Attributes as H hiding (form)
+import qualified Text.Blaze.Html5.Attributes as H hiding (form,span)
 import qualified Data.Aeson as A
 import qualified Data.Map as M
 import Data.Map (Map)
@@ -51,6 +53,18 @@ instance ToMarkup WordResult where
     Gaffe w    -> H.div ! H.style "color:#EE8509;" $ H.text w
     Idk'Oops w -> H.div ! H.style "color:#854B21;" $ H.text w
 
+instance ToMarkup ChatView where
+  toMarkup (ChatView gob) = table $ do
+    thead $ H.text $ T.intercalate ", " (gob^.players.to M.keys)
+    gob & iforMOf_ (chat'room.messages.ifolded) $ \t (Chat'Message tweet author) ->
+      tr $ do td $ H.text author
+              td $ H.div ! H.class_ "occurrence" $ do
+                H.text tweet
+                H.span ! H.class_ "happening" $ H.string $ fmt t
+      where loc = defaultTimeLocale
+            zon = hoursToTimeZone (-4)
+            fmt = formatTime loc "%H:%M:%S" . utcToZonedTime zon
+
 board'dia :: Text -> Diagram B
 board'dia b = D.vcat [ D.hcat [ block x | x <- T.unpack r ] | r <- board'rows b ] where
   block x =
@@ -68,13 +82,12 @@ tag'thing :: A.ToJSON v => Text -> v -> A.Value
 tag'thing tag val = A.object [ tag A..= val ]
 
 render'chat :: Gobble -> H
-render'chat gob = renderHtml chat'html where
-  whos'here = H.text $ T.intercalate ", " (gob^.players.to M.keys)
-  chat'html = table $ do
-    thead whos'here
-    forM_ (gob^..chat'room.messages.folded) $ \(Chat'Message tweet author) ->
-      tr $ do td $ H.text author
-              td $ H.text tweet
+render'chat = renderHtml . toMarkup . ChatView
+--   chat'html = table $ do
+--     thead whos'here
+--     forM_ (gob^..chat'room.messages.folded) $ \(Chat'Message tweet author) ->
+--       tr $ do td $ H.text author
+--               td $ H.text tweet
 
 (.&) = M.intersection
 (.-) = M.difference
@@ -130,9 +143,9 @@ instance ToMarkup GobblePage where
   toMarkup _ = html $ do
     H.head $ do
       title "gobble"
-      link ! H.rel "stylesheet" ! H.href "static/gobble.css?5"
+      link ! H.rel "stylesheet" ! H.href "static/gobble.css?6"
       script ! H.src "static/jquery-3.4.1.slim.js" $ ""
-      script ! H.src "static/gobble.js?5" $ ""
+      script ! H.src "static/gobble.js?6" $ ""
     H.body $ do
       H.h1 "GOBBLE"
       H.div ! H.class_ "row" $ do
