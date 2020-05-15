@@ -4,6 +4,7 @@ lib-path::= .:$(CHEZSCHEMELIBDIRS)
 scheme::= scheme -q --libdirs $(lib-path)
 libs::= $(foreach lib,$(objs),$(lib).so)
 boards::= 1000
+local-boards::= ../garcon/boards
 
 .PHONY : clean all boards
 
@@ -24,9 +25,9 @@ $(dictionary) : $(libs)
 	$(scheme) --script load.scm
 
 boards : gobbler.ss $(libs) input/trie.fasl
-	rm -rf garcon/boards
-	mkdir -p garcon/boards
-	$(scheme) --script $< -n $(boards) -d garcon/boards
+	rm -rf $(local-boards)
+	mkdir -p $(local-boards)
+	$(scheme) --script $< -n $(boards) -d $(local-boards)
 
 clean :
 	find . -name "*~" -exec rm {} \;

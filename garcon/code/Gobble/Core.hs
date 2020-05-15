@@ -7,9 +7,9 @@ import Network.WebSockets
 import qualified Data.Map as M
 import Data.Map (Map)
 import qualified Data.Text as T
+import Unsafe.Coerce
 import Data.Text (Text)
 import Control.Lens
-import Unsafe.Coerce
 import Control.Concurrent
 
 todo :: todo
@@ -55,11 +55,7 @@ data Gobble = Gobble
   , _chat'room :: Chat
   , _current'round :: Int } deriving (Show)
 
-data Game'Log = Game'Log
-  { _round'board :: Text
-  , _round'n :: Int
-  , _participants :: Map Text ([Text],Int)
-  } deriving (Show,Read)
+type Game'Log = (Text,Int,Map Text ([Text],Int))
 
 makePrisms ''Phase
 makeLenses ''Board
@@ -67,16 +63,21 @@ makeLenses ''Player
 makeLenses ''Gobble
 makeLenses ''Chat'Message
 makeLenses ''Chat
-makeLenses ''Game'Log
 
 score'word :: Text -> Int
 score'word = ([0,0,0,1,1,2,3,5,11] !!) . min 8 . T.length
 
-round'length :: Int
-round'length = 90
+round'length :: Integer
+round'length = 20
 
-score'length :: Int
-score'length = 45
+score'length :: Integer
+score'length = 10
+
+overall'length :: Integer
+overall'length = round'length + score'length
+
+step'length :: Int
+step'length = 500000
 
 round'period :: NominalDiffTime
 round'period = unsafeCoerce $ secondsToDiffTime $
@@ -88,8 +89,8 @@ isqrt = floor . sqrt . fromIntegral
 board'rows :: Text -> [Text]
 board'rows b = T.chunksOf (isqrt $ T.length b) b
 
-threadDelayS :: Int -> IO ()
-threadDelayS = threadDelay . (*10^6)
+threadDelayS :: Integer -> IO ()
+threadDelayS = threadDelay . fromIntegral . (*10^6) 
 
 dup :: a -> (a,a)
 dup x = (x,x)
@@ -112,6 +113,5 @@ score'submissions gob = gob & players.traversed%~scr'rnd & game'phase.~Scoring w
     npts = [ score'word word | (word,1) <- M.toList (all'subs .& (sol .- solution)) ]
 
 game'log'view :: Gobble -> Game'Log
-game'log'view gob = Game'Log b r (gob^.players<&>vp)
-  where vp p = ((p^.answers & M.keys),p^.total'score)
-        b = gob^.board.letters; r = gob^.current'round
+game'log'view gob = (gob^.board.letters,gob^.current'round,gob^.players<&>vp) where
+  vp p = ((p^.answers & M.keys),p^.total'score)

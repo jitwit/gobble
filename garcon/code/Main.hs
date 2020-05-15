@@ -12,6 +12,7 @@ import qualified Data.ByteString.Lazy.UTF8 as B8
 import Data.Text (Text)
 import Data.Proxy
 import qualified Data.Map as M
+import Unsafe.Coerce
 
 import Control.Exception (finally)
 import Control.Monad
@@ -55,7 +56,7 @@ new'board = do
 
 start'state :: IO Gobble
 start'state = start <$> new'board where
-  start b = Gobble b M.empty Scoring (Chat M.empty) (-1)
+  start b = Gobble b M.empty Ready (Chat M.empty) (-1)
 
 fetch'board :: (?gobble :: TVar Gobble, MonadIO m) => m Board
 fetch'board = liftIO $ view board <$> readTVarIO ?gobble
@@ -207,10 +208,15 @@ fresh'round = liftIO $ do
 
 run'gobble :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 run'gobble = liftIO $ forever $ do
-  fresh'round
-  threadDelayS round'length
-  score'round
-  threadDelayS score'length
+  gob <- readTVarIO ?gobble
+  let gobble'dt t = diffUTCTime t $ gob ^. board.creation'time
+  dt <- unsafeCoerce . gobble'dt <$> getCurrentTime
+  print (dt,gob^.game'phase,preview players gob)
+  case gob ^. game'phase of
+    Ready   -> when (isn't _Empty $ view players gob) $ fresh'round
+    Boggled -> when (dt > (10^12)*round'length)   score'round
+    Scoring -> when (dt > (10^12)*overall'length) fresh'round
+  threadDelay $ step'length
 
 -- "ws backend"
 boggle :: (?gobble :: TVar Gobble, MonadIO m) => PendingConnection -> m ()
@@ -238,9 +244,7 @@ check'boards = liftIO $ length <$> listDirectory "boards/"
 naked'state :: (?gobble :: TVar Gobble) => Handler String 
 naked'state = liftIO $ do
   gob <- readTVarIO ?gobble
-  return $ unlines [gob ^. board & show,"",
-                    gob ^. players & show,"",
-                    gob ^. chat'room & show]
+  return $ unlines [gob & game'log'view & show,"",gob ^. chat'room & show]
 
 boggle'server :: (?gobble :: TVar Gobble) => Server BoggleAPI
 boggle'server = pure GobblePage
