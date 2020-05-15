@@ -174,9 +174,8 @@ send'words conn who = liftIO $ do
 score'submissions :: Gobble -> Gobble
 score'submissions gob = gob
   & players.traversed %~ scr'rnd
-  & game'phase .~ Scoring
-  & current'round %~ ((`mod`5).succ) where
-  new = if gob ^. current'round.to(==4) then 0 else 1
+  & game'phase .~ Scoring where
+  new = gob ^. current'round.to signum
   wgt b = if b then 1 else -1
   solution = gob^.board.word'list
   all'subs = gob ^.. players.traversed.answers & M.unionsWith (+)
@@ -210,6 +209,7 @@ fresh'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 fresh'round = liftIO $ do
   b <- new'board
   gob <- (board .~ b) . (game'phase .~ Boggled) .
+         (current'round %~ ((`mod`5).succ)) .
          (players.traversed.answers .~ M.empty) <$>
          readTVarIO ?gobble
   atomically $ writeTVar ?gobble gob
