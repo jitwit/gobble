@@ -1,4 +1,4 @@
-{-# language OverloadedStrings, ImplicitParams, TemplateHaskell, LambdaCase #-}
+{-# language OverloadedStrings, ImplicitParams, TemplateHaskell, LambdaCase, FlexibleContexts #-}
 
 module Gobble.Core where
 
@@ -55,12 +55,19 @@ data Gobble = Gobble
   , _chat'room :: Chat
   , _current'round :: Int } deriving (Show)
 
+data Game'Log = Game'Log
+  { _round'board :: Text
+  , _round'n :: Int
+  , _participants :: Map Text ([Text],Int)
+  } deriving (Show,Read)
+
 makePrisms ''Phase
 makeLenses ''Board
 makeLenses ''Player
 makeLenses ''Gobble
 makeLenses ''Chat'Message
 makeLenses ''Chat
+makeLenses ''Game'Log
 
 score'word :: Text -> Int
 score'word = ([0,0,0,1,1,2,3,5,11] !!) . min 8 . T.length
@@ -91,16 +98,20 @@ dup x = (x,x)
 (.-) = M.difference
 
 score'submissions :: Gobble -> Gobble
-score'submissions gob = gob
-  & players.traversed %~ scr'rnd
-  & game'phase .~ Scoring where
+score'submissions gob = gob & players.traversed%~scr'rnd & game'phase.~Scoring where
   new = gob ^. current'round.to signum
   wgt b = if b then 1 else -1
   solution = gob^.board.word'list
   all'subs = gob ^.. players.traversed.answers & M.unionsWith (+)
-  scr'rnd (Player conn sol scr ssr tot) = Player conn sol pts spts (pts+tot*new) where
+  scr'rnd p@(Player conn sol scr ssr tot) = p' where
+    p' = p & score .~ pts & solo'score .~ spts & total'score .~ pts+tot*new
+    tot = p ^. total'score
     pts = sum ppts - sum npts
     spts = sum [ score'word word * (wgt (word `M.member` solution)) | word <- M.keys sol ]
     ppts = [ score'word word | (word,1) <- M.toList (all'subs .& sol .& solution) ]
     npts = [ score'word word | (word,1) <- M.toList (all'subs .& (sol .- solution)) ]
 
+game'log'view :: Gobble -> Game'Log
+game'log'view gob = Game'Log b r (gob^.players<&>vp)
+  where vp p = ((p^.answers & M.keys),p^.total'score)
+        b = gob^.board.letters; r = gob^.current'round

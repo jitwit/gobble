@@ -114,6 +114,7 @@ add'tweet who tweet = liftIO $ do
     (chat'room.messages.at now?~Chat'Message tweet who) .
     (chat'room.messages %~ \m -> M.drop (M.size m - 10) m)
   tweet'chat
+  print (who,tweet)
 
 tweet'chat :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 tweet'chat = liftIO $ tagged'broadcast "chirp" =<< render'chat <$> readTVarIO ?gobble
@@ -149,7 +150,7 @@ handle'data who conn = liftIO . \case
   Delete w -> delete'word who w
   Chirp c -> add'tweet who c
   Query "who-else" -> reply'json conn =<< get'players
-  Query "words" -> send'words conn who -- =<< get'persons'words who
+  Query "words" -> send'words conn who
   Text msg _ -> print msg >> reply'json @Text conn "idk/text"
   Binary msg -> print msg >> reply'json @Text conn "idk/bin"
 
@@ -172,6 +173,7 @@ score'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 score'round = liftIO $ do
   gob <- atomically $ stateTVar ?gobble (dup.score'submissions)
   putStrLn "Scored Round... "
+  print $ game'log'view gob
   broadcast'clear "words"
   tagged'broadcast "pinou" . html'of'pinou =<< new'pinou
   broadcast'val $ A.object
