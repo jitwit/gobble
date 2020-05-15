@@ -82,3 +82,6 @@ board'rows b = T.chunksOf (isqrt $ T.length b) b
 
 threadDelayS :: Int -> IO ()
 threadDelayS = threadDelay . (*10^6)
+
+dup :: a -> (a,a)
+dup x = (x,x)

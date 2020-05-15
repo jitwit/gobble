@@ -1,4 +1,3 @@
-- 10 round matches/cumulative scores
 - better debugging
 - rework game loop. eg detect when no one's there and sit ready
 - check and throw away dead connections

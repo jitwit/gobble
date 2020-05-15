@@ -55,7 +55,7 @@ new'board = do
 
 start'state :: IO Gobble
 start'state = start <$> new'board where
-  start b = Gobble b M.empty Scoring (Chat M.empty) 0
+  start b = Gobble b M.empty Scoring (Chat M.empty) (-1)
 
 fetch'board :: (?gobble :: TVar Gobble, MonadIO m) => m Board
 fetch'board = liftIO $ view board <$> readTVarIO ?gobble
@@ -67,10 +67,8 @@ is'name'free name = liftIO $ do
 
 new'player :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Connection -> m ()
 new'player who conn = liftIO $ do
-  gob <- atomically $ do
-    g <- (players.at who ?~ Player conn M.empty 0 0 0) <$> readTVar ?gobble
-    writeTVar ?gobble g
-    return g
+  gob <- atomically $ stateTVar ?gobble $ dup .
+    (players.at who ?~ Player conn M.empty 0 0 0)
   reply'json conn $ tag'thing "board" $ html'of'board (gob^.board)
   reply'json conn $ A.object
     [ "time" A..= (gob^.board.creation'time.to (addUTCTime round'period))
@@ -88,9 +86,8 @@ name'player conn = liftIO $ do
                 pure uname
 
 remove'player :: (?gobble :: TVar Gobble, MonadIO m) => Name -> m ()
-remove'player who = liftIO $ do
-  gob <- (players . at who .~ Nothing) <$> readTVarIO ?gobble
-  atomically $ writeTVar ?gobble gob
+remove'player who = liftIO $ atomically $ modifyTVar' ?gobble $
+  players.at who .~ Nothing
 
 reply :: (?gobble :: TVar Gobble, WebSocketsData a, MonadIO m) => Connection -> a -> m ()
 reply conn = liftIO . sendTextData conn
@@ -187,10 +184,7 @@ score'submissions gob = gob
 
 score'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 score'round = liftIO $ do
-  gob <- atomically $ do
-    g <- score'submissions <$> readTVar ?gobble
-    writeTVar ?gobble g
-    return g
+  gob <- atomically $ stateTVar ?gobble (dup.score'submissions)
   putStrLn "Scored Round... "
   broadcast'clear "words"
   tagged'broadcast "pinou" . html'of'pinou =<< new'pinou
