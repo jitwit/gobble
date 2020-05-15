@@ -4,6 +4,7 @@ module Gobble.Core where
 
 import Data.Time.Clock
 import Network.WebSockets
+import qualified Data.Map as M
 import Data.Map (Map)
 import qualified Data.Text as T
 import Data.Text (Text)
@@ -85,3 +86,21 @@ threadDelayS = threadDelay . (*10^6)
 
 dup :: a -> (a,a)
 dup x = (x,x)
+
+(.&) = M.intersection
+(.-) = M.difference
+
+score'submissions :: Gobble -> Gobble
+score'submissions gob = gob
+  & players.traversed %~ scr'rnd
+  & game'phase .~ Scoring where
+  new = gob ^. current'round.to signum
+  wgt b = if b then 1 else -1
+  solution = gob^.board.word'list
+  all'subs = gob ^.. players.traversed.answers & M.unionsWith (+)
+  scr'rnd (Player conn sol scr ssr tot) = Player conn sol pts spts (pts+tot*new) where
+    pts = sum ppts - sum npts
+    spts = sum [ score'word word * (wgt (word `M.member` solution)) | word <- M.keys sol ]
+    ppts = [ score'word word | (word,1) <- M.toList (all'subs .& sol .& solution) ]
+    npts = [ score'word word | (word,1) <- M.toList (all'subs .& (sol .- solution)) ]
+

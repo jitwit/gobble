@@ -168,20 +168,6 @@ send'words conn who = liftIO $ do
   when (gob ^. game'phase & isn't _Scoring) $
     reply'json conn $ tag'thing "words" $ render'words who gob
 
-score'submissions :: Gobble -> Gobble
-score'submissions gob = gob
-  & players.traversed %~ scr'rnd
-  & game'phase .~ Scoring where
-  new = gob ^. current'round.to signum
-  wgt b = if b then 1 else -1
-  solution = gob^.board.word'list
-  all'subs = gob ^.. players.traversed.answers & M.unionsWith (+)
-  scr'rnd (Player conn sol scr ssr tot) = Player conn sol pts spts (pts+tot*new) where
-    pts = sum ppts - sum npts
-    spts = sum [ score'word word * (wgt (word `M.member` solution)) | word <- M.keys sol ]
-    ppts = [ score'word word | (word,1) <- M.toList (all'subs .& sol .& solution) ]
-    npts = [ score'word word | (word,1) <- M.toList (all'subs .& (sol .- solution)) ]
-
 score'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 score'round = liftIO $ do
   gob <- atomically $ stateTVar ?gobble (dup.score'submissions)

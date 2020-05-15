@@ -116,9 +116,6 @@ tag'thing tag val = A.object [ tag A..= val ]
 render'chat :: Gobble -> H
 render'chat = renderHtml . toMarkup . Chat'View
 
-(.&) = M.intersection
-(.-) = M.difference
-
 render'solution :: Gobble -> H
 render'solution = renderHtml . toMarkup . Word'List'View
 
