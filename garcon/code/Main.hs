@@ -70,11 +70,12 @@ new'player :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Connection -> m ()
 new'player who conn = liftIO $ do
   gob <- atomically $ stateTVar ?gobble $ dup .
     (players.at who ?~ Player conn M.empty 0 0 0)
-  reply'json conn $ tag'thing "board" $ html'of'board (gob^.board)
-  reply'json conn $ A.object
-    [ "time" A..= (gob^.board.creation'time.to (addUTCTime round'period))
-    , "pause" A..= score'length
-    , "round" A..= round'length ]
+  when (gob ^. game'phase & isn't _Ready) $ do
+    reply'json conn $ tag'thing "board" $ html'of'board (gob^.board)
+    reply'json conn $ A.object
+      [ "time" A..= (gob^.board.creation'time.to (addUTCTime round'period))
+      , "pause" A..= score'length
+      , "round" A..= round'length ]
   add'tweet "GOBBLE" (who <> " joined the chat.")
 
 name'player :: (?gobble :: TVar Gobble, MonadIO m) => Connection -> m Name
@@ -163,6 +164,7 @@ update'phase = liftIO $ atomically $ modifyTVar' ?gobble switch'phase where
   switch'phase = game'phase %~ \case
     Scoring -> Boggled
     Boggled -> Scoring
+    other   -> other
 
 send'words :: (?gobble :: TVar Gobble, MonadIO m) => Connection -> Name -> m ()
 send'words conn who = liftIO $ do
@@ -188,6 +190,11 @@ new'pinou = do
   j <- randomRIO (0,length imgs - 1)
   return $ img'dir <> imgs !! j
 
+reset'gobble :: (?gobble :: TVar Gobble, MonadIO m) => m ()
+reset'gobble = liftIO $ do
+  atomically $ modifyTVar' ?gobble (game'phase .~ Ready)
+  putStrLn "ready!"
+
 fresh'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 fresh'round = liftIO $ do
   b <- new'board
@@ -210,13 +217,20 @@ run'gobble :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 run'gobble = liftIO $ forever $ do
   gob <- readTVarIO ?gobble
   let gobble'dt t = diffUTCTime t $ gob ^. board.creation'time
+      peeps = gob ^. players & isn't _Empty
+      phase = gob ^. game'phase
   dt <- unsafeCoerce . gobble'dt <$> getCurrentTime
-  print (dt,gob^.game'phase,preview players gob)
-  case gob ^. game'phase of
-    Ready   -> when (isn't _Empty $ view players gob) $ fresh'round
-    Boggled -> when (dt > (10^12)*round'length)   score'round
-    Scoring -> when (dt > (10^12)*overall'length) fresh'round
-  threadDelay $ step'length
+  case phase of
+    Ready   -> when peeps $ fresh'round
+    Boggled -> if | not peeps -> reset'gobble
+                  | dt > (10^12)*round'length -> score'round
+                  | otherwise -> mempty
+    Scoring -> if | not peeps -> reset'gobble
+                  | dt > (10^12)*overall'length -> fresh'round
+                  | otherwise -> mempty
+  case phase of
+    Ready   -> threadDelay $ ready'length
+    running -> threadDelay $ run'length
 
 -- "ws backend"
 boggle :: (?gobble :: TVar Gobble, MonadIO m) => PendingConnection -> m ()

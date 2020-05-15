@@ -18,7 +18,7 @@ todo = error "todo"
 type Name = Text
 type Reason = String
 
-data Phase = Boggled | Scoring | Ready | Broken Reason
+data Phase = Boggled | Scoring | Ready
   deriving (Eq,Show)
 
 data Board = Board
@@ -76,8 +76,10 @@ score'length = 10
 overall'length :: Integer
 overall'length = round'length + score'length
 
-step'length :: Int
-step'length = 500000
+run'length :: Int
+run'length = 50000
+ready'length :: Int
+ready'length = 500000
 
 round'period :: NominalDiffTime
 round'period = unsafeCoerce $ secondsToDiffTime $
