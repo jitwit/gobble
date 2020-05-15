@@ -70,7 +70,7 @@ instance ToMarkup Chat'View where
                 H.span ! H.class_ "happening" $ H.string $ fmt t
       where loc = defaultTimeLocale
             zon = hoursToTimeZone (-4)
-            fmt = formatTime loc "%H:%M:%S" . utcToZonedTime zon
+            fmt = formatTime loc " %H:%M:%S" . utcToZonedTime zon
 
 instance ToMarkup Score'View where
   toMarkup (Score'View gob) = report where

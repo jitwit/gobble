@@ -187,12 +187,12 @@ new'pinou :: IO String
 new'pinou = do
   let img'dir = "static/images/"
   imgs <- listDirectory img'dir
-  j <- randomRIO (0,length imgs - 1)
+  j <- randomRIO (0,length imgs-1)
   return $ img'dir <> imgs !! j
 
 reset'gobble :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 reset'gobble = liftIO $ do
-  atomically $ modifyTVar' ?gobble (game'phase .~ Ready)
+  atomically $ modifyTVar' ?gobble $ (game'phase .~ Ready) . (current'round .~ (-1))
   putStrLn "ready!"
 
 fresh'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
