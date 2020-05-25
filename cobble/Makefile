@@ -29,6 +29,9 @@ boards : gobbler.ss $(libs) input/trie.fasl
 	mkdir -p $(local-boards)
 	$(scheme) --script $< -n $(boards) -d $(local-boards)
 
+update-boards :
+	nixops scp --to gobble-net $(local-boards) /var/www/gobble
+
 clean :
 	find . -name "*~" -exec rm {} \;
 	find . -name "*.so" -exec rm {} \;
