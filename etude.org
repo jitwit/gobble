@@ -13,8 +13,6 @@ AnagN=: Anag@Let
 NB. valid backwards words
 Back=: #~(e.|.&.>)
 BackN=: Back@Let
-
-noendspace=: #~ ' '~:{:"1
 #+end_src
 
 #+RESULTS:
@@ -28,7 +26,7 @@ overrepresented, eg ~dis~ with disestablishmentarianism. Maybe this
 skews things! 
 
 #+begin_src j :session :exports both
-5 {. \:~ (#;{.)/.~ 3 {."1 > W 
+5 {. \:~ (#;{.)/.~ 3 {."1 > W
 #+end_src
 
 #+RESULTS:
@@ -50,32 +48,32 @@ skews things!
 Recalculating on relevant words:
 
 #+begin_src j :session :exports both
-RWS =: ,/ (Let"0) 3 + i. 6 NB. relevant words
-10 {. \:~ (#;{.)/.~ noendspace 3 {."1 > RWS
+RWS =: ,/ (Let"0) 5 + i. 4 NB. relevant words (length 5-8)
+10 {. \:~ (#;{.)/.~ (#~ ' '~:{:"1) 3 {."1 > RWS
 #+end_src
 
 #+RESULTS:
 #+begin_example
 ┌───┬───┐
-│643│OUT│
+│640│OUT│
 ├───┼───┤
-│550│PRE│
+│543│PRE│
 ├───┼───┤
-│493│CHA│
+│480│CHA│
 ├───┼───┤
-│470│PRO│
+│459│PRO│
 ├───┼───┤
-│462│MIS│
+│457│MIS│
 ├───┼───┤
-│443│CON│
+│434│CON│
 ├───┼───┤
-│420│CAR│
+│409│CAR│
 ├───┼───┤
-│414│PAR│
+│405│PAR│
 ├───┼───┤
-│411│STA│
+│404│STA│
 ├───┼───┤
-│389│FOR│
+│381│FOR│
 └───┴───┘
 #+end_example
 
@@ -84,31 +82,31 @@ RWS =: ,/ (Let"0) 3 + i. 6 NB. relevant words
 
 
 #+begin_src j :session :exports both
-10 {. \:~ (#;{.)/.~ noendspace 4 {."1 > RWS
+10 {. \:~ (#;{.)/.~ (#~ ' '~:{:"1) 4 {."1 > RWS
 #+end_src
 
 #+RESULTS:
 #+begin_example
 ┌───┬────┐
-│365│OVER│
+│364│OVER│
 ├───┼────┤
-│122│FORE│
+│121│FORE│
 ├───┼────┤
-│109│ANTI│
+│108│ANTI│
 ├───┼────┤
-│102│OUTS│
+│101│OUTS│
 ├───┼────┤
 │100│STRA│
 ├───┼────┤
-│95 │CHAR│
+│94 │CHAR│
 ├───┼────┤
-│93 │BACK│
+│92 │BACK│
 ├───┼────┤
-│92 │COMP│
+│91 │COMP│
 ├───┼────┤
-│86 │PARA│
+│85 │PARA│
 ├───┼────┤
-│80 │POST│
+│79 │POST│
 └───┴────┘
 #+end_example
 
@@ -117,7 +115,7 @@ RWS =: ,/ (Let"0) 3 + i. 6 NB. relevant words
 *** Length 3
 
 #+begin_src j :session :exports both
-10 {. \:~ (#;{.)/.~ noendspace _3 {."1 > RWS
+10 {. \:~ (#;{.)/.~ (#~ ' '~:{:"1) _3 {."1 > RWS
 #+end_src
 
 #+RESULTS:
@@ -145,8 +143,10 @@ RWS =: ,/ (Let"0) 3 + i. 6 NB. relevant words
 └────┴───┘
 #+end_example
 
+*** Length 4
+
 #+begin_src j :session :exports both
-10 {. \:~ (#;{.)/.~ noendspace _4 {."1 > RWS
+10 {. \:~ (#;{.)/.~ (#~ ' '~:{:"1) _4 {."1 > RWS
 #+end_src
 
 #+RESULTS:
@@ -178,14 +178,350 @@ RWS =: ,/ (Let"0) 3 + i. 6 NB. relevant words
 
 Useful words which are the valid backwards and forwards
 
+*** 4 Letter Palindromes
+
 #+begin_src j :session :exports both
-BackN 5
+> (#~ (2=#&>)) (</.~ (([: {. /:~ @ (; |.)) &. >)) BackN 4
 #+end_src
 
 #+RESULTS:
-: ┌─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬───...
-: │AIDER│AIRTS│ALULA│AMAHS│AMENE│AMMAN│ANANA│ANGER│ANNAT│ARBAS│ARRET│ARRIS│ARVAL│ASSAM│ASSES│AYAHS│AYAYA│BLITS│BOBAC│BOBAK│BOORD│CABOB│CAMUS│CARES│CIRES│CIVIC│DARAF│DARTS│DEBUT│DECAF│DECAL│DEDAL│DEENS│DEEPS│DEETS│DEFER│DEFFO│DEKED│DELED│DELIS│DELOS│DEMAN│DEM...
-: └─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴───...
+#+begin_example
+...
+│LEAT│TAEL│
+├────┼────┤
+│LEEP│PEEL│
+├────┼────┤
+│LEER│REEL│
+├────┼────┤
+│LEES│SEEL│
+├────┼────┤
+│LEET│TEEL│
+├────┼────┤
+│LEIR│RIEL│
+├────┼────┤
+│LEVO│OVEL│
+├────┼────┤
+│LIAR│RAIL│
+├────┼────┤
+│LIAS│SAIL│
+├────┼────┤
+│LIES│SEIL│
+├────┼────┤
+│LION│NOIL│
+├────┼────┤
+│LOBO│OBOL│
+├────┼────┤
+│LOOM│MOOL│
+├────┼────┤
+│LOOP│POOL│
+├────┼────┤
+│LOOS│SOOL│
+├────┼────┤
+│LOOT│TOOL│
+├────┼────┤
+│MACS│SCAM│
+├────┼────┤
+│MAES│SEAM│
+├────┼────┤
+│MALS│SLAM│
+├────┼────┤
+│MAPS│SPAM│
+├────┼────┤
+│MART│TRAM│
+├────┼────┤
+│MAWS│SWAM│
+├────┼────┤
+│MEES│SEEM│
+├────┼────┤
+│MEET│TEEM│
+├────┼────┤
+│METS│STEM│
+├────┼────┤
+│MILS│SLIM│
+├────┼────┤
+│MIPS│SPIM│
+├────┼────┤
+│MOOR│ROOM│
+├────┼────┤
+│MOOS│SOOM│
+├────┼────┤
+│MOOT│TOOM│
+├────┼────┤
+│MUTS│STUM│
+├────┼────┤
+│NAES│SEAN│
+├────┼────┤
+│NAPS│SPAN│
+├────┼────┤
+│NEEP│PEEN│
+├────┼────┤
+│NEKS│SKEN│
+├────┼────┤
+│NETS│STEN│
+├────┼────┤
+│NIPS│SPIN│
+├────┼────┤
+│NOOP│POON│
+├────┼────┤
+│NUTS│STUN│
+├────┼────┤
+│OBEY│YEBO│
+├────┼────┤
+│ODAS│SADO│
+├────┼────┤
+│OIKS│SKIO│
+├────┼────┤
+│ONER│RENO│
+├────┼────┤
+│OOHS│SHOO│
+├────┼────┤
+│PALP│PLAP│
+├────┼────┤
+│PALS│SLAP│
+├────┼────┤
+│PANS│SNAP│
+├────┼────┤
+│PART│TRAP│
+├────┼────┤
+│PATS│STAP│
+├────┼────┤
+│PAWS│SWAP│
+├────┼────┤
+│PEES│SEEP│
+├────┼────┤
+│PERP│PREP│
+├────┼────┤
+│PETS│STEP│
+├────┼────┤
+│PINS│SNIP│
+├────┼────┤
+│POHS│SHOP│
+├────┼────┤
+│POLS│SLOP│
+├────┼────┤
+│POOR│ROOP│
+├────┼────┤
+│POOS│SOOP│
+├────┼────┤
+│PORT│TROP│
+├────┼────┤
+#+end_example
+
+
+*** 5 Letter Palindromes
+
+#+begin_src j :session :exports both
+> (#~ (2 = # & >)) (</.~ (([: {. /:~ @ (; |.)) &. >)) BackN 5
+#+end_src
+
+#+RESULTS:
+#+begin_example
+...
+│LARES│SERAL│
+├─────┼─────┤
+│LARUM│MURAL│
+├─────┼─────┤
+│LEBEN│NEBEL│
+├─────┼─────┤
+│LEEPS│SPEEL│
+├─────┼─────┤
+│LEETS│STEEL│
+├─────┼─────┤
+│LEPER│REPEL│
+├─────┼─────┤
+│LEVER│REVEL│
+├─────┼─────┤
+│LIART│TRAIL│
+├─────┼─────┤
+│LOGES│SEGOL│
+├─────┼─────┤
+│LOOKS│SKOOL│
+├─────┼─────┤
+│LOONS│SNOOL│
+├─────┼─────┤
+│LOOPS│SPOOL│
+├─────┼─────┤
+│LOOTS│STOOL│
+├─────┼─────┤
+│LOTOS│SOTOL│
+├─────┼─────┤
+│MARCS│SCRAM│
+├─────┼─────┤
+│MEETS│STEEM│
+├─────┼─────┤
+│METER│RETEM│
+├─────┼─────┤
+│MILKS│SKLIM│
+├─────┼─────┤
+│MOOLS│SLOOM│
+├─────┼─────┤
+│MOOPS│SPOOM│
+├─────┼─────┤
+│MURES│SERUM│
+├─────┼─────┤
+│MUTON│NOTUM│
+├─────┼─────┤
+│NAMER│REMAN│
+├─────┼─────┤
+│NAPAS│SAPAN│
+├─────┼─────┤
+│NARAS│SARAN│
+├─────┼─────┤
+│NARCS│SCRAN│
+├─────┼─────┤
+│NARKS│SKRAN│
+├─────┼─────┤
+│NELIS│SILEN│
+├─────┼─────┤
+│NEMAS│SAMEN│
+├─────┼─────┤
+│NEVES│SEVEN│
+├─────┼─────┤
+│NINER│RENIN│
+├─────┼─────┤
+│NOLOS│SOLON│
+├─────┼─────┤
+│NONET│TENON│
+├─────┼─────┤
+│NOOPS│SPOON│
+├─────┼─────┤
+│NOTES│SETON│
+├─────┼─────┤
+│OFFER│REFFO│
+├─────┼─────┤
+│OLLER│RELLO│
+├─────┼─────┤
+│PACER│RECAP│
+├─────┼─────┤
+│PARTS│STRAP│
+├─────┼─────┤
+│PEELS│SLEEP│
+├─────┼─────┤
+│PELAS│SALEP│
+├─────┼─────┤
+│PEONS│SNOEP│
+├─────┼─────┤
+│PERTS│STREP│
+├─────┼─────┤
+│POOLS│SLOOP│
+├─────┼─────┤
+│POONS│SNOOP│
+├─────┼─────┤
+│POORT│TROOP│
+├─────┼─────┤
+│POOTS│STOOP│
+├─────┼─────┤
+│PORTS│STROP│
+├─────┼─────┤
+│PURIS│SIRUP│
+├─────┼─────┤
+│RAGER│REGAR│
+├─────┼─────┤
+│RAGES│SEGAR│
+├─────┼─────┤
+│RAGUS
+#+end_example
+
+*** 6 Letter Palindromes
+
+#+begin_src j :session :exports both
+> (#~ (2 = # & >)) (</.~ (([: {. /:~ @ (; |.)) &. >)) BackN 6
+#+end_src
+
+#+RESULTS:
+#+begin_example
+┌──────┬──────┐
+│AGENES│SENEGA│
+├──────┼──────┤
+│ANIMAL│LAMINA│
+├──────┼──────┤
+│ANIMES│SEMINA│
+├──────┼──────┤
+│BRACED│DECARB│
+├──────┼──────┤
+│DEFFER│REFFED│
+├──────┼──────┤
+│DEGAMI│IMAGED│
+├──────┼──────┤
+│DEMITS│STIMED│
+├──────┼──────┤
+│DENIER│REINED│
+├──────┼──────┤
+│DENIES│SEINED│
+├──────┼──────┤
+│DEPART│TRAPED│
+├──────┼──────┤
+│DEPORT│TROPED│
+├──────┼──────┤
+│DEPOTS│STOPED│
+├──────┼──────┤
+│DERATS│STARED│
+├──────┼──────┤
+│DERRIS│SIRRED│
+├──────┼──────┤
+│DESSES│SESSED│
+├──────┼──────┤
+│DEVILS│SLIVED│
+├──────┼──────┤
+│DEVOTS│STOVED│
+├──────┼──────┤
+│DEWANS│SNAWED│
+├──────┼──────┤
+│DIALER│RELAID│
+├──────┼──────┤
+│DIAPER│REPAID│
+├──────┼──────┤
+│DORMIN│NIMROD│
+├──────┼──────┤
+│DORTER│RETROD│
+├──────┼──────┤
+│DRAWER│REWARD│
+├──────┼──────┤
+│ELIDES│SEDILE│
+├──────┼──────┤
+│ELUTES│SETULE│
+├──────┼──────┤
+│EMMETS│STEMME│
+├──────┼──────┤
+│EPATER│RETAPE│
+├──────┼──────┤
+│ESPIAL│LAIPSE│
+├──────┼──────┤
+│EVILER│RELIVE│
+├──────┼──────┤
+│GELDER│REDLEG│
+├──────┼──────┤
+│HALLAN│NALLAH│
+├──────┼──────┤
+│LAHALS│SLAHAL│
+├──────┼──────┤
+│LANGER│REGNAL│
+├──────┼──────┤
+│LEVINS│SNIVEL│
+├──────┼──────┤
+│LOOTER│RETOOL│
+├──────┼──────┤
+│MARRUM│MURRAM│
+├──────┼──────┤
+│NAPPAS│SAPPAN│
+├──────┼──────┤
+│PUPILS│SLIPUP│
+├──────┼──────┤
+│RAGGAS│SAGGAR│
+├──────┼──────┤
+│RECAPS│SPACER│
+├──────┼──────┤
+│RECCOS│SOCCER│
+├──────┼──────┤
+│REDIPS│SPIDER│
+├──────┼──────┤
+│REDRAW│WARDER│
+├──────┼──────┤
+│REFLET│TELFER│
+├──────┼──────┤
+│REFLOW│WOLFER│
+├───
+#+end_example
 
 Useful letter combinations based on how many words they form.
 
@@ -425,7 +761,7 @@ Useful letter combinations based on how many words they form.
 *** 10 words
 
 #+BEGIN_SRC j :session :exports both
->>_1{]combos4=: combos 4
+>(#~ (10 = #) & >) AnagN 4
 #+END_SRC
 
 #+RESULTS:
@@ -436,16 +772,16 @@ Useful letter combinations based on how many words they form.
 *** 7 words
 
 #+BEGIN_SRC j :session :exports both
->>_2{combos4
+>(#~ (7 = #) & >) AnagN 4
 #+END_SRC
 
 #+RESULTS:
 : ┌────┬────┬────┬────┬────┬────┬────┐
-: │ARLE│EARL│LAER│LARE│LEAR│RALE│REAL│
-: ├────┼────┼────┼────┼────┼────┼────┤
 : │ARES│ARSE│EARS│ERAS│RASE│SEAR│SERA│
 : ├────┼────┼────┼────┼────┼────┼────┤
 : │ARIL│LAIR│LARI│LIAR│LIRA│RAIL│RIAL│
+: ├────┼────┼────┼────┼────┼────┼────┤
+: │ARLE│EARL│LAER│LARE│LEAR│RALE│REAL│
 : ├────┼────┼────┼────┼────┼────┼────┤
 : │OWTS│STOW│SWOT│TOWS│TWOS│WOST│WOTS│
 : └────┴────┴────┴────┴────┴────┴────┘
@@ -453,7 +789,7 @@ Useful letter combinations based on how many words they form.
 *** 6 words
 
 #+BEGIN_SRC j :session :exports both
->>_3{combos4
+>(#~ (6 = #) & >) AnagN 4
 #+END_SRC
 
 #+RESULTS:
@@ -461,29 +797,25 @@ Useful letter combinations based on how many words they form.
 ┌────┬────┬────┬────┬────┬────┐
 │ABLE│ALBE│BAEL│BALE│BEAL│BLAE│
 ├────┼────┼────┼────┼────┼────┤
-│ARED│DARE│DEAR│EARD│RADE│READ│
-├────┼────┼────┼────┼────┼────┤
 │AIDS│DAIS│DISA│SADI│SAID│SIDA│
 ├────┼────┼────┼────┼────┼────┤
-│ALME│LAME│LEAM│MALE│MEAL│MELA│
+│AIRS│ARIS│RAIS│RIAS│SAIR│SARI│
 ├────┼────┼────┼────┼────┼────┤
 │ALES│LASE│LEAS│SALE│SEAL│SLAE│
 ├────┼────┼────┼────┼────┼────┤
-│LATE│LEAT│TAEL│TALE│TEAL│TELA│
-├────┼────┼────┼────┼────┼────┤
-│AVEL│LAVE│LEVA│VALE│VEAL│VELA│
+│ALME│LAME│LEAM│MALE│MEAL│MELA│
 ├────┼────┼────┼────┼────┼────┤
 │AMES│MAES│MASE│MESA│SAME│SEAM│
 ├────┼────┼────┼────┼────┼────┤
 │ANES│EANS│NAES│SANE│SEAN│SENA│
 ├────┼────┼────┼────┼────┼────┤
-│AIRS│ARIS│RAIS│RIAS│SAIR│SARI│
-├────┼────┼────┼────┼────┼────┤
 │APTS│PAST│PATS│SPAT│STAP│TAPS│
+├────┼────┼────┼────┼────┼────┤
+│ARED│DARE│DEAR│EARD│RADE│READ│
 ├────┼────┼────┼────┼────┼────┤
 │ARTS│RAST│RATS│STAR│TARS│TSAR│
 ├────┼────┼────┼────┼────┼────┤
-│STAW│SWAT│TAWS│TWAS│WAST│WATS│
+│AVEL│LAVE│LEVA│VALE│VEAL│VELA│
 ├────┼────┼────┼────┼────┼────┤
 │DEER│DERE│DREE│ERED│REDE│REED│
 ├────┼────┼────┼────┼────┼────┤
@@ -499,12 +831,13 @@ Useful letter combinations based on how many words they form.
 ├────┼────┼────┼────┼────┼────┤
 │EROS│ORES│REOS│ROES│ROSE│SORE│
 ├────┼────┼────┼────┼────┼────┤
-│RUES│RUSE│SUER│SURE│URES│USER│
-├────┼────┼────┼────┼────┼────┤
 │HOPS│PHOS│POHS│POSH│SHOP│SOPH│
 ├────┼────┼────┼────┼────┼────┤
+│LATE│LEAT│TAEL│TALE│TEAL│TELA│
+├────┼────┼────┼────┼────┼────┤
 │OPTS│POST│POTS│SPOT│STOP│TOPS│
-└────┴────┴────┴────┴────┴────┘
+├────┼────┼────┼────┼────┼────┤
+│RUES│RUSE│SUER│SURE│URES│
 #+end_example
 
 ** 5 letter combinations
@@ -512,7 +845,7 @@ Useful letter combinations based on how many words they form.
 *** 13 words
 
 #+BEGIN_SRC j :session :exports both
->>_1{]combos5=: combos 5
+>(#~ (13 = #) & >) AnagN 5
 #+END_SRC
 
 #+RESULTS:
@@ -525,7 +858,7 @@ Useful letter combinations based on how many words they form.
 *** 12 words
 
 #+BEGIN_SRC j :session :exports both
->>_2{combos5
+>(#~ (12 = #) & >) AnagN 5
 #+END_SRC
 
 #+RESULTS:
@@ -536,21 +869,40 @@ Useful letter combinations based on how many words they form.
 *** 10 words
 
 #+BEGIN_SRC j :session :exports both
->>_3{combos5
+>(#~ (10 = #) & >) AnagN 5
 #+END_SRC
 
 #+RESULTS:
 : ┌─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┐
-: │LAPSE│LEAPS│PALES│PEALS│PELAS│PLEAS│SALEP│SEPAL│SPALE│SPEAL│
-: ├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤
 : │DEILS│DELIS│DIELS│EILDS│IDLES│ISLED│SIDLE│SIELD│SILED│SLIDE│
 : ├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤
 : │DEROS│DOERS│DORES│DORSE│DOSER│REDOS│RESOD│RODES│ROSED│SORED│
+: ├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤
+: │LAPSE│LEAPS│PALES│PEALS│PELAS│PLEAS│SALEP│SEPAL│SPALE│SPEAL│
 : └─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┘
 
 #+BEGIN_SRC j :session :exports both
->>_4{combos5
+>(#~ (9 = #) & >) AnagN 5
 #+END_SRC
+
+#+RESULTS:
+#+begin_example
+┌─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┐
+│ACERS│ACRES│CARES│CARSE│ESCAR│RACES│SCARE│SCRAE│SERAC│
+├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤
+│AIRTS│ARTIS│ASTIR│RAITS│SITAR│STAIR│STRIA│TARSI│TIARS│
+├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤
+│ARLES│EARLS│LAERS│LARES│LASER│LEARS│RALES│REALS│SERAL│
+├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤
+│AVELS│LAVES│LEVAS│SALVE│SELVA│SLAVE│VALES│VALSE│VEALS│
+├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤
+│EPRIS│PERIS│PIERS│PRIES│PRISE│RIPES│SPEIR│SPIER│SPIRE│
+├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤
+│ESTER│REEST│RESET│STEER│STERE│TEERS│TERES│TERSE│TREES│
+├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤
+│RIOTS│ROIST│ROSIT│ROSTI│ROTIS│TIROS│TORSI│TRIOS│TROIS│
+└─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┘
+#+end_example
 
 *** 9 words
 
@@ -576,7 +928,7 @@ Useful letter combinations based on how many words they form.
 *** 8 words
 
 #+BEGIN_SRC j :session :exports both
->>_5{combos5
+>(#~ (8 = #) & >) AnagN 5
 #+END_SRC
 
 #+RESULTS:
@@ -586,20 +938,20 @@ Useful letter combinations based on how many words they form.
 ├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤
 │ALMES│LAMES│LEAMS│MALES│MEALS│MELAS│MESAL│SAMEL│
 ├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤
-│LEAPT│LEPTA│PALET│PELTA│PETAL│PLATE│PLEAT│TEPAL│
-├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤
 │AMENS│MANES│MANSE│MEANS│MENSA│NAMES│NEMAS│SAMEN│
 ├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤
-│ASPEN│NAPES│NEAPS│PANES│PEANS│SNEAP│SPANE│SPEAN│
+│ANTIS│NATIS│SAINT│SATIN│STAIN│TAINS│TIANS│TINAS│
 ├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤
 │APERT│APTER│PATER│PEART│PETAR│PRATE│TAPER│TRAPE│
 ├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤
-│PASTE│PATES│PEATS│SEPTA│SPATE│SPEAT│TAPES│TEPAS│
-├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤
-│ANTIS│NATIS│SAINT│SATIN│STAIN│TAINS│TIANS│TINAS│
+│ASPEN│NAPES│NEAPS│PANES│PEANS│SNEAP│SPANE│SPEAN│
 ├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤
 │HEROS│HOERS│HORSE│HOSER│ROHES│SHERO│SHOER│SHORE│
 ├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤
 │INSET│NEIST│NITES│SENTI│SIENT│STEIN│TEINS│TINES│
+├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤
+│LEAPT│LEPTA│PALET│PELTA│PETAL│PLATE│PLEAT│TEPAL│
+├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤
+│PASTE│PATES│PEATS│SEPTA│SPATE│SPEAT│TAPES│TEPAS│
 └─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┘
 #+end_example
