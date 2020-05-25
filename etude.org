@@ -1,33 +1,175 @@
-Original:
-
-#+BEGIN_SRC j :session :exports both
-words=: 'b'freads<'~/code/gobble/input/collins.txt'
-nletter=: monad : 'words #~ >(y=#)&.>words'
-grp=: 1,2([:-.0&{::-:&(/:~)1&{::)\] NB. group anagrams together
-grpl=: 1,2([:-.0&{::-:&#1&{::)\]
-combos=: [: (grpl <;.1]) [: (/:#&.>) [: (a:-.~grp<;.1]) [: (/:/:~&.>) nletter
-#+END_SRC
-
-A few months later:
+Some helpful boggle calculations.
 
 #+begin_src j :session :exports both
-W=: (<@}:);._2(1!:1)<'../input/collins.txt'
+W=: (<@}:);._2(1!:1)<'cobble/share/collins.txt'
 
 NB. words of given length
-NLet=: (W#~=&(#&>W))
+Let=: (W#~=&(#&>W))
 
 NB. words that have anagrams in dictionary
 Anag=: (#~1<#&>)@:(</.)~([:i.~(/:~&>))
-AnagN=: Anag@NLet
+AnagN=: Anag@Let
 
 NB. valid backwards words
 Back=: #~(e.|.&.>)
-BackN=: Back@NLet
+BackN=: Back@Let
 #+end_src
 
 #+RESULTS:
 
 * Boggle Bits
+
+** Common prefixes
+
+This finds 10 most common 3-letter prefixes. Long words are likely
+overrepresented, eg ~dis~ with disestablishmentarianism. Maybe this
+skews things! 
+
+#+begin_src j :session :exports both
+5 {. \:~ (#;{.)/.~ 3 {."1 > W 
+#+end_src
+
+#+RESULTS:
+#+begin_example
+┌────┬───┐
+│2858│DIS│
+├────┼───┤
+│2752│CON│
+├────┼───┤
+│2505│PRE│
+├────┼───┤
+│2357│OVE│
+├────┼───┤
+│2215│PRO│
+└────┴───┘
+#+end_example
+
+*** 3 letter prefixes to know
+Recalculating on relevant words:
+
+#+begin_src j :session :exports both
+RWS =: ,/ (Let"0) 3 + i. 6 NB. relevant words
+}. 10 {. \:~ (#;{.)/.~ 3 {."1 > RWS
+#+end_src
+
+#+RESULTS:
+#+begin_example
+┌───┬───┐
+│643│OUT│
+├───┼───┤
+│550│PRE│
+├───┼───┤
+│493│CHA│
+├───┼───┤
+│470│PRO│
+├───┼───┤
+│462│MIS│
+├───┼───┤
+│443│CON│
+├───┼───┤
+│420│CAR│
+├───┼───┤
+│414│PAR│
+├───┼───┤
+│411│STA│
+└───┴───┘
+#+end_example
+
+*** 4 letter prefixes
+
+
+
+#+begin_src j :session :exports both
+}. 10 {. \:~ (#;{.)/.~ 4 {."1 > RWS NB. the extra behead because
+                                    NB. spaces are included for
+                                    NB. whatever reason (too tired to
+                                    NB. figure out)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+┌───┬────┐
+│365│OVER│
+├───┼────┤
+│122│FORE│
+├───┼────┤
+│109│ANTI│
+├───┼────┤
+│102│OUTS│
+├───┼────┤
+│100│STRA│
+├───┼────┤
+│95 │CHAR│
+├───┼────┤
+│93 │BACK│
+├───┼────┤
+│92 │COMP│
+├───┼────┤
+│86 │PARA│
+└───┴────┘
+#+end_example
+
+** Suffixes
+
+*** Length 3
+
+#+begin_src j :session :exports both
+noendspace=: #~ ' '~:{:"1
+
+}. 10 {. \:~ (#;{.)/.~ noendspace _3 {."1 > RWS
+#+end_src
+
+#+RESULTS:
+#+begin_example
+┌────┬───┐
+│1571│ERS│
+├────┼───┤
+│1044│EST│
+├────┼───┤
+│870 │NGS│
+├────┼───┤
+│774 │IER│
+├────┼───┤
+│675 │IES│
+├────┼───┤
+│672 │ESS│
+├────┼───┤
+│608 │TED│
+├────┼───┤
+│594 │SES│
+├────┼───┤
+│483 │RED│
+└────┴───┘
+#+end_example
+
+#+begin_src j :session :exports both
+}. 10 {. \:~ (#;{.)/.~ noendspace _4 {."1 > RWS
+#+end_src
+
+#+RESULTS:
+#+begin_example
+┌───┬────┐
+│742│IEST│
+├───┼────┤
+│509│LING│
+├───┼────┤
+│394│TING│
+├───┼────┤
+│359│LESS│
+├───┼────┤
+│323│ABLE│
+├───┼────┤
+│288│ERED│
+├───┼────┤
+│287│TERS│
+├───┼────┤
+│257│NESS│
+├───┼────┤
+│252│LIKE│
+└───┴────┘
+#+end_example
+
+** Palindromes
 
 Useful words which are the valid backwards and forwards
 
