@@ -13,6 +13,8 @@ AnagN=: Anag@Let
 NB. valid backwards words
 Back=: #~(e.|.&.>)
 BackN=: Back@Let
+
+noendspace=: #~ ' '~:{:"1
 #+end_src
 
 #+RESULTS:
@@ -49,7 +51,7 @@ Recalculating on relevant words:
 
 #+begin_src j :session :exports both
 RWS =: ,/ (Let"0) 3 + i. 6 NB. relevant words
-}. 10 {. \:~ (#;{.)/.~ 3 {."1 > RWS
+10 {. \:~ (#;{.)/.~ noendspace 3 {."1 > RWS
 #+end_src
 
 #+RESULTS:
@@ -72,6 +74,8 @@ RWS =: ,/ (Let"0) 3 + i. 6 NB. relevant words
 │414│PAR│
 ├───┼───┤
 │411│STA│
+├───┼───┤
+│389│FOR│
 └───┴───┘
 #+end_example
 
@@ -80,10 +84,7 @@ RWS =: ,/ (Let"0) 3 + i. 6 NB. relevant words
 
 
 #+begin_src j :session :exports both
-}. 10 {. \:~ (#;{.)/.~ 4 {."1 > RWS NB. the extra behead because
-                                    NB. spaces are included for
-                                    NB. whatever reason (too tired to
-                                    NB. figure out)
+10 {. \:~ (#;{.)/.~ noendspace 4 {."1 > RWS
 #+end_src
 
 #+RESULTS:
@@ -106,6 +107,8 @@ RWS =: ,/ (Let"0) 3 + i. 6 NB. relevant words
 │92 │COMP│
 ├───┼────┤
 │86 │PARA│
+├───┼────┤
+│80 │POST│
 └───┴────┘
 #+end_example
 
@@ -114,14 +117,14 @@ RWS =: ,/ (Let"0) 3 + i. 6 NB. relevant words
 *** Length 3
 
 #+begin_src j :session :exports both
-noendspace=: #~ ' '~:{:"1
-
-}. 10 {. \:~ (#;{.)/.~ noendspace _3 {."1 > RWS
+10 {. \:~ (#;{.)/.~ noendspace _3 {."1 > RWS
 #+end_src
 
 #+RESULTS:
 #+begin_example
 ┌────┬───┐
+│2901│ING│
+├────┼───┤
 │1571│ERS│
 ├────┼───┤
 │1044│EST│
@@ -143,12 +146,14 @@ noendspace=: #~ ' '~:{:"1
 #+end_example
 
 #+begin_src j :session :exports both
-}. 10 {. \:~ (#;{.)/.~ noendspace _4 {."1 > RWS
+10 {. \:~ (#;{.)/.~ noendspace _4 {."1 > RWS
 #+end_src
 
 #+RESULTS:
 #+begin_example
 ┌───┬────┐
+│832│INGS│
+├───┼────┤
 │742│IEST│
 ├───┼────┤
 │509│LING│
