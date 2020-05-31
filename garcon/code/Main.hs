@@ -9,6 +9,8 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Data.ByteString.Lazy.Char8 as B
 import qualified Data.ByteString.Lazy.UTF8 as B8
+import Data.Bool
+import Data.Char
 import Data.Text (Text)
 import Data.Proxy
 import qualified Data.Map as M
@@ -99,9 +101,11 @@ reply'json conn = reply conn . A.encode
 
 submit'words :: (?gobble :: TVar Gobble, MonadIO m) => Name -> [Text] -> m ()
 submit'words who words = liftIO $ atomically $ do
+  let ok'word w = T.all isLetter w
   gob <- readTVar ?gobble
   when (gob ^. game'phase & isn't _Scoring) $ writeTVar ?gobble $
-    gob & players.ix who.answers %~ flip (foldr (\w -> at w?~1)) words
+    gob & players.ix who.answers
+        %~ flip (foldr (\w -> bool id (at w?~1) (ok'word w))) words
 
 delete'word :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Text -> m ()
 delete'word who word = liftIO $ atomically $ do
