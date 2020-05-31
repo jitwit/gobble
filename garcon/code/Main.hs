@@ -276,9 +276,10 @@ launch'boggle port = do
   gobble <- newTVarIO =<< start'state
   let ?gobble = gobble
    in do let back = serve boggle'api boggle'server
-         control'thread <- forkIO run'gobble
-         let bog = run port $ websocketsOr defaultConnectionOptions boggle back
-         bog `finally` killThread control'thread
+         bog'thread <- forkIO $ run port $
+           websocketsOr defaultConnectionOptions boggle back
+         run'gobble `finally` killThread bog'thread
+         putStrLn $ "GOBBLE died"
 
 main :: IO ()
 main = map read <$> getArgs >>= \case

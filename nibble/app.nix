@@ -6,6 +6,7 @@ let gobbler  = import ../garcon/default.nix {};
     cobble   = callPackage ./chez-gobble.nix { chez-hemlock = hemlock; chez-euler = euler; };
     chezlibs = [ chez-srfi chez-matchable euler hemlock cobble ];
     libdirs  = concatStringsSep ":" (map (x: "${x}/lib/csv9.5-site") chezlibs);
+    webdir   = "/var/www/gobble";
 in {
   networking.firewall = { allowedTCPPorts = [ 22 80 ]; enable = false; };
   environment.systemPackages = flatten [ gobbler chez chezlibs ];
@@ -21,12 +22,13 @@ in {
          environment = { CHEZSCHEMELIBDIRS = "${libdirs}"; };
          serviceConfig = {
            WorkingDirectory = "${cobble}";
-           ExecStart = "${cobble}/bin/gobbler -n 1000 -d /var/www/gobble/boards"; }; };
+           ExecStart = "${cobble}/bin/gobbler -n 1000 -d ${webdir}/boards"; }; };
       gobble = {
         description = "boggle-bitch.net";
         wantedBy = [ "multi-user.target" ];
         after = [ "network.target" "cobble.service" ];
         wants = [ "cobble.service" ];
         serviceConfig =
-          { WorkingDirectory = "/var/www/gobble";
-            ExecStart = "${gobbler}/bin/gobble 80"; }; }; }; }; }; }
+          { WorkingDirectory = webdir;
+            ExecStart = "${gobbler}/bin/gobble 80";
+            Restart = "always"; }; }; }; }; }; }
