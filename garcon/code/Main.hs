@@ -7,7 +7,6 @@ module Main where
 import Control.Lens
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
-import qualified Data.ByteString.Lazy.Char8 as B
 import qualified Data.ByteString.Lazy.UTF8 as B8
 import Data.Bool
 import Data.Char
@@ -145,8 +144,8 @@ broadcast'clear :: (?gobble :: TVar Gobble, MonadIO m) => Text -> m ()
 broadcast'clear what = tagged'broadcast what clear'html
 
 pattern Query cmd <- Text cmd _
-pattern Words ws <- Text (T.words.T.toUpper.T.pack.B.unpack -> "GOBBLE":ws) _
-pattern Delete w <- Text (T.words.T.toUpper.T.pack.B.unpack -> "DOBBLE":w:[]) _
+pattern Words ws <- Text (T.words.T.toUpper.T.pack.B8.toString -> "GOBBLE":ws) _
+pattern Delete w <- Text (T.words.T.toUpper.T.pack.B8.toString -> "DOBBLE":w:[]) _
 pattern Chirp msg <- Text (T.stripPrefix "chirp ".T.pack.B8.toString -> Just msg) _
 
 handle'data :: (?gobble :: TVar Gobble, MonadIO m)
@@ -196,7 +195,10 @@ new'pinou = do
 
 reset'gobble :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 reset'gobble = liftIO $ do
-  atomically $ modifyTVar' ?gobble $ (game'phase .~ Ready) . (current'round .~ (-1))
+  atomically $ modifyTVar' ?gobble $
+    (game'phase .~ Ready) .
+    (current'round .~ (-1)) .
+    (chat'room .~ Chat mempty)
   putStrLn "ready!"
 
 fresh'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
