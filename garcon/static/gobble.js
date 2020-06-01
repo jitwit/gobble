@@ -1,6 +1,11 @@
 var boggle;
 
 $(() => {
+    if (window.history && window.history.pushState) {
+        window.history.pushState('forward', null, './#forward');
+        $(window).on('popstate', () => { alert('sure about that?'); });
+    }
+
     boggle = new WebSocket ("ws://" + window.location.host);
     var dt = 1000;
 
