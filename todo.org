@@ -1,10 +1,8 @@
 - better debugging
-- check and throw away dead connections
+- handle bad connections better
 - record results
 - flavicon
 - help/about/better chat
-- tooptips/way to see times in chat (abuse divs? to make easier?)
-- improve amazon config/understand firewall
 - use more typeclasses and make js/haskell interface better (or at
   all) typed
 - css/flex-grid?

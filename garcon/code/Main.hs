@@ -7,8 +7,9 @@ module Main where
 import Control.Lens
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
-import qualified Data.ByteString.Lazy.Char8 as B
 import qualified Data.ByteString.Lazy.UTF8 as B8
+import Data.Bool
+import Data.Char
 import Data.Text (Text)
 import Data.Proxy
 import qualified Data.Map as M
@@ -99,9 +100,11 @@ reply'json conn = reply conn . A.encode
 
 submit'words :: (?gobble :: TVar Gobble, MonadIO m) => Name -> [Text] -> m ()
 submit'words who words = liftIO $ atomically $ do
+  let ok'word w = T.all isLetter w
   gob <- readTVar ?gobble
   when (gob ^. game'phase & isn't _Scoring) $ writeTVar ?gobble $
-    gob & players.ix who.answers %~ flip (foldr (\w -> at w?~1)) words
+    gob & players.ix who.answers
+        %~ flip (foldr (\w -> bool id (at w?~1) (ok'word w))) words
 
 delete'word :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Text -> m ()
 delete'word who word = liftIO $ atomically $ do
@@ -141,8 +144,8 @@ broadcast'clear :: (?gobble :: TVar Gobble, MonadIO m) => Text -> m ()
 broadcast'clear what = tagged'broadcast what clear'html
 
 pattern Query cmd <- Text cmd _
-pattern Words ws <- Text (T.words.T.toUpper.T.pack.B.unpack -> "GOBBLE":ws) _
-pattern Delete w <- Text (T.words.T.toUpper.T.pack.B.unpack -> "DOBBLE":w:[]) _
+pattern Words ws <- Text (T.words.T.toUpper.T.pack.B8.toString -> "GOBBLE":ws) _
+pattern Delete w <- Text (T.words.T.toUpper.T.pack.B8.toString -> "DOBBLE":w:[]) _
 pattern Chirp msg <- Text (T.stripPrefix "chirp ".T.pack.B8.toString -> Just msg) _
 
 handle'data :: (?gobble :: TVar Gobble, MonadIO m)
@@ -192,7 +195,10 @@ new'pinou = do
 
 reset'gobble :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 reset'gobble = liftIO $ do
-  atomically $ modifyTVar' ?gobble $ (game'phase .~ Ready) . (current'round .~ (-1))
+  atomically $ modifyTVar' ?gobble $
+    (game'phase .~ Ready) .
+    (current'round .~ (-1)) .
+    (chat'room .~ Chat mempty)
   putStrLn "ready!"
 
 fresh'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
@@ -272,9 +278,10 @@ launch'boggle port = do
   gobble <- newTVarIO =<< start'state
   let ?gobble = gobble
    in do let back = serve boggle'api boggle'server
-         control'thread <- forkIO run'gobble
-         let bog = run port $ websocketsOr defaultConnectionOptions boggle back
-         bog `finally` killThread control'thread
+         bog'thread <- forkIO $ run port $
+           websocketsOr defaultConnectionOptions boggle back
+         run'gobble `finally` killThread bog'thread
+         putStrLn $ "GOBBLE died"
 
 main :: IO ()
 main = map read <$> getArgs >>= \case
