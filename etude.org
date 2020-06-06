@@ -1,7 +1,7 @@
 Some helpful boggle calculations.
 
 #+begin_src j :session :exports both
-W=: (<@}:);._2(1!:1)<'cobble/share/collins.txt'
+W=: <@}:;._2(1!:1)<'cobble/share/collins.txt'
 
 NB. words of given length
 Let=: (W#~=&(#&>W))
@@ -181,131 +181,13 @@ Useful words which are the valid backwards and forwards
 *** 4 Letter Palindromes
 
 #+begin_src j :session :exports both
-> (#~ (2=#&>)) (</.~ (([: {. /:~ @ (; |.)) &. >)) BackN 4
+p4s=: _50 <\ > (#~ (2=#&>)) (</.~ (([: {. /:~ @ (; |.)) &. >)) BackN 4
+(8!:2 p4s) (1!:2) <'report/palindrome-4.txt'
 #+end_src
 
 #+RESULTS:
-#+begin_example
-...
-│LEAT│TAEL│
-├────┼────┤
-│LEEP│PEEL│
-├────┼────┤
-│LEER│REEL│
-├────┼────┤
-│LEES│SEEL│
-├────┼────┤
-│LEET│TEEL│
-├────┼────┤
-│LEIR│RIEL│
-├────┼────┤
-│LEVO│OVEL│
-├────┼────┤
-│LIAR│RAIL│
-├────┼────┤
-│LIAS│SAIL│
-├────┼────┤
-│LIES│SEIL│
-├────┼────┤
-│LION│NOIL│
-├────┼────┤
-│LOBO│OBOL│
-├────┼────┤
-│LOOM│MOOL│
-├────┼────┤
-│LOOP│POOL│
-├────┼────┤
-│LOOS│SOOL│
-├────┼────┤
-│LOOT│TOOL│
-├────┼────┤
-│MACS│SCAM│
-├────┼────┤
-│MAES│SEAM│
-├────┼────┤
-│MALS│SLAM│
-├────┼────┤
-│MAPS│SPAM│
-├────┼────┤
-│MART│TRAM│
-├────┼────┤
-│MAWS│SWAM│
-├────┼────┤
-│MEES│SEEM│
-├────┼────┤
-│MEET│TEEM│
-├────┼────┤
-│METS│STEM│
-├────┼────┤
-│MILS│SLIM│
-├────┼────┤
-│MIPS│SPIM│
-├────┼────┤
-│MOOR│ROOM│
-├────┼────┤
-│MOOS│SOOM│
-├────┼────┤
-│MOOT│TOOM│
-├────┼────┤
-│MUTS│STUM│
-├────┼────┤
-│NAES│SEAN│
-├────┼────┤
-│NAPS│SPAN│
-├────┼────┤
-│NEEP│PEEN│
-├────┼────┤
-│NEKS│SKEN│
-├────┼────┤
-│NETS│STEN│
-├────┼────┤
-│NIPS│SPIN│
-├────┼────┤
-│NOOP│POON│
-├────┼────┤
-│NUTS│STUN│
-├────┼────┤
-│OBEY│YEBO│
-├────┼────┤
-│ODAS│SADO│
-├────┼────┤
-│OIKS│SKIO│
-├────┼────┤
-│ONER│RENO│
-├────┼────┤
-│OOHS│SHOO│
-├────┼────┤
-│PALP│PLAP│
-├────┼────┤
-│PALS│SLAP│
-├────┼────┤
-│PANS│SNAP│
-├────┼────┤
-│PART│TRAP│
-├────┼────┤
-│PATS│STAP│
-├────┼────┤
-│PAWS│SWAP│
-├────┼────┤
-│PEES│SEEP│
-├────┼────┤
-│PERP│PREP│
-├────┼────┤
-│PETS│STEP│
-├────┼────┤
-│PINS│SNIP│
-├────┼────┤
-│POHS│SHOP│
-├────┼────┤
-│POLS│SLOP│
-├────┼────┤
-│POOR│ROOP│
-├────┼────┤
-│POOS│SOOP│
-├────┼────┤
-│PORT│TROP│
-├────┼────┤
-#+end_example
+: |domain error
+: |   (    8!:2 p4s)(1!:2)<'report/palindrome-4.txt'
 
 
 *** 5 Letter Palindromes
@@ -522,6 +404,50 @@ Useful words which are the valid backwards and forwards
 │REFLOW│WOLFER│
 ├───
 #+end_example
+
+#+begin_src j :session :exports both
+> (#~ (2 = # & >)) (</.~ (([: {. /:~ @ (; |.)) &. >)) BackN 7
+#+end_src
+
+#+RESULTS:
+#+begin_example
+┌───────┬───────┐
+│DEIFIER│REIFIED│
+├───────┼───────┤
+│DELIVER│REVILED│
+├───────┼───────┤
+│DENNETS│STENNED│
+├───────┼───────┤
+│DESSERT│TRESSED│
+├───────┼───────┤
+│GATEMAN│NAMETAG│
+├───────┼───────┤
+│OILLETS│STELLIO│
+├───────┼───────┤
+│REKNITS│STINKER│
+├───────┼───────┤
+│REKNOTS│STONKER│
+├───────┼───────┤
+│RELIVER│REVILER│
+├───────┼───────┤
+│SAGENES│SENEGAS│
+├───────┼───────┤
+│SALLETS│STELLAS│
+└───────┴───────┘
+#+end_example
+
+#+begin_src j :session :exports both
+> (#~ (2 = # & >)) (</.~ (([: {. /:~ @ (; |.)) &. >)) BackN 8
+#+end_src
+
+#+RESULTS:
+: ┌────────┬────────┐
+: │DESSERTS│STRESSED│
+: ├────────┼────────┤
+: │REDRAWER│REWARDER│
+: └────────┴────────┘
+
+#+RESULTS:
 
 Useful letter combinations based on how many words they form.
 
