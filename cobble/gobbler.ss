@@ -1,4 +1,4 @@
-#!/home/jo/.nix-profile/bin/scheme --script
+#!/usr/bin/env scheme --script
 
 (library-directories (cons "." (library-directories)))
 
@@ -20,20 +20,23 @@
            solution))
 
 (define (interesting-board? solution)
-  (let ((longest-word (string-length (car (last-pair solution)))))
+  (let ((longest-word (if (null? solution)
+                          0
+                          (string-length (car (last-pair solution))))))
     ;; still accept "tough" boards but mostly make sure there are words to find.
-    (or (<= longest-word 7)
+    (or (<= 8 longest-word)
         (cond
-         ((<= longest-word 6) (< 1/3  (random 1.0)))
-         ((<= longest-word 5) (< 4/5  (random 1.0)))
-         (else                (< 9/10 (random 1.0)))))))
+         ((<= 7 longest-word) (< 15/20 (random 1.0)))
+         ((<= 6 longest-word) (< 1/2   (random 1.0)))
+         ((<= 5 longest-word) (< 1/2   (random 1.0)))
+         (else #f)))))
 
 ;; fill directory to have n boards
 (define (generate n dir)
   (define n* (length (directory-list dir)))
   (define N (- n n*))
   (format #t "there are ~a board(s), making ~a more~%" n* N)
-  (let make ((i 0))
+  (let make ((i 1))
     (unless (> i N)
       (let* ((board (list->string (roll (list-head (shuffle dice-5x5) 16))))
              (board-file (string-append dir "/" board))
