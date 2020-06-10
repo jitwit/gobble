@@ -49,12 +49,14 @@ newtype Word'List'View = Word'List'View Gobble
 data Chat = Chat { _messages :: Map UTCTime Chat'Message } deriving Show
 
 data Gobble = Gobble
-  { _board :: Board
+  { _current'round :: Int
+  , _board :: Board
   , _players :: Map Name Player
   , _game'phase :: Phase
   , _chat'room :: Chat
   , _pinou'stream :: [FilePath]
-  , _current'round :: Int } deriving (Show)
+  , _gobble'likes :: Map Name Text
+  } deriving (Show)
 
 type Game'Log = (Text,Int,Map Text ([Text],Int))
 
@@ -69,10 +71,10 @@ score'word :: Text -> Int
 score'word = ([0,0,0,1,1,2,3,5,11] !!) . min 8 . T.length
 
 round'length :: Integer
-round'length = 30
+round'length = 90
 
 score'length :: Integer
-score'length = 80
+score'length = 45
 
 overall'length :: Integer
 overall'length = round'length + score'length

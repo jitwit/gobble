@@ -85,10 +85,11 @@ reply'json :: (?gobble :: TVar Gobble, A.ToJSON j, MonadIO m) => Connection -> j
 reply'json conn = reply conn . A.encode
 
 wow'wow :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Text -> m ()
-wow'wow who word = do
-  gob <- liftIO $ readTVarIO ?gobble
---  when (gob ^. game'phase & is _Scoring) $ -- not necessary? words exist iff scoring phase
-  add'tweet who ("likes " <> word)
+wow'wow who word = liftIO $ do
+  gob <- readTVarIO ?gobble
+  when (Just word /= (gob^.gobble'likes.at who)) $ do
+    atomically $ writeTVar ?gobble $ gob & gobble'likes.at who ?~ word
+    add'tweet "GOBBLE" $ T.unwords [who,"likes",word]
 
 submit'words :: (?gobble :: TVar Gobble, MonadIO m) => Name -> [Text] -> m ()
 submit'words who words = liftIO $ atomically $ do
@@ -194,6 +195,7 @@ fresh'round = liftIO $ do
   gob <- (board .~ b) . (game'phase .~ Boggled) .
          (current'round %~ ((`mod`5).succ)) .
          (pinou'stream %~ tail) .
+         (gobble'likes .~ mempty) .
          (players.traversed.answers .~ M.empty) <$>
          readTVarIO ?gobble
   atomically $ writeTVar ?gobble gob

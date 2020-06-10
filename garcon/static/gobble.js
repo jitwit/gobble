@@ -74,6 +74,8 @@ $(() => {
     boggle.onerror = (e) => {
         console.log(e);
     };
-        
-    boggle.onclose = () => { alert("lost connection."); };
+
+    boggle.onclose = () => {
+        alert("lost connection.");
+    };
 });
