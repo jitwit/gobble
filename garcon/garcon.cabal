@@ -41,8 +41,7 @@ common doggle
 
 executable gobble
   import: doggle
-  main-is:          Main.hs
+  main-is:          Garcon.hs
   other-modules:    Gobble.Core, Gobble.Render, Gobble.System
   default-language: Haskell2010
-  hs-source-dirs:   code
   ghc-options:      -O2 -threaded -Wunused-imports
