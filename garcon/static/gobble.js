@@ -11,11 +11,11 @@ $(() => {
 
     add_word = (word) => { boggle.send('gobble ' + word); };
     del_word = (word) => { boggle.send('dobble ' + word); };
+    like_word = (word) => { boggle.send('wobble ' + word); };
     chirp = (tweet) => { boggle.send('chirp ' + tweet); };
     query_words = () => { boggle.send('words'); };
     set_name = (msg="") => {
-        var name = prompt('name?' + msg);
-        boggle.send(name);
+        boggle.send(prompt('name?' + msg));
         $("#scratch").focus();
     };
 
@@ -38,6 +38,10 @@ $(() => {
         query_words();
     });
 
+    $("#scores").on("click","div",(e) => {
+        like_word($(e.target).text());
+    });
+
     timer = async (expires,round=90,pause=30) => {
         var end = expires.getTime();
         var show = async () => {
@@ -53,7 +57,7 @@ $(() => {
     }
 
     boggle.onopen = (e) => { set_name(); };
-    
+
     boggle.onmessage = (msg) => {
         var res = JSON.parse(msg.data);
         if (res === "name-is-taken") { set_name(msg=" (previous one is taken)"); }

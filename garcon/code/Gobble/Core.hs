@@ -53,6 +53,7 @@ data Gobble = Gobble
   , _players :: Map Name Player
   , _game'phase :: Phase
   , _chat'room :: Chat
+  , _pinou'stream :: [FilePath]
   , _current'round :: Int } deriving (Show)
 
 type Game'Log = (Text,Int,Map Text ([Text],Int))
@@ -68,10 +69,10 @@ score'word :: Text -> Int
 score'word = ([0,0,0,1,1,2,3,5,11] !!) . min 8 . T.length
 
 round'length :: Integer
-round'length = 90
+round'length = 30
 
 score'length :: Integer
-score'length = 45
+score'length = 80
 
 overall'length :: Integer
 overall'length = round'length + score'length

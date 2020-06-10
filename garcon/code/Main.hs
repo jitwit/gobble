@@ -5,6 +5,7 @@
 module Main where
 
 import Control.Lens
+import Control.Lens.Extras
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Data.ByteString.Lazy.UTF8 as B8
@@ -20,7 +21,6 @@ import Control.Monad
 import Control.Monad.State
 import System.Environment
 import System.Directory
-import System.Random
 import Data.Time.Clock
 
 import Control.Concurrent
@@ -37,27 +37,8 @@ import Network.Wai.Handler.Warp
 import qualified Data.Aeson as A
 
 import Gobble.Core
+import Gobble.System
 import Gobble.Render
-
-gobbler :: IO (T.Text, [T.Text])
-gobbler = do
-  let board'dir = "boards/"
-  boards <- listDirectory board'dir
-  board <- (boards!!) <$> randomRIO (0,length boards - 1)
-  wds <- T.readFile (board'dir <> board)
-  removeFile (board'dir <> board)
-  return (T.pack board,T.lines wds)
-
-new'board :: IO Board
-new'board = do
-  (b,as) <- gobbler
-  t <- getCurrentTime
-  write'board b
-  return $ Board t b $ M.fromList [ (w,T.unwords def) | w:def <- map T.words as ]
-
-start'state :: IO Gobble
-start'state = start <$> new'board where
-  start b = Gobble b M.empty Ready (Chat M.empty) (-1)
 
 fetch'board :: (?gobble :: TVar Gobble, MonadIO m) => m Board
 fetch'board = liftIO $ view board <$> readTVarIO ?gobble
@@ -77,6 +58,11 @@ new'player who conn = liftIO $ do
       [ "time" A..= (gob^.board.creation'time.to (addUTCTime round'period))
       , "pause" A..= score'length
       , "round" A..= round'length ]
+    when (gob ^. game'phase & is _Scoring) $
+      reply'json conn $ A.object
+      [ "pinou"    A..= (html'of'pinou $ gob^.pinou'stream._head)
+      , "solution" A..= render'solution gob
+      , "scores"   A..= render'scores gob ]
   add'tweet "GOBBLE" (who <> " joined the chat.")
 
 name'player :: (?gobble :: TVar Gobble, MonadIO m) => Connection -> m Name
@@ -97,6 +83,12 @@ reply conn = liftIO . sendTextData conn
 
 reply'json :: (?gobble :: TVar Gobble, A.ToJSON j, MonadIO m) => Connection -> j -> m ()
 reply'json conn = reply conn . A.encode
+
+wow'wow :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Text -> m ()
+wow'wow who word = do
+  gob <- liftIO $ readTVarIO ?gobble
+--  when (gob ^. game'phase & is _Scoring) $ -- not necessary? words exist iff scoring phase
+  add'tweet who ("likes " <> word)
 
 submit'words :: (?gobble :: TVar Gobble, MonadIO m) => Name -> [Text] -> m ()
 submit'words who words = liftIO $ atomically $ do
@@ -146,6 +138,7 @@ broadcast'clear what = tagged'broadcast what clear'html
 pattern Query cmd <- Text cmd _
 pattern Words ws <- Text (T.words.T.toUpper.T.pack.B8.toString -> "GOBBLE":ws) _
 pattern Delete w <- Text (T.words.T.toUpper.T.pack.B8.toString -> "DOBBLE":w:[]) _
+pattern Wow'wow w <- Text (T.words.T.toUpper.T.pack.B8.toString -> "WOBBLE":w:[]) _
 pattern Chirp msg <- Text (T.stripPrefix "chirp ".T.pack.B8.toString -> Just msg) _
 
 handle'data :: (?gobble :: TVar Gobble, MonadIO m)
@@ -154,6 +147,7 @@ handle'data who conn = liftIO . \case
   Words ws -> submit'words who ws
   Delete w -> delete'word who w
   Chirp c -> add'tweet who c
+  Wow'wow w -> wow'wow who w
   Query "who-else" -> reply'json conn =<< get'players
   Query "words" -> send'words conn who
   Text msg _ -> print msg >> reply'json @Text conn "idk/text"
@@ -181,17 +175,10 @@ score'round = liftIO $ do
   putStrLn "Scored Round... "
   print $ game'log'view gob
   broadcast'clear "words"
-  tagged'broadcast "pinou" . html'of'pinou =<< new'pinou
+  tagged'broadcast "pinou" $ html'of'pinou $ gob ^. pinou'stream._head
   broadcast'val $ A.object
     [ "solution" A..= render'solution gob
     , "scores"   A..= render'scores gob ]
-
-new'pinou :: IO String
-new'pinou = do
-  let img'dir = "static/images/"
-  imgs <- listDirectory img'dir
-  j <- randomRIO (0,length imgs-1)
-  return $ img'dir <> imgs !! j
 
 reset'gobble :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 reset'gobble = liftIO $ do
@@ -206,6 +193,7 @@ fresh'round = liftIO $ do
   b <- new'board
   gob <- (board .~ b) . (game'phase .~ Boggled) .
          (current'round %~ ((`mod`5).succ)) .
+         (pinou'stream %~ tail) .
          (players.traversed.answers .~ M.empty) <$>
          readTVarIO ?gobble
   atomically $ writeTVar ?gobble gob
