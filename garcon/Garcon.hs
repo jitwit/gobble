@@ -275,5 +275,5 @@ launch'boggle port = do
 
 main :: IO ()
 main = map read <$> getArgs >>= \case
-  [] -> launch'boggle 8080
+  [] -> launch'boggle 8011
   x:_ -> launch'boggle x

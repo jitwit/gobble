@@ -5,6 +5,7 @@ module Gobble.Render where
 
 import Control.Monad
 import Control.Lens
+import Data.Set.Lens
 import qualified Diagrams.Prelude as D
 import Diagrams.Prelude (Diagram,V2 (..))
 import Diagrams.Backend.SVG
@@ -57,8 +58,12 @@ instance ToMarkup Word'List'View where
   toMarkup (Word'List'View gob) = 
     let sol = gob ^. board.word'list
         wl = sortBy (flip compare `on` T.length . fst) $ M.toList sol
+        gotten = gob & setOf (players.folded.answers.to M.keys.folded)
      in do h3 "word list"
-           table $ forM_ wl $ \(w,d) -> tr $ td (H.text w) >> td (H.text d)
+           table $ forM_ wl $ \(w,d) ->
+             tr $ do td $ toMarkup $ if gotten^.contains w
+                       then Shared w else Unique w
+                     td (H.text d)
 
 instance ToMarkup Chat'View where
   toMarkup (Chat'View gob) = table $ do
@@ -143,9 +148,9 @@ instance ToMarkup GobblePage where
   toMarkup _ = html $ do
     H.head $ do
       title "gobble"
-      link ! H.rel "stylesheet" ! H.href "static/gobble.css?9"
+      link ! H.rel "stylesheet" ! H.href "static/gobble.css?10"
       script ! H.src "static/jquery-3.4.1.slim.js" $ ""
-      script ! H.src "static/gobble.js?9" $ ""
+      script ! H.src "static/gobble.js?10" $ ""
     H.body $ do
       H.h1 "GOBBLE"
       H.div ! H.class_ "row" $ do

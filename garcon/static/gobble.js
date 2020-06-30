@@ -14,10 +14,8 @@ $(() => {
     like_word = (word) => { boggle.send('wobble ' + word); };
     chirp = (tweet) => { boggle.send('chirp ' + tweet); };
     query_words = () => { boggle.send('words'); };
-    set_name = (msg="") => {
-        boggle.send(prompt('name?' + msg));
-        $("#scratch").focus();
-    };
+    set_name = (msg="") => {  boggle.send(prompt('name?' + msg));  $("#scratch").focus(); };
+    clear_new_round = () => { $("#scratch").val(""); $("#scratch").focus(); query_words (); };
 
     $("#mush").submit((e) => {
         e.preventDefault();
@@ -61,7 +59,7 @@ $(() => {
     boggle.onmessage = (msg) => {
         var res = JSON.parse(msg.data);
         if (res === "name-is-taken") { set_name(msg=" (previous one is taken)"); }
-        if (!(res['board'] == null)) { $("#gobble").html(res['board']); $("#scratch").focus(); query_words(); }
+        if (!(res['board'] == null)) { $("#gobble").html(res['board']); clear_new_round (); }
         if (!(res['words'] == null)) { $("#submissions").html(res['words']); }
         if (!(res['peeps'] == null)) { $("#people").html(res['peeps']); } // defns, actually
         if (!(res['chirp'] == null)) { $("#tweets").html(res['chirp']); }
@@ -71,11 +69,7 @@ $(() => {
         if (!(res['scores'] == null)) { $("#scores").html(res['scores']); }
         // idk: { console.log(res); }
     };
-    boggle.onerror = (e) => {
-        console.log(e);
-    };
+    boggle.onerror = (e) => { console.log(e); };
 
-    boggle.onclose = () => {
-        alert("lost connection.");
-    };
+    boggle.onclose = () => { alert("lost connection. refresh, unless the whole thing went down.");  };
 });

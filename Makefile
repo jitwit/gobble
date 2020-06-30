@@ -22,7 +22,7 @@ update-images :
 	nixops scp --to gobble-net garcon/images/ $(image-dir)
 
 ghcid-gobble :
-	cd garcon && nix-shell --command 'ghcid -c "cabal repl gobble" -s ":l Main" -r'
+	cd garcon && nix-shell --command 'ghcid -c "cabal repl gobble" -s ":l Garcon" -r'
 
 clean :
 	find . -name "*~" -exec rm {} \;
