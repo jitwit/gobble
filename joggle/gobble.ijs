@@ -1,7 +1,7 @@
-coclass 'gobble'
+NB. coclass 'gobble'
 
 init=: 3 : 0
-COLN=: 1!:1 < jpath '~/code/gobble/input/definitions.txt'
+COLN=: 1!:1 < jpath '~/code/gobble/cobble/share/definitions.txt'
 COLN=: ([: <;._1 (9{a.)&,);._2 COLN
 N=:#]WORDS=: {."1 COLN
 (9!:43) 0
