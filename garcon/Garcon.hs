@@ -51,7 +51,8 @@ is'name'free name = liftIO $ do
 new'player :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Connection -> m ()
 new'player who conn = liftIO $ do
   gob <- atomically $ stateTVar ?gobble $ dup .
-    (players.at who ?~ Player conn M.empty 0 0 0)
+    (players.at who ?~ Player M.empty 0 0 0) .
+    (connections.at who ?~ conn)
   when (gob ^. game'phase & isn't _Ready) $ do
     reply'json conn $ tag'thing "board" $ html'of'board (gob^.board)
     reply'json conn $ A.object
@@ -125,7 +126,7 @@ handle'control who conn = liftIO . \case
 
 broadcast :: (?gobble :: TVar Gobble, WebSocketsData a, MonadIO m) => a -> m ()
 broadcast msg = liftIO $ readTVarIO ?gobble >>=
-  mapMOf_ (players.folded.connection) (`sendTextData` msg)
+  mapMOf_ (connections.folded) (`sendTextData` msg)
 
 broadcast'val :: (?gobble :: TVar Gobble, A.ToJSON a, MonadIO m) => a -> m ()
 broadcast'val = broadcast . A.encode

@@ -2,6 +2,7 @@
 
 module Gobble.Core where
 
+import Data.Default
 import Data.Time.Clock
 import Network.WebSockets
 import qualified Data.Map as M
@@ -28,15 +29,14 @@ data Board = Board
   } deriving (Show)
 
 data Player = Player
-  { _connection :: Connection
-  , _answers :: Map Text Int
+  { _answers :: Map Text Int
   , _score :: Int
   , _solo'score :: Int
-  , _total'score :: Int }
+  , _total'score :: Int } deriving (Show)
 
-instance Show Player where
-  show (Player _ as n s t) =
-    "Player { _answers = " <> show as <> ", _score = " <> show n <> ", _total'score = " <> show t <> " }"
+--instance Show Player where
+--  show (Player as n s t) =
+--    "Player { _answers = " <> show as <> ", _score = " <> show n <> ", _total'score = " <> show t <> " }"
 
 data Chat'Message = Chat'Message
   { _contents :: Text
@@ -52,11 +52,12 @@ data Gobble = Gobble
   { _current'round :: Int
   , _board :: Board
   , _players :: Map Name Player
+  , _connections :: Map Name Connection
   , _game'phase :: Phase
   , _chat'room :: Chat
   , _pinou'stream :: [FilePath]
   , _gobble'likes :: Map Name Text
-  } deriving (Show)
+  } -- deriving (Show)
 
 type Game'Log = (Text,Int,Map Text ([Text],Int))
 
@@ -66,6 +67,9 @@ makeLenses ''Player
 makeLenses ''Gobble
 makeLenses ''Chat'Message
 makeLenses ''Chat
+
+instance Default Phase where
+  def = Ready
 
 score'word :: Text -> Int
 score'word = ([0,0,0,1,1,2,3,5,11] !!) . min 8 . T.length
@@ -109,7 +113,7 @@ score'submissions gob = gob & players.traversed%~scr'rnd & game'phase.~Scoring w
   wgt b = if b then 1 else -1
   solution = gob^.board.word'list
   all'subs = gob ^.. players.traversed.answers & M.unionsWith (+)
-  scr'rnd p@(Player conn sol scr ssr tot) = p' where
+  scr'rnd p@(Player sol scr ssr tot) = p' where
     p' = p & score .~ pts & solo'score .~ spts & total'score .~ pts+tot*new
     tot = p ^. total'score
     pts = sum ppts - sum npts

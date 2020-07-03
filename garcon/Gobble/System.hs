@@ -8,6 +8,7 @@ import System.Directory
 import System.Random
 import System.Random.Shuffle
 import Data.Time.Clock
+import Data.Default
 
 import Gobble.Render
 import Gobble.Core
@@ -32,10 +33,12 @@ start'state :: IO Gobble
 start'state = do
   b0 <- new'board
   pinous <- make'pinou'stream
-  return $ Gobble (-1) b0 mempty Ready (Chat mempty) pinous mempty
+  return $ Gobble (-1) b0 mempty mempty def (Chat mempty) pinous mempty
 
 make'pinou'stream :: IO [FilePath]
 make'pinou'stream =
   let img'dir = "static/images/"
-   in do pinous <- shuffleM =<< listDirectory img'dir
-         return [ img'dir <> pinou | pinou <- cycle pinous ]
+   in do ps1 <- shuffleM =<< listDirectory img'dir
+         ps2 <- shuffleM ps1
+         ps3 <- shuffleM ps2
+         return [ img'dir <> pinou | pinou <- cycle $ ps1 <> ps2 <> ps3 ]

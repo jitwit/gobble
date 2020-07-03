@@ -12,6 +12,7 @@ common doggle
     warp,
     servant,
     servant-server,
+    data-default,
     servant-client,
     servant-blaze,
     unix,

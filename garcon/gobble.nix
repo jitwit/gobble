@@ -2,7 +2,7 @@
 , containers, diagrams, diagrams-lib, diagrams-svg, directory
 , filepath, lens, lens-aeson, mtl, process, random, random-shuffle, servant
 , servant-blaze, servant-client, servant-server, stdenv, stm, text, time, unix
-, wai, wai-websockets, warp, websockets, hashable, utf8-string
+, wai, wai-websockets, warp, websockets, hashable, utf8-string, data-default
 }:
 mkDerivation {
   pname = "gobble";
@@ -15,7 +15,7 @@ mkDerivation {
     diagrams-lib diagrams-svg directory filepath lens lens-aeson mtl
     process random random-shuffle servant servant-blaze servant-client
     servant-server stm text time unix wai wai-websockets warp
-    websockets hashable utf8-string
+    websockets hashable utf8-string data-default
   ];
   license = "unknown";
   hydraPlatforms = stdenv.lib.platforms.none;
