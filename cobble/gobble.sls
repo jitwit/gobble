@@ -2,10 +2,8 @@
 (eval-when (load compile) (optimize-level 3))
 (library (gobble)
   (export gobble
-          ;; boggle
 
           ;; boards
-          board!
           display-board
           display-ln
           roll
