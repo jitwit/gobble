@@ -7,13 +7,13 @@
 ;; currently uses ints as bit sets. means maximum board size is 7x7
 ;; until i switch to intsets or bitvectors or something. assumes board
 ;; is string with perfect square length.
-(define (dfs B D)
+(define (boggle-search board dictionary)
   (define G
-    (board-graph (isqrt (string-length B))))
+    (board-graph (isqrt (string-length board))))
   (define word-list
     (make-hashtable string-hash string=?))
   (define (expand-path path j)
-    (let ((x (string-ref B j)))
+    (let ((x (string-ref board j)))
       (if (char=? x #\Q)
 	  (make-path (cons* #\U #\Q (path-letters path))
 		     j
@@ -34,8 +34,8 @@
 		    (walk (expand-path path j))))
 		(vector-ref G (path-spot path)))))
   (for-each (lambda (j)
-	      (walk (expand-path (make-path '() 0 0 D) j)))
-	    (iota (string-length B)))
+	      (walk (expand-path (make-path '() 0 0 dictionary) j)))
+	    (iota (string-length board)))
   (filter (lambda (word)
 	    (< 2 (string-length (car word))))
 	  (sort-on (compose string-length car)
@@ -44,7 +44,7 @@
 			 (vector->list (hashtable-cells word-list))))))
 
 (define (gobble board)
-  (dfs board collins))
+  (boggle-search board collins))
 
 (define score-vector
   '#vfx(0 0 0 1 1 2 3 5 11))

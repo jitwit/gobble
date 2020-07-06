@@ -13,11 +13,11 @@
 
 (define example1 "SKDSMAHLETROEUSP")
 (define example2 "ELIHYWOTXSERINAT")
-
+(define example3 "LGROSEDENSTAEFUTERSFMETCO")
 (define (run-bench)
   (define out "../report/bench.txt")
   (when (file-exists? out)
     (delete-file out))
   (transcript-on out)
-  (do-gobble example1 1000)
+  (do-gobble example3 1000)
   (transcript-off))
