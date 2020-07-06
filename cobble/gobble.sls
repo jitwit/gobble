@@ -26,5 +26,4 @@
 	  (prefix (patricia) t:)
 	  (trie))
   (include "code/board.scm")
-  (include "code/gobble.scm")
   (include "code/boggle.scm"))
