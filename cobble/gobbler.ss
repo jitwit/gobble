@@ -12,17 +12,17 @@
                         (time-nanosecond (current-time)))))
 
 (define (dump-solution solution)
-  (for-all (lambda (word)
-             (display word)
+  (for-all (lambda (word.def)
+             (display (car word.def))
              (display #\space)
-             (display (definition word))
+             (display (cdr word.def))
              (newline))
            solution))
 
 (define (interesting-board? solution)
   (let ((longest-word (if (null? solution)
                           0
-                          (string-length (car (last-pair solution))))))
+                          (string-length (caar (last-pair solution))))))
     ;; still accept "tough" boards but mostly make sure there are words to find.
     (or (<= 8 longest-word)
         (cond
@@ -60,3 +60,4 @@
     (else (error 'gobbler "bad command line args" (command-line)))))
 
 (main)
+
