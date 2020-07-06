@@ -38,7 +38,7 @@
   (format #t "there are ~a board(s), making ~a more~%" n* N)
   (let make ((i 1))
     (unless (> i N)
-      (let* ((board (list->string (roll (list-head (shuffle dice-5x5) 16))))
+      (let* ((board (roll (list-head (shuffle dice-5x5) 16)))
              (board-file (string-append dir "/" board))
              (solution (gobble board)))
         (cond
