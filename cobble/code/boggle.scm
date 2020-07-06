@@ -45,3 +45,15 @@
 
 (define (gobble board)
   (dfs board collins))
+
+(define score-vector
+  '#vfx(0 0 0 1 1 2 3 5 11))
+
+(define (score-word word)
+  (fxvector-ref score-vector (fxmin 8 (string-length word))))
+
+(define (score-word-list word-list)
+  (fold-left (lambda (score word)
+	       (fx+ score (score-word word)))
+	     0
+	     word-list))

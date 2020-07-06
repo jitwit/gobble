@@ -11,6 +11,8 @@
           roll
           dice-4x4
           dice-5x5
+	  score-word
+	  score-word-list
 
           ;; definitions
           word?
