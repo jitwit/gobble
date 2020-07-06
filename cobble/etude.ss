@@ -15,7 +15,7 @@
                (solution (gobble board))
                (n (if (null? solution)
                       0
-                      (min 8 (string-length (car (last-pair solution)))))))
+                      (min 8 (string-length (caar (last-pair solution)))))))
           (walk (1- N) (cons n ls))))))
 
 (define (output-results results N)

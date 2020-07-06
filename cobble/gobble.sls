@@ -2,7 +2,7 @@
 (eval-when (load compile) (optimize-level 3))
 (library (gobble)
   (export gobble
-          boggle
+          ;; boggle
 
           ;; boards
           board!
@@ -19,7 +19,10 @@
           completions)
   (import (chezscheme)
           (dictionary)
-          (only (euler) shuffle compose)
-          (only (srfi :1) append-map filter-map))
+          (only (euler) shuffle compose square sort-on)
+          (only (srfi :1) append-map filter-map)
+	  (prefix (patricia) t:)
+	  (trie))
   (include "code/board.scm")
+  (include "code/gobble.scm")
   (include "code/boggle.scm"))

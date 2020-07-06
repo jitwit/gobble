@@ -47,7 +47,7 @@
           (else #f)))
   (aux T xs))
 
-(define (lookup-char T x)
+(define (lookup-char x T)
   (t:lookup (char->integer x) (trie-tries T)))
 
 (define (lookup s T)

@@ -65,9 +65,6 @@
                      (iota (board-size board))))
               (iota (board-size board))))
 
-(define string->board
-  (compose list->board string->list))
-
 (define (list->board letters)
   (define n (isqrt (length letters)))
   (define board (make-vector n))
@@ -76,6 +73,26 @@
        (letters (map char-upcase letters) (list-tail letters n)))
       ((= i n) board)
     (vector-set! board i (list->string (list-head letters n)))))
+
+(define (board-graph n)
+  (define G (make-vector (square n) '()))
+  (define n-1 (1- n))
+  (do ((i 0 (1+ i)))
+      ((= i n) G)
+    (do ((j 0 (1+ j)))
+	((= j n))
+      (vector-set! G (+ i (* n j))
+		   ;; (sort <)
+		   (filter-map (lambda (x.y)
+				 (let ((x (car x.y))
+				       (y (cdr x.y)))
+				   (and (<= 0 x n-1)
+					(<= 0 y n-1)
+					(+ x (* n y)))))
+			       (adjacent (cons i j)))))))
+
+(define string->board
+  (compose list->board string->list))
 
 (define (board! dice)
   (list->board (roll dice)))

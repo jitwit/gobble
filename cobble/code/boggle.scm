@@ -1,4 +1,5 @@
-(define (boggle board)
+;; could be sped up by snaking down the trie?
+(define ($boggle board)
   (define size (board-size board))
   (define (ref xy)
     (string-ref (vector-ref board (car xy)) (cdr xy)))
@@ -40,5 +41,7 @@
         (sort/nub words)
         (walk (expand prefixes) (append prefixes words)))))
 
-(define gobble
-  (compose boggle string->board))
+;; (define gobble (compose boggle string->board))
+
+(define (gobble board)
+  (dfs board collins))
