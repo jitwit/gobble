@@ -30,5 +30,5 @@ in {
         wants = [ "cobble.service" ];
         serviceConfig =
           { WorkingDirectory = webdir;
-            ExecStart = "${gobbler}/bin/gobble 80";
+            ExecStart = "${gobbler}/bin/garcon 80";
             Restart = "always"; }; }; }; }; }; }

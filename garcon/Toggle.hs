@@ -1,3 +1,5 @@
+{-# language OverloadedStrings #-}
+
 module Main where
 
 import Gobble.Core

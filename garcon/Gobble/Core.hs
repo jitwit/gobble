@@ -124,9 +124,9 @@ calculate'scores (new,wl,ps) = ps & mapped %~ scr where
 
 score'submissions :: Gobble -> Gobble
 score'submissions gob = gob & players.~result & game'phase.~Scoring where
-  result = calculate'scores (new,solution,gob^.players)
-  new = gob^.current'round.to signum
-  solution = gob^.board.word'list
+  result = calculate'scores (gob^.current'round.to signum
+                            ,gob^.board.word'list
+                            ,gob^.players)
 
 game'log'view :: Gobble -> Game'Log
 game'log'view gob = (gob^.board.letters,gob^.current'round,gob^.players<&>vp) where
