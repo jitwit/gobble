@@ -110,19 +110,23 @@ infixl 6 .*
 (.-) = M.difference @Text
 (.+) = M.union @Text
 
-score'submissions :: Gobble -> Gobble
-score'submissions gob = gob & players.traversed%~scr'rnd & game'phase.~Scoring where
-  new = gob ^. current'round.to signum
-  wgt b = if b then 1 else -1
-  solution = gob^.board.word'list
-  all'subs = gob ^.. players.traversed.answers & M.unionsWith (+)
-             scr'rnd p@(Player sol scr ssr tot) = p' where
-    p' = p & score .~ pts & solo'score .~ spts & total'score .~ pts+tot*new
-    tot = p ^. total'score
+calculate'scores :: (Int,Map Text Text,Map Name Player) -> Map Name Player
+calculate'scores (new,wl,ps) = ps & mapped %~ scr where
+  wgt b = 2 * fromEnum b - 1
+  all'subs = ps^..folded.answers & M.unionsWith (+)
+  scr p@(Player sol scr ssr tot) = p' where
+    p' = p & score .~ pts & solo'score.~spts & total'score.~pts+tot*new
+    tot = p^.total'score
     pts = sum ppts - sum npts
-    spts = sum [ score'word word * (wgt (word `M.member` solution)) | word <- M.keys sol ]
-    ppts = [ score'word word | (word,1) <- M.toList $ all'subs .* sol .* solution ]
-    npts = [ score'word word | (word,1) <- M.toList $ all'subs .* sol .- solution ]
+    spts = sum [ score'word word * (wgt (word `M.member` wl)) | word <- M.keys sol ]
+    ppts = [ score'word word | (word,1) <- M.toList $ all'subs .* sol .* wl ]
+    npts = [ score'word word | (word,1) <- M.toList $ all'subs .* (sol .- wl) ]
+
+score'submissions :: Gobble -> Gobble
+score'submissions gob = gob & players.~result & game'phase.~Scoring where
+  result = calculate'scores (new,solution,gob^.players)
+  new = gob^.current'round.to signum
+  solution = gob^.board.word'list
 
 game'log'view :: Gobble -> Game'Log
 game'log'view gob = (gob^.board.letters,gob^.current'round,gob^.players<&>vp) where
