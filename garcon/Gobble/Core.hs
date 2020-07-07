@@ -1,4 +1,5 @@
-{-# language OverloadedStrings, ImplicitParams, TemplateHaskell, LambdaCase, FlexibleContexts #-}
+{-# language OverloadedStrings, ImplicitParams, TemplateHaskell, LambdaCase #-}
+{-# language TypeApplications, FlexibleContexts #-}
 
 module Gobble.Core where
 
@@ -32,11 +33,8 @@ data Player = Player
   { _answers :: Map Text Int
   , _score :: Int
   , _solo'score :: Int
-  , _total'score :: Int } deriving (Show)
-
---instance Show Player where
---  show (Player as n s t) =
---    "Player { _answers = " <> show as <> ", _score = " <> show n <> ", _total'score = " <> show t <> " }"
+  , _total'score :: Int
+  } deriving (Show)
 
 data Chat'Message = Chat'Message
   { _contents :: Text
@@ -104,8 +102,13 @@ threadDelayS = threadDelay . fromIntegral . (*10^6)
 dup :: a -> (a,a)
 dup x = (x,x)
 
-(.&) = M.intersection
-(.-) = M.difference
+-- | just because...
+infixl 7 .-
+infixl 6 .+
+infixl 6 .*
+(.*) = M.intersection @Text
+(.-) = M.difference @Text
+(.+) = M.union @Text
 
 score'submissions :: Gobble -> Gobble
 score'submissions gob = gob & players.traversed%~scr'rnd & game'phase.~Scoring where
@@ -113,13 +116,13 @@ score'submissions gob = gob & players.traversed%~scr'rnd & game'phase.~Scoring w
   wgt b = if b then 1 else -1
   solution = gob^.board.word'list
   all'subs = gob ^.. players.traversed.answers & M.unionsWith (+)
-  scr'rnd p@(Player sol scr ssr tot) = p' where
+             scr'rnd p@(Player sol scr ssr tot) = p' where
     p' = p & score .~ pts & solo'score .~ spts & total'score .~ pts+tot*new
     tot = p ^. total'score
     pts = sum ppts - sum npts
     spts = sum [ score'word word * (wgt (word `M.member` solution)) | word <- M.keys sol ]
-    ppts = [ score'word word | (word,1) <- M.toList (all'subs .& sol .& solution) ]
-    npts = [ score'word word | (word,1) <- M.toList (all'subs .& (sol .- solution)) ]
+    ppts = [ score'word word | (word,1) <- M.toList $ all'subs .* sol .* solution ]
+    npts = [ score'word word | (word,1) <- M.toList $ all'subs .* sol .- solution ]
 
 game'log'view :: Gobble -> Game'Log
 game'log'view gob = (gob^.board.letters,gob^.current'round,gob^.players<&>vp) where

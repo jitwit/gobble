@@ -35,6 +35,10 @@ start'state = do
   pinous <- make'pinou'stream
   return $ Gobble (-1) b0 mempty mempty def (Chat mempty) pinous mempty
 
+-- | nb. we specifically want images in static so they can be
+-- served. this is in contrast to boards which absolutely must not be
+-- visible, not that anyone in their right mind would bother combing
+-- through them to gain an edge...
 make'pinou'stream :: IO [FilePath]
 make'pinou'stream =
   let img'dir = "static/images/"

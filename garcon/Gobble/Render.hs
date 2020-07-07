@@ -43,8 +43,8 @@ classify'words :: RoundResult -> Map Text WordResult
 classify'words = \case
   RoundResult sol subs ->
     let misses = negate <$> subs .- sol
-        hits   = subs .& sol
-     in M.mapWithKey word'result (misses `M.union` hits)
+        hits   = subs .* sol
+     in M.mapWithKey word'result (misses .+ hits)
 
 instance ToMarkup WordResult where
   toMarkup = \case
