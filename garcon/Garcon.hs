@@ -77,7 +77,7 @@ name'player conn = liftIO $ do
 
 remove'player :: (?gobble :: TVar Gobble, MonadIO m) => Name -> m ()
 remove'player who = liftIO $ atomically $ modifyTVar' ?gobble $
-  players.at who .~ Nothing
+  (players.at who .~ Nothing) . (connections.at who .~ Nothing)
 
 reply :: (?gobble :: TVar Gobble, WebSocketsData a, MonadIO m) => Connection -> a -> m ()
 reply conn = liftIO . sendTextData conn
