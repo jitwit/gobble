@@ -18,7 +18,6 @@ todo :: todo
 todo = error "todo"
 
 type Name = Text
-type Reason = String
 
 data Phase = Boggled | Scoring | Ready
   deriving (Eq,Show)
