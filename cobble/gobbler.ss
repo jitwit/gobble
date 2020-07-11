@@ -36,7 +36,7 @@
   (define n* (length (directory-list dir)))
   (define N (- n n*))
   (format #t "there are ~a board(s), making ~a more~%" n* N)
-  (let make ((i 1))
+  (let make ((i 1) (j 1))
     (unless (> i N)
       (let* ((board (roll (list-head (shuffle dice-5x5) 16)))
              (board-file (string-append dir "/" board))
@@ -45,14 +45,15 @@
          ((file-exists? board-file)
           (error 'generate "time to make better randoms, eh?"))
          ((interesting-board? solution)
-          (format #t "saving    ~s ~4d/~d~%" board i N)
+          (format #t "saving    ~a ~5d/~d/~d~%" board i j N)
           (with-output-to-file board-file
             (lambda ()
               (dump-solution solution)))
-          (make (1+ i)))
+          (make (fx1+ i) (fx1+ j)))
          (else
-          (format #t "rejecting ~s~%" board)
-          (make i)))))))
+	  (format #t "rejecting ~a ~5d/~d/~d~%" board i j N)
+          
+          (make i (fx1+ j))))))))
 
 (define (main)
   (match (command-line)
