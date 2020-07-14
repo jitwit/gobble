@@ -4,7 +4,8 @@
         (only (srfi :13) string-tokenize string-join))
 
 (for-all load
-         '("code/trie.scm"
+         '(
+;;	   "code/trie.scm"
            "code/dictionary.scm"
            "code/board.scm"
            "code/boggle.scm"))

@@ -1,5 +1,5 @@
 dictionary::= input/trie.fasl
-objs::= trie dictionary gobble
+objs::= dictionary gobble
 lib-path::= .:$(CHEZSCHEMELIBDIRS)
 scheme::= scheme -q --libdirs $(lib-path)
 libs::= $(foreach lib,$(objs),$(lib).so)
@@ -11,14 +11,14 @@ local-boards::= ../garcon/boards
 all : $(dictionary) $(libs)
 
 # scheme libraries
-gobble.so : code/*.scm dictionary.so trie.so *.sls
+gobble.so : code/*.scm dictionary.so *.sls
 	echo "(compile-library \"gobble.sls\")" | $(scheme)
 
-dictionary.so : code/*.scm trie.so *.sls
+dictionary.so : code/*.scm *.sls
 	echo "(compile-library \"dictionary.sls\")" | $(scheme)
 
-trie.so : code/*.scm *.sls
-	echo "(compile-library \"trie.sls\")" | $(scheme)
+# trie.so : code/*.scm *.sls
+# 	echo "(compile-library \"trie.sls\")" | $(scheme)
 
 # english dictionary, binary file
 $(dictionary) : $(libs)
