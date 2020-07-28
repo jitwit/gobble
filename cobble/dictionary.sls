@@ -5,6 +5,9 @@
           word?
           definition
           completions
+	  dictionary?
+	  dictionary-language
+	  dictionary-trie
           anagrams
           collins
           get-collins

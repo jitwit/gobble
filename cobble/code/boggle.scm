@@ -41,7 +41,7 @@
 			(sort (lambda (x y)
 				(string<? (car x) (car y)))
 			      (vector->list (hashtable-cells word-list))))))
-    (walk (expand-path (make-path '() 0 0 dictionary) j))))
+    (walk (expand-path (make-path '() 0 0 (dictionary-trie dictionary)) j))))
 
 (define (gobble board)
   (boggle-search board collins))

@@ -1,3 +1,6 @@
+(define-record-type dictionary
+  (fields language trie))
+
 (define (parse-definition line)
   (string-tokenize line (char-set-complement (char-set #\tab #\return))))
 
@@ -19,15 +22,16 @@
             (loop (get-line in) (cons (apply cons (parse-definition x)) words)))))))
 
 (define collins
-  (call/cc
-   (lambda (k)
-     (with-exception-handler
-         (lambda (e)
-           (let ((T (dictionary->trie (get-collins))))
-             (store-trie T "share/trie.fasl")
-             (k T)))
-       (lambda ()
-         (fetch-trie "share/trie.fasl"))))))
+  (make-dictionary 'english
+		   (call/cc
+		    (lambda (k)
+		      (with-exception-handler
+			  (lambda (e)
+			    (let ((T (dictionary->trie (get-collins))))
+			      (store-trie T "share/trie.fasl")
+			      (k T)))
+			(lambda ()
+			  (fetch-trie "share/trie.fasl")))))))
 
 (define (prefix? word)
   (trie-prefix? word collins))
