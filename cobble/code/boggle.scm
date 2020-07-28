@@ -4,6 +4,14 @@
 (define (tree-step x T)
   (and T (t:lookup-with-default (char->integer x) #f (trie-tries T))))
 
+(define (char-substitutes char)
+  (case char
+    ((#\E) '(#\E #\É #\È))
+    ((#\C) '(#\C #\Ç))
+    ((#\A) '(#\A #\À))
+    ;; ((#\O) '(#\O))
+    (else `(,char))))
+
 ;; currently uses ints as bit sets. means maximum board size is 7x7
 ;; until i switch to intsets or bitvectors or something. assumes board
 ;; is string with perfect square length.
