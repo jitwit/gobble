@@ -44,10 +44,10 @@
   (display object) (newline))
 
 (define (display-row row)
-  (put-char (current-output-port) #\|)
+  (put-char (current-output-port) #\space)
   (for-each (lambda (char)
 	      (put-char (current-output-port) char)
-	      (put-char (current-output-port) #\|))
+	      (put-char (current-output-port) #\space))
 	    (string->list row))
   (newline))
 
@@ -55,7 +55,7 @@
   (define NxN (string-length board))
   (define N (isqrt NxN))
   (define width (1+ (* 2 N)))
-  (display-ln (make-string width #\-))
+  (display-ln (make-string width #\space))
   (do ((i 0 (+ i N)))
-      ((= i NxN) (display-ln (make-string width #\-)))
+      ((= i NxN) (display-ln (make-string width #\space)))
     (display-row (substring board i (+ i N)))))

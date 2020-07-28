@@ -50,7 +50,6 @@
           (make (fx1+ i) (fx1+ j)))
          (else
 	  (format #t "rejecting ~a ~5d/~d/~d~%" board i j N)
-          
           (make i (fx1+ j))))))))
 
 (define (solve-single board)
@@ -64,7 +63,10 @@
 	 (fmt (format "~~~aa ~~a~~%" (+ 2 n))))
     (for-each (lambda (word.def)
 		(format #t fmt (car word.def) (cdr word.def)))
-	      words)))  
+	      words)))
+
+(define (random-board)
+  (display-board (roll dice-4x4)))
 
 (define help-message
   (case-lambda
@@ -73,6 +75,7 @@ options:
 
     -n <n> -d <dir>    solve n random boards and save to files in given directory
     -b <board>         output solutions to board
+    -r                 output a random board
     -h                 self
 "))
     ((args)
@@ -83,6 +86,7 @@ options:
   (match (command-line)
     ((_ "-n" n "-d" dir) (generate (string->number n) dir))
     ((_ "-b" board)      (solve-single board))
+    ((_ "-r")            (random-board))
     ((_ "-h")            (help-message))
     (else                (help-message (command-line)))))
 
