@@ -4,13 +4,26 @@
 (define (tree-step x T)
   (and T (t:lookup-with-default (char->integer x) #f (trie-tries T))))
 
+(define char-substitutes-table
+  (fold-right (lambda (char substitutes table)
+		(t:insert (char->integer char)
+			  substitutes
+			  table))
+	      t:empty
+	      (string->list "EeCcAaOo")
+	      '((#\E #\É #\È)
+		(#\e #\é #\è)
+		(#\C #\Ç)
+		(#\c #\ç)
+		(#\A #\À)
+		(#\a #\à)
+		(#\O #\Ô)
+		(#\o #\ô))))
+
 (define (char-substitutes char)
-  (case char
-    ((#\E) '(#\E #\É #\È))
-    ((#\C) '(#\C #\Ç))
-    ((#\A) '(#\A #\À))
-    ;; ((#\O) '(#\O))
-    (else `(,char))))
+  (t:lookup-with-default (char->integer char)
+			 `(,char)
+			 char-substitutes-table))
 
 ;; currently uses ints as bit sets. means maximum board size is 7x7
 ;; until i switch to intsets or bitvectors or something. assumes board
@@ -43,12 +56,14 @@
 		(vector-ref G (path-spot path)))))
   (do ((j 0 (fx1+ j)))
       ((fx= j (string-length board))
-       (sort-on (compose string-length car)
-		(filter (lambda (word)
-			  (fx< 2 (string-length (car word))))
-			(sort (lambda (x y)
-				(string<? (car x) (car y)))
-			      (vector->list (hashtable-cells word-list))))))
+       (sort (lambda (S1 S2)
+	       (let ((S1 (car S1)) (S2 (car S2)))
+		 (or (< (string-length S1) (string-length S2))
+		     (and (= (string-length S1) (string-length S2))
+			  (string<? S1 S2)))))
+	     (filter (lambda (word)
+		       (fx< 2 (string-length (car word))))
+		     (vector->list (hashtable-cells word-list)))))
     (walk (expand-path (make-path '() 0 0 (dictionary-trie dictionary)) j))))
 
 (define (gobble board)

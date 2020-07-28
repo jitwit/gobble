@@ -1,9 +1,7 @@
-#!/usr/bin/env scheme --script
-
 (library-directories (cons "." (library-directories)))
 
 (import (gobble)
-        (only (euler) shuffle)
+        (only (euler) shuffle square? compose)
         (matchable))
 
 (random-seed (time-nanosecond (current-time)))
@@ -55,10 +53,38 @@
           
           (make i (fx1+ j))))))))
 
+(define (solve-single board)
+  (unless (square? (string-length board))
+    (format #t
+	    "Expecting square size board but ~s has ~a characters~%"
+	    board (string-length board))
+    (exit 1))
+  (let* ((words (gobble board))
+	 (n (apply max (cons 0 (map (compose string-length car) words))))
+	 (fmt (format "~~~aa ~~a~~%" (+ 2 n))))
+    (for-each (lambda (word.def)
+		(format #t fmt (car word.def) (cdr word.def)))
+	      words)))  
+
+(define help-message
+  (case-lambda
+    (() (format #t "gobbler solves and generates boggle boards.
+options:
+
+    -n <n> -d <dir>    solve n random boards and save to files in given directory
+    -b <board>         output solutions to board
+    -h                 self
+"))
+    ((args)
+     (help-message)
+     (format #t "~%got arguments: ~a~%" args))))
+
 (define (main)
   (match (command-line)
     ((_ "-n" n "-d" dir) (generate (string->number n) dir))
-    (else (error 'gobbler "bad command line args" (command-line)))))
+    ((_ "-b" board)      (solve-single board))
+    ((_ "-h")            (help-message))
+    (else                (help-message (command-line)))))
 
 (main)
 
