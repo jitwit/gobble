@@ -1,10 +1,10 @@
-dictionary::= input/trie.fasl
-objs::= dictionary gobble
-lib-path::= .:$(CHEZSCHEMELIBDIRS)
-scheme::= scheme -q --libdirs $(lib-path)
-libs::= $(foreach lib,$(objs),$(lib).so)
-boards::= 1000
-local-boards::= ../garcon/boards
+dictionary = input/trie.fasl
+objs = dictionary gobble
+lib-path = .:$(CHEZSCHEMELIBDIRS)
+scheme = scheme -q --libdirs $(lib-path)
+libs = $(foreach lib,$(objs),$(lib).so)
+boards = 1000
+local-boards = ../garcon/boards
 
 .PHONY : clean all boards
 
@@ -17,18 +17,19 @@ gobble.so : code/*.scm dictionary.so *.sls
 dictionary.so : code/*.scm *.sls
 	echo "(compile-library \"dictionary.sls\")" | $(scheme)
 
-# trie.so : code/*.scm *.sls
-# 	echo "(compile-library \"trie.sls\")" | $(scheme)
+gobbler.so : gobbler.ss gobble.so dictionary.so $(dictionary)
+	echo "(compile-script \"$<\")" | scheme -q --libdirs $(lib-path)
 
 # english dictionary, binary file
 $(dictionary) : $(libs)
 	$(scheme) --script load.scm
 
-boards : gobbler.ss $(libs) input/trie.fasl
+boards : gobbler.so
 	rm -rf $(local-boards)
 	mkdir -p $(local-boards)
 	$(scheme) --script $< -n $(boards) -d $(local-boards)
 
+# obsolete
 update-boards :
 	nixops scp --to gobble-net $(local-boards) /var/www/gobble
 

@@ -1,5 +1,3 @@
-(library-directories (cons "." (library-directories)))
-
 (import (gobble)
         (only (euler) shuffle square? compose)
         (matchable))
@@ -65,8 +63,10 @@
 		(format #t fmt (car word.def) (cdr word.def)))
 	      words)))
 
-(define (random-board)
-  (display-board (roll dice-4x4)))
+(define random-board
+  (case-lambda
+    (() (display-board (roll dice-4x4)))
+    ((flat) (display (roll dice-4x4)) (newline))))
 
 (define help-message
   (case-lambda
@@ -75,7 +75,7 @@ options:
 
     -n <n> -d <dir>    solve n random boards and save to files in given directory
     -b <board>         output solutions to board
-    -r                 output a random board
+    (-r | -rn)         output a random board. use -rn to get flat chars or -r for square
     -h                 self
 "))
     ((args)
@@ -87,6 +87,7 @@ options:
     ((_ "-n" n "-d" dir) (generate (string->number n) dir))
     ((_ "-b" board)      (solve-single board))
     ((_ "-r")            (random-board))
+    ((_ "-rn")           (random-board 'flat))
     ((_ "-h")            (help-message))
     (else                (help-message (command-line)))))
 
