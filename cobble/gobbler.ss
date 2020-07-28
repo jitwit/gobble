@@ -18,7 +18,7 @@
 (define (interesting-board? solution)
   (let ((longest-word (if (null? solution)
                           0
-                          (string-length (caar (last-pair solution))))))
+                          (string-length (caar solution)))))
     ;; still accept "tough" boards but mostly make sure there are words to find.
     (or (<= 8 longest-word)
         (cond
@@ -92,4 +92,3 @@ options:
     (else                (help-message (command-line)))))
 
 (main)
-

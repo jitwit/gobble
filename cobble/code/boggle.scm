@@ -58,7 +58,7 @@
       ((fx= j (string-length board))
        (sort (lambda (S1 S2)
 	       (let ((S1 (car S1)) (S2 (car S2)))
-		 (or (< (string-length S1) (string-length S2))
+		 (or (> (string-length S1) (string-length S2))
 		     (and (= (string-length S1) (string-length S2))
 			  (string<? S1 S2)))))
 	     (filter (lambda (word)

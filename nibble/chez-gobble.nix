@@ -22,9 +22,10 @@ stdenv.mkDerivation rec {
     mkdir -p $out/bin/
     cp *.so $out/lib/csv9.5-site/
     cp share/trie.fasl $out/share/
+    cp share/definitions.txt $out/share/
     echo "#!${chez}/bin/scheme --script" >> $out/bin/gobbler
     echo "(library-directories \"${libpath}\")" >> $out/bin/gobbler
-    cat gobbler.ss | tail -n +5 >> $out/bin/gobbler
+    cat gobbler.ss >> $out/bin/gobbler
     chmod 755 $out/bin/gobbler
   '';
 
