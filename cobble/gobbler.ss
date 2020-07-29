@@ -34,7 +34,7 @@
   (format #t "there are ~a board(s), making ~a more~%" n* N)
   (let make ((i 1) (j 1))
     (unless (> i N)
-      (let* ((board (roll (list-head (shuffle dice-5x5) 16)))
+      (let* ((board (substring (roll dice-5x5) 0 16))
              (board-file (string-append dir "/" board))
              (solution (gobble board)))
         (cond
@@ -56,7 +56,7 @@
 	    "Expecting square size board but ~s has ~a characters~%"
 	    board (string-length board))
     (exit 1))
-  (let* ((words (gobble board))
+  (let* ((words (pobble board))
 	 (n (apply max (cons 0 (map (compose string-length car) words))))
 	 (fmt (format "~~~aa ~~a~~%" (+ 2 n))))
     (for-each (lambda (word.def)

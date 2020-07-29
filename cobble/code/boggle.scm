@@ -69,6 +69,7 @@
 (define (p-boggle-search board dictionary)
   (define count 0)
   (define mount (make-mutex))
+  (define hound (make-mutex))
   (define dt (make-time 'time-duration 1000 0))
   (define chunk 8)
   (define N (string-length board))
@@ -90,7 +91,7 @@
   (define (walk path)
     (when (path-tree path)
       (when (trie-element (path-tree path))
-	(with-mutex mount
+	(with-mutex hound
 		    (hashtable-set! word-list
 				    (list->string (reverse (path-letters path)))
 				    (trie-element (path-tree path)))))
@@ -112,7 +113,7 @@
     (fork-thread
      (lambda ()
        (do ((i j (fx1+ i)))
-	   ((fx= i (fxmax N (fx+ j chunk)))
+	   ((fx= i (fxmin N (fx+ j chunk)))
 	    (with-mutex mount (set! count (fx+ count (fx- i j)))))
 	 (walk (expand-path (make-path '() 0 0 (dictionary-trie dictionary)) i))))))
   (let wait ()

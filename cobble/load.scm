@@ -25,7 +25,7 @@
       (for-all put-def (reverse (get-collins))))))
 
 (define (try-parallel)
-  (define b (roll dice-4x4))
+  (define b (substring (roll dice-5x5) 0 16))
   (display (time (length (gobble b))))
   (newline)
   (display (time (length (pobble b))))
