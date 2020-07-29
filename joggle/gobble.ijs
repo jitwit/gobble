@@ -19,12 +19,29 @@ definition=: [: {: COLN {~ WORDS&I.
 
 reify_grid=: [:-.&_1&.>[:,[:<"_2[:,"_2/(0 0-.~,/,"0/~i:1)|.!._1]
 adj=: ],"_ 0]-.~[{::~[:{:]
+board_graph =: reify_grid i. 4 4
+paths0 =: ,:"0 i. 16
+unique=: -: ~.
+
+path_word =: (]`(('Q';'QU')&stringreplace)@.('Q'&e.)) @: {
+
+NB. single. x is board, y is single path
+expand=: 4 : 0
+  (#~ (prefix@(path_word&x))"1) (#~ unique"1) y ,"_ 0/ ({:y) {:: board_graph
+)
+
+expand_paths =: ([: < [: ; [ <@expand"_ 1 >@])`]@.(0=(*/)@$@>@])
+
+solve =: 3 : 0
+  matches =. (#~ exact"0) ; (<@({&y))"1 &.> (y&expand_paths) ^: a: < paths0
+  (/: #&>) /:~ ~. matches
+)
 
 gobble=: 3 : 0
-graph=. reify_grid i. 2 # %: # ]board=. y[words=. ''[curr=. |:,:i.#y
+graph=. reify_grid i. 2 # %: # ]board=. y[words=. ''[curr=. ,:"0 i.#y
 while. #curr do. ws =. ''[next =. ,: 0,{.curr
   for_j. curr do.
-    for_j. graph adj j do. w=. <('Q';'QU') stringreplace j{board
+    for_j. graph adj j do. w=. < j path_word board
       if. exact w    do. ws=. ws,w end.
       if. isprefix w do. next=. next,j end.
     end.
