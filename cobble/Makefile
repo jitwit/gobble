@@ -1,7 +1,7 @@
 dictionary = input/trie.fasl
 objs = dictionary gobble
 lib-path = .:$(CHEZSCHEMELIBDIRS)
-scheme = scheme -q --optimize-level 3 --libdirs $(lib-path)
+scheme = scheme -q --libdirs $(lib-path)
 libs = $(foreach lib,$(objs),$(lib).so)
 boards = 1000
 local-boards = ../garcon/boards

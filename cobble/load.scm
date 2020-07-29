@@ -24,6 +24,13 @@
         (newline))
       (for-all put-def (reverse (get-collins))))))
 
+(define (try-parallel)
+  (define b (roll dice-4x4))
+  (display (time (length (gobble b))))
+  (newline)
+  (display (time (length (pobble b))))
+  (newline))
+
 ;; (define (get-dela-fr) ;; danger - large file
 ;;   (define dict "input/dela-fr-public-u8.dic.xml")
 ;;   (with-input-from-file dict

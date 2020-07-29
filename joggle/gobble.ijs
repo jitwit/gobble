@@ -26,14 +26,16 @@ unique=: -: ~.
 path_word =: (]`(('Q';'QU')&stringreplace)@.('Q'&e.)) @: {
 
 NB. single. x is board, y is single path
-expand=: 4 : 0
-  (#~ (prefix@(path_word&x))"1) (#~ unique"1) y ,"_ 0/ ({:y) {:: board_graph
+NB. m is board
+expand_path=: 4 : 0
+  (#~ (prefix@(path_word&x))"1) y,"_ 0/ y -.~ ({:y) {:: board_graph
 )
 
-expand_paths =: ([: < [: ; [ <@expand"_ 1 >@])`]@.(0=(*/)@$@>@])
+expand_paths =: ([: < [: ; [ <@expand_path"_ 1 >@])`]@.(0=(*/)@$@>@])
 
-solve =: 3 : 0
-  matches =. (#~ exact"0) ; (<@({&y))"1 &.> (y&expand_paths) ^: a: < paths0
+boggle =: 3 : 0
+  candidates =. (y&expand_paths) ^: a: < ,:"0 i. # y
+  matches =. (#~ exact"0) ; (<@(path_word&y))"1 &.> candidates
   (/: #&>) /:~ ~. matches
 )
 

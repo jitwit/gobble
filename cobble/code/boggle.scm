@@ -66,8 +66,64 @@
 		     (vector->list (hashtable-cells word-list)))))
     (walk (expand-path (make-path '() 0 0 (dictionary-trie dictionary)) j))))
 
+(define (p-boggle-search board dictionary)
+  (define count 0)
+  (define mount (make-mutex))
+  (define dt (make-time 'time-duration 1000 0))
+  (define chunk 8)
+  (define N (string-length board))
+  (define G
+    (board-graph (isqrt N)))
+  (define word-list
+    (make-hashtable string-hash string=?))
+  (define (expand-path path j)
+    (let ((x (string-ref board j)))
+      (if (char=? x #\Q)
+	  (make-path (cons* #\U #\Q (path-letters path))
+		     j
+		     (fxlogbit1 j (path-mask path))
+		     (tree-step #\U (tree-step #\Q (path-tree path))))
+	  (make-path (cons x (path-letters path))
+		     j
+		     (fxlogbit1 j (path-mask path))
+		     (tree-step x (path-tree path))))))
+  (define (walk path)
+    (when (path-tree path)
+      (when (trie-element (path-tree path))
+	(with-mutex mount
+		    (hashtable-set! word-list
+				    (list->string (reverse (path-letters path)))
+				    (trie-element (path-tree path)))))
+      (for-each (lambda (j)
+		  (unless (fxbit-set? (path-mask path) j)
+		    (walk (expand-path path j))))
+		(vector-ref G (path-spot path)))))
+  (define (get-solution)
+    (sort (lambda (S1 S2)
+	    (let ((S1 (car S1)) (S2 (car S2)))
+	      (or (> (string-length S1) (string-length S2))
+		  (and (= (string-length S1) (string-length S2))
+		       (string<? S1 S2)))))
+	  (filter (lambda (word)
+		    (fx< 2 (string-length (car word))))
+		  (vector->list (hashtable-cells word-list)))))
+  (do ((j 0 (fx+ j chunk)))
+      ((fx>= j N))
+    (fork-thread
+     (lambda ()
+       (do ((i j (fx1+ i)))
+	   ((fx= i (fxmax N (fx+ j chunk)))
+	    (with-mutex mount (set! count (fx+ count (fx- i j)))))
+	 (walk (expand-path (make-path '() 0 0 (dictionary-trie dictionary)) i))))))
+  (let wait ()
+    (cond ((fx< (with-mutex mount count) N) (sleep dt) (wait))
+	  (else (get-solution)))))
+
 (define (gobble board)
   (boggle-search board collins))
+
+(define (pobble board)
+  (p-boggle-search board collins))
 
 (define score-vector
   '#vfx(0 0 0 1 1 2 3 5 11))
