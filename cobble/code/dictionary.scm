@@ -34,13 +34,13 @@
 			  (fetch-trie "share/trie.fasl")))))))
 
 (define (prefix? word)
-  (trie-prefix? word collins))
+  (trie-prefix? word (dictionary-trie collins)))
 
 (define (word? word)
-  (trie-member? word collins))
+  (trie-member? word (dictionary-trie collins)))
 
 (define (definition word)
-  (lookup (string-upcase word) collins))
+  (lookup (string-upcase word) (dictionary-trie collins)))
 
 (define (suffixes prefix)
   (cond ((lookup-string collins prefix)
