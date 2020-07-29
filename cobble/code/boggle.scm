@@ -71,7 +71,7 @@
   (define mount (make-mutex))
   (define hound (make-mutex))
   (define dt (make-time 'time-duration 1000 0))
-  (define chunk 8)
+  (define chunk 6)
   (define N (string-length board))
   (define G
     (board-graph (isqrt N)))

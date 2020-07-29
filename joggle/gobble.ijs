@@ -3,9 +3,11 @@ init=: 3 : 0
 (9!:43) 0
 COLLINS=: jpath '~/code/gobble/cobble/share/definitions.txt'
 N=: # WORDS=: {."1  DICTIONARY=: ([: <;._1 (9{a.)&,);._2 (1!:1) < COLLINS
+PREFX=: /:~ ~. ; <\ &.> WORDS
 define=: DICTIONARY {~ WORDS I. <@toupper
 isprefix=: 3 : 'y e.(#>y)&{.&.>WORDS{~N|(,~<:)WORDS I. y'
-prefix=: isprefix@<@toupper
+prefix=: -: [: {&PREFX PREFX&I.
+NB. prefix=: isprefix@<@toupper
 exact=: -: [: {&WORDS WORDS&I.
 'ok'
 )
@@ -28,7 +30,7 @@ path_word =: (]`(('Q';'QU')&stringreplace)@.('Q'&e.)) @: {
 NB. single. x is board, y is single path
 NB. m is board
 expand_path=: 4 : 0
-  (#~ (prefix@(path_word&x))"1) y,"_ 0/ y -.~ ({:y) {:: board_graph
+  (#~ (prefix@<@(path_word&x))"1) y,"_ 0/ y -.~ ({:y) {:: board_graph
 )
 
 expand_paths =: ([: < [: ; [ <@expand_path"_ 1 >@])`]@.(0=(*/)@$@>@])
@@ -44,8 +46,8 @@ graph=. reify_grid i. 2 # %: # ]board=. y[words=. ''[curr=. ,:"0 i.#y
 while. #curr do. ws =. ''[next =. ,: 0,{.curr
   for_j. curr do.
     for_j. graph adj j do. w=. < j path_word board
-      if. exact w    do. ws=. ws,w end.
-      if. isprefix w do. next=. next,j end.
+      if. exact w  do. ws=. ws,w end.
+      if. prefix w do. next=. next,j end.
     end.
   end. curr=. }.next[words=. words,~.ws
 end. (/: #&.>) /:~ words
