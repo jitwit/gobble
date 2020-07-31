@@ -40,6 +40,22 @@
 					(+ x (* n y)))))
 			       (adjacent (cons i j)))))))
 
+(define (board-rectangle r c)
+  (define G (make-vector (fx* r c) '()))
+  (define n-1 (fx1- (fx* r c)))
+  (do ((i 0 (fx1+ i)))
+      ((= i r) G)
+    (do ((j 0 (fx1+ j)))
+	((= j c))
+      (vector-set! G (fx+ j (fx* r i))
+		   (filter-map (lambda (x.y)
+				 (let ((x (car x.y))
+				       (y (cdr x.y)))
+				   (and (fx<= 0 x (fx1- r))
+					(fx<= 0 y (fx1- c))
+					(fx+ y (fx* r x)))))
+			       (adjacent (cons i j)))))))
+
 (define (display-ln object)
   (display object) (newline))
 

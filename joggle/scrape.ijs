@@ -1,6 +1,7 @@
 require 'regex'
 
 refpat=: '/tous-les-mots-par-lettre/[^"]+'
+motpat=: '<p class="liste-mots">[^>]+>'
 
 lettres=: a. {~ (a. i. 'a')+i.26
 url_bas=: 'https://www.liste-de-mots.com'&,
@@ -21,4 +22,8 @@ file1 =: 1 lettre_file y
 
 tele_lettre=: 3 : 0
 (lettre_urls y) tele"0 _ y
+)
+
+page_liste=: 4 : 0
+motpat rxall 1!:1 < x lettre_file y
 )

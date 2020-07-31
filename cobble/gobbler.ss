@@ -36,7 +36,7 @@
     (unless (> i N)
       (let* ((board (substring (roll dice-5x5) 0 16))
              (board-file (string-append dir "/" board))
-             (solution (pobble board)))
+             (solution (gobble board)))
         (cond
          ((file-exists? board-file)
           (error 'generate "time to make better randoms, eh?"))

@@ -1,15 +1,16 @@
 (library-directories (cons "." (library-directories)))
 (optimize-level 3)
 (import (gobble)
-        (euler))
+        (euler)
+	(juniper))
 
 (define (gobble1 board)
   (time (begin (gobble board) (void))))
 
-(define (do-gobble board N)
+(define (do-gobble N)
   (do ((i 0 (fx1+ i)))
       ((fx= i N))
-    (gobble1 board)))
+    (gobble1 (substring (roll dice-5x5) 0 16))))
 
 (define example1 "SKDSMAHLETROEUSP")
 (define example2 "ELIHYWOTXSERINAT")
@@ -18,10 +19,11 @@
   (define n^2 (square n))
   (roll (list-head (apply append (make-list (ceiling (/ n^2 25)) dice-5x5))
 		   n^2)))
-(define (run-bench)
+
+(define (run-bench N)
   (define out "../report/bench.txt")
   (when (file-exists? out)
     (delete-file out))
   (transcript-on out)
-  (do-gobble example3 1000)
+  (do-gobble N)
   (transcript-off))

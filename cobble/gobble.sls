@@ -12,6 +12,8 @@
           dice-5x5
 	  score-word
 	  score-word-list
+	  board-graph
+	  board-rectangle
 
           ;; definitions
           word?
