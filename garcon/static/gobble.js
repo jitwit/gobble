@@ -2,20 +2,31 @@ var boggle;
 
 $(() => {
     if (window.history && window.history.pushState) {
-        window.history.pushState('forward', null, './#forward');
+        window.history.pushState('forward', null, './#gob');
+        window.history.pushState('forward', null, './#gobble');
         $(window).on('popstate', () => { alert('sure about that?'); });
     }
 
     boggle = new WebSocket ("ws://" + window.location.host);
-    var dt = 1000;
+    var dt = 1000; var attempts = 0; var attempt_limit = 5;
+    var whoami = localStorage.getItem("whoami");
 
     add_word = (word) => { boggle.send('gobble ' + word); };
     del_word = (word) => { boggle.send('dobble ' + word); };
     like_word = (word) => { boggle.send('wobble ' + word); };
     chirp = (tweet) => { boggle.send('chirp ' + tweet); };
     query_words = () => { boggle.send('words'); };
-    set_name = (msg="") => {  boggle.send(prompt('name?' + msg));  $("#scratch").focus(); };
-    clear_new_round = () => { $("#scratch").val(""); $("#scratch").focus(); query_words (); };
+
+    set_name = (msg="") => {
+	whoami = prompt('name ?' + msg, whoami || "");
+	localStorage.setItem("whoami", whoami);
+	boggle.send(whoami);
+	$("#scratch").focus();
+    };
+    
+    clear_new_round = () => {
+	$("#scratch").val(""); $("#scratch").focus(); query_words ();
+    };
 
     $("#mush").submit((e) => {
         e.preventDefault();
