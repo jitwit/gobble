@@ -123,6 +123,9 @@
 (define (gobble board)
   (boggle-search board collins))
 
+(define (yobble board)
+  (boggle-search board yawl))
+
 (define (pobble board)
   (p-boggle-search board collins))
 

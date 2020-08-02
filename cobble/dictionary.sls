@@ -10,7 +10,9 @@
 	  dictionary-trie
           anagrams
           collins
+	  yawl
           get-collins
+	  get-yawl
           get-collins-word-list)
   (import (chezscheme)
           (only (euler) sort-on nub-eq square)

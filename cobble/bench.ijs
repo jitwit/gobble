@@ -11,4 +11,4 @@ samp=. > ([: ". [: > [: {. [: <;._1 's'&,) &.> cpupat rxall 1!:1 < benchfile
 bs_summarize samp
 )
 
-0 run''
+1 run''

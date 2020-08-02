@@ -12,6 +12,29 @@
             words
             (loop (read) (cons (string-upcase (symbol->string x)) words)))))))
 
+(define (get-yawl)
+  (with-input-from-file "share/yawl.txt"
+    (lambda ()
+      (let loop ((x (read)) (words '()))
+        (if (eof-object? x)
+            words
+            (loop (read) (cons (string-upcase (symbol->string x)) words)))))))
+
+(define yawl
+  (make-dictionary 'english
+		   (call/cc
+		    (lambda (k)
+		      (with-exception-handler
+			  (lambda (e)
+			    (let ((T (dictionary->trie
+				      (map (lambda (w)
+					     (cons w #t))
+					   (get-yawl)))))
+			      (store-trie T "share/trie.fasl")
+			      (k T)))
+			(lambda ()
+			  (error "blaha")))))))
+
 (define (get-collins)
   (with-input-from-file "share/definitions.txt"
     (lambda ()
