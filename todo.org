@@ -1,6 +1,6 @@
 - better debugging / *logging*
 - better random images and add images that haven't been added yet
-- add static files to nix somehow?
+- add static files to nix
 - handle bad connections better
 - record results
 - flavicon

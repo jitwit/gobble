@@ -2,13 +2,11 @@
 
 * Gobble
 
-Boggle on the net. 
-
 + [[file:cobble/][cobble]] - scheme libraries including tries, dictionaries, and the
   boggle sovler. script to generate boards
 + [[file:garcon/][garcon]] - haskell servant web server and websocket server to actually
   run games
 + [[file:joggle/][joggle]] - J script that also solves boggle boards. it loads much
   faster than the scheme program, but solves slower
-+ [[file:nibble/][nibble]] - nix expressions to get it all going in the _cloud_
++ [[file:nibble/][nibble]] - nix expressions to get it all going in the _net_
 
