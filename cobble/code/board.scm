@@ -56,6 +56,15 @@
 					(fx+ y (fx* r x)))))
 			       (adjacent (cons i j)))))))
 
+(define (make-board chars)
+  (list->fxvector (map char->integer (string->list chars))))
+
+(define (board-ref board j)
+  (integer->char (fxvector-ref board j)))
+
+(define (board-length board)
+  (fxvector-length board))
+
 (define (display-ln object)
   (display object) (newline))
 
