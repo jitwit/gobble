@@ -12,14 +12,6 @@
             words
             (loop (read) (cons (string-upcase (symbol->string x)) words)))))))
 
-(define (get-yawl)
-  (with-input-from-file "share/yawl.txt"
-    (lambda ()
-      (let loop ((x (read)) (words '()))
-        (if (eof-object? x)
-            words
-            (loop (read) (cons (string-upcase (symbol->string x)) words)))))))
-
 (define (get-collins)
   (with-input-from-file "share/definitions.txt"
     (lambda ()

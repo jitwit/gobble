@@ -25,6 +25,28 @@
 			 `(,char)
 			 char-substitutes-table))
 
+(define (extend path board j)
+  (let ((x (string-ref board j)))
+    (if (char=? x #\Q)
+	(make-path (cons* #\U #\Q (path-letters path))
+		   j
+		   (fxlogbit1 j (path-mask path))
+		   (tree-step #\U (tree-step #\Q (path-tree path))))
+	(make-path (cons x (path-letters path))
+		   j
+		   (fxlogbit1 j (path-mask path))
+		   (tree-step x (path-tree path))))))
+
+(define (extract-word-list word-list)
+  (sort (lambda (S1 S2)
+	  (let ((S1 (car S1)) (S2 (car S2)))
+	    (or (> (string-length S1) (string-length S2))
+		(and (= (string-length S1) (string-length S2))
+		     (string<? S1 S2)))))
+	(filter (lambda (word)
+		  (fx< 2 (string-length (car word))))
+		(vector->list (hashtable-cells word-list)))))
+
 ;; currently uses ints as bit sets. means maximum board size is 7x7
 ;; until i switch to intsets or bitvectors or something. assumes board
 ;; is string with perfect square length.
@@ -33,38 +55,20 @@
     (board-graph (isqrt (string-length board))))
   (define word-list
     (make-hashtable string-hash string=?))
-  (define (expand-path path j)
-    (let ((x (string-ref board j)))
-      (if (char=? x #\Q)
-	  (make-path (cons* #\U #\Q (path-letters path))
-		     j
-		     (fxlogbit1 j (path-mask path))
-		     (tree-step #\U (tree-step #\Q (path-tree path))))
-	  (make-path (cons x (path-letters path))
-		     j
-		     (fxlogbit1 j (path-mask path))
-		     (tree-step x (path-tree path))))))
   (define (walk path)
     (when (path-tree path)
       (when (trie-element (path-tree path))
-	(hashtable-set! word-list
-			(list->string (reverse (path-letters path)))
-			(trie-element (path-tree path))))
+	(let ((word (list->string (reverse (path-letters path)))))
+	  (unless (hashtable-ref word-list word #f)
+	    (hashtable-set! word-list word (trie-element (path-tree path))))))
       (for-each (lambda (j)
 		  (unless (fxbit-set? (path-mask path) j)
-		    (walk (expand-path path j))))
+		    (walk (extend path board j))))
 		(vector-ref G (path-spot path)))))
   (do ((j 0 (fx1+ j)))
       ((fx= j (string-length board))
-       (sort (lambda (S1 S2)
-	       (let ((S1 (car S1)) (S2 (car S2)))
-		 (or (> (string-length S1) (string-length S2))
-		     (and (= (string-length S1) (string-length S2))
-			  (string<? S1 S2)))))
-	     (filter (lambda (word)
-		       (fx< 2 (string-length (car word))))
-		     (vector->list (hashtable-cells word-list)))))
-    (walk (expand-path (make-path '() 0 0 (dictionary-trie dictionary)) j))))
+       (extract-word-list word-list))
+    (walk (extend (make-path '() 0 0 (dictionary-trie dictionary)) board j))))
 
 (define (p-boggle-search board dictionary)
   (define count 0)
