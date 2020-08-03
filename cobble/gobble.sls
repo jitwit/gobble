@@ -2,7 +2,6 @@
 (eval-when (load compile) (optimize-level 3))
 (library (gobble)
   (export gobble
-	  yobble
 	  pobble
 
           ;; boards

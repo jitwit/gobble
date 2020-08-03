@@ -1,20 +1,10 @@
-(unless (assoc "." (library-directories))
-  (print-gensym #f)
-  (library-directories (cons "." (library-directories))))
-
-(import (gobble)
-        (euler)
-	(prefix (patricia) t:)
-	(juniper))
-
 (define (gobble1 board)
   (time (begin (gobble board) (void))))
 
 (define (do-gobble N)
   (do ((i 0 (fx1+ i)))
       ((fx= i N))
-    (gobble1 example3 ;; (substring (roll dice-5x5) 0 16)
-	     )))
+    (gobble1 example3)))
 
 (define example1 "SKDSMAHLETROEUSP")
 (define example2 "ELIHYWOTXSERINAT")
@@ -84,6 +74,8 @@
 ;; TGEDENITSRASOBEL 12221
 ;; STERLIRGMANETESD 12342
 ;; HOSAMNRTEAIESTLS 12386
+;; MLPEAIASSNRTTEED 12705
+;; PSLMEAIARNTRGESO 12848
 
 ;; SERSPATGLINESERS 15554
 ;; whatever dice: ARESSTIMENALGRES 14157
@@ -96,9 +88,8 @@
     (and (memv c (string->list S)) #t)))
 
 (define (random-dice)
-  (map (lambda (n)
-	 "ABCDEFGHIKLMNPRST")
-       (iota 16)))
+  ;; (map (lambda (n) "ABCDEFGHIKLMNPRST") (iota 16))
+  (shuffle dice-4x4))
 
 (define (simulate-annealing schedule)
   (define state
@@ -109,8 +100,13 @@
        (values (state-board state) (state-score state)))
     (let* ((next (neighbor state))
 	   (delta (- (state-score next) (state-score state))))
-      (when (= 0 (mod t 100))
-	(format #t "~a ~a ~a~%" t (state-board state) (state-score state)))
+      (meta-cond
+       ((< 2 (verbosity))
+	(when (= 0 (mod t 100))
+	  (format #t "~a ~a ~a~%" t (state-board state) (state-score state))))
+       ((< 1 (verbosity))
+	(when (= 0 (mod t 250))
+	  (format #t "~a ~a ~a~%" t (state-board state) (state-score state)))))
       (if (< 0 delta)
 	  (set! state next)
 	  (when (< (random 1.0) (exp (/ delta T)))
@@ -120,7 +116,7 @@
   (define-values (board score) (simulate-annealing schedule))
   (do ((i 0 (1+ i)))
       ((= i N) (values board score))
-    (format #T "~%STARTING ROUND ~a~%" i)
+    (format #T "~%STARTING ROUND ~a ~a ~a~%" i board score)
     (let-values (((board* score*) (simulate-annealing schedule)))
       (when (< score score*)
 	(set! board board*)

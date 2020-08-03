@@ -9,7 +9,11 @@
         (euler)
         (dictionary)
         (trie)
+	(prefix (patricia) t:)
         (only (srfi :1) append-map filter-map))
+
+(define verbosity
+  (make-parameter 3))
 
 (define (dump-collins)
   (define out-file "share/clns.txt")

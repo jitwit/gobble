@@ -10,7 +10,6 @@
 	  dictionary-trie
           anagrams
           collins
-	  yawl
           get-collins
 	  get-yawl
           get-collins-word-list)

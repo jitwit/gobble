@@ -123,9 +123,6 @@
 (define (gobble board)
   (boggle-search board collins))
 
-(define (yobble board)
-  (boggle-search board yawl))
-
 (define (pobble board)
   (p-boggle-search board collins))
 
@@ -139,4 +136,4 @@
   (fold-left (lambda (score word)
 	       (fx+ score (score-word word)))
 	     0
-	     word-list))
+	     (map car word-list)))
