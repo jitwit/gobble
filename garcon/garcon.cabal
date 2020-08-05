@@ -3,6 +3,7 @@ cabal-version:       2.4
 name:                gobble
 version:             0.1.0.0
 build-type:          Simple
+data-files: dawggle.dawg
 
 -- the deps
 common doggle
@@ -38,7 +39,10 @@ common doggle
     hashable,
     random,
     random-shuffle,
-    utf8-string
+    utf8-string,
+    packed-dawg,
+    vector,
+    unordered-containers
   ghc-options:  -O2 -threaded -Wunused-imports
   default-language: Haskell2010
 
@@ -46,8 +50,15 @@ common doggle
 executable garcon
   import: doggle
   main-is: Garcon.hs
-  exposed-modules: Gobble.Core, Gobble.Render, Gobble.System
+  exposed-modules: Gobble.Core, Gobble.Render, Gobble.System, Gobble.Doggle
 
+
+-- executable dawggle
+--  import: doggle
+--  build-depends: criterion
+--  main-is: Dawggle.hs
+
+  
 -- the tests
 test-suite toggle
   import: doggle

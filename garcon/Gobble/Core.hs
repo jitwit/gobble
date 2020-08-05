@@ -10,6 +10,7 @@ import qualified Data.Map as M
 import Data.Map (Map)
 import qualified Data.Text as T
 import Unsafe.Coerce
+import Data.DAWG.Packed
 import Data.Text (Text)
 import Control.Lens
 import Control.Concurrent
@@ -54,6 +55,7 @@ data Gobble = Gobble
   , _chat'room :: Chat
   , _pinou'stream :: [FilePath]
   , _gobble'likes :: Map Name Text
+  , _dawggle :: Node
   } -- deriving (Show)
 
 type Game'Log = (Text,Int,Map Text ([Text],Int))
