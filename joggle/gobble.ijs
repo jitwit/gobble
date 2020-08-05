@@ -1,5 +1,5 @@
 require 'dictionary.ijs stats/bonsai'
-eg =: 'YVUPESTAGOLEOWNV'
+
 shake=: ({~?~@#) {"0 1~ [: ? #"1
 dice4=: _6]\'NAEAEGEGNWEHCSOAHPLVERDYTOATOWPKAFFSHRVTWEHQUMNIEITSSORLTYETTITSYDLXEDIRTOIMCUBAOBOJNLNHZRENSIEU'
 score=: 0 0 0 1 1 2 3 5 11 {~ 8 <. #
@@ -16,6 +16,10 @@ boggle =: 3 : 0
 test =: 3 : 0
 assert. 24 = +/ score & > boggle 4 4 $ 'DEMODEMODEMODEMO'
 assert. 1254 = # boggle 4 4 $ 'PSLMEAIARNTRGESO'
+assert. 189 = # boggle 8 2 $ 'PSLMEAIARNTRGESO'
+assert. 318 = # boggle 4 4 $ 'YVUPESTAGOLEOWNV'
+assert. 8 = # boggle 2 2 $ 'ABBA'
+assert. 25 = # boggle 3 2 $ 'GOOGLE'
 'aok'
 )
 
