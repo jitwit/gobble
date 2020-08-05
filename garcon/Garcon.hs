@@ -39,7 +39,6 @@ import qualified Data.Aeson as A
 import Gobble.Core
 import Gobble.System
 import Gobble.Render
-import Gobble.Doggle
 
 fetch'board :: (?gobble :: TVar Gobble, MonadIO m) => m Board
 fetch'board = liftIO $ view board <$> readTVarIO ?gobble
@@ -249,7 +248,6 @@ type BoggleAPI =
   :<|> "static" :> Raw
   :<|> "boards" :> Get '[JSON] Int
   :<|> "help" :> "naked" :> Get '[PlainText] String
-  :<|> "solve" :> Capture "board" String :> Get '[JSON] [String]
 
 check'boards :: Handler Int
 check'boards = liftIO $ length <$> listDirectory "boards/"
@@ -259,19 +257,11 @@ naked'state = liftIO $ do
   gob <- readTVarIO ?gobble
   return $ unlines [gob & game'log'view & show,"",gob ^. chat'room & show]
 
-solve'board :: (?gobble :: TVar Gobble) => String -> Handler [String]
-solve'board (filter isLetter -> board)
-  | length board `elem` [4,9,16,25] = liftIO $ do
-      gob <- readTVarIO ?gobble
-      return $ boggle'search (gob^.dawggle) (toUpper <$> board)
-  | otherwise = return ["BAD BOARD"]--  $ err400 {errBody = "bad board"}
-
 boggle'server :: (?gobble :: TVar Gobble) => Server BoggleAPI
 boggle'server = pure GobblePage
   :<|> serveDirectoryWebApp "static"
   :<|> check'boards
   :<|> naked'state
-  :<|> solve'board
 
 launch'boggle :: Int -> IO ()
 launch'boggle port = do

@@ -10,7 +10,6 @@ import System.Random.Shuffle
 import Data.Time.Clock
 import Data.Default
 
-import Gobble.Doggle
 import Gobble.Render
 import Gobble.Core
 
@@ -34,8 +33,7 @@ start'state :: IO Gobble
 start'state = do
   b0 <- new'board
   pinous <- make'pinou'stream
-  d <- fetch'dawggle
-  return $ Gobble (-1) b0 mempty mempty def (Chat mempty) pinous mempty d
+  return $ Gobble (-1) b0 mempty mempty def (Chat mempty) pinous mempty
 
 -- | nb. we specifically want images in static so they can be
 -- served. this is in contrast to boards which absolutely must not be
