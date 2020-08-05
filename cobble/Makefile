@@ -1,5 +1,5 @@
 dictionary = input/trie.fasl
-objs = dictionary gobble dawg
+objs = dictionary gobble
 lib-path = .:$(CHEZSCHEMELIBDIRS)
 scheme = scheme -q --optimize-level 3 --libdirs $(lib-path)
 libs = $(foreach lib,$(objs),$(lib).so)
@@ -17,10 +17,7 @@ gobble.so : code/*.scm dictionary.so *.sls
 dictionary.so : code/*.scm *.sls
 	echo "(compile-library \"dictionary.sls\")" | $(scheme)
 
-dawg.so : code/*.scm *.sls
-	echo "(compile-library \"dawg.sls\")" | $(scheme)
-
-gobbler.so : gobbler.ss dawg.so gobble.so dictionary.so $(dictionary)
+gobbler.so : gobbler.ss gobble.so dictionary.so $(dictionary)
 	echo "(compile-script \"$<\")" | $(scheme)
 
 # english dictionary, binary file
