@@ -56,7 +56,7 @@
 	    "Expecting square size board but ~s has ~a characters~%"
 	    board (string-length board))
     (exit 1))
-  (let* ((words (pobble board))
+  (let* ((words (gobble board))
 	 (n (apply max (cons 0 (map (compose string-length car) words))))
 	 (fmt (format "~~~aa ~~a~~%" (+ 2 n))))
     (for-each (lambda (word.def)

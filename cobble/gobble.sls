@@ -22,7 +22,7 @@
           completions)
   (import (chezscheme)
           (dictionary)
-          (only (euler) shuffle compose square sort-on)
+          (only (euler) shuffle compose square)
           (only (srfi :1) append-map filter-map)
 	  (prefix (patricia) t:)
 	  (trie))

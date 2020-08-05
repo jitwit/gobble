@@ -1,3 +1,4 @@
+
 (define (gobble1 board)
   (time (begin (gobble board) (void))))
 
