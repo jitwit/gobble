@@ -3,15 +3,20 @@ require 'dictionary.ijs stats/bonsai'
 shake=: ({~?~@#) {"0 1~ [: ? #"1
 dice4=: _6]\'NAEAEGEGNWEHCSOAHPLVERDYTOATOWPKAFFSHRVTWEHQUMNIEITSSORLTYETTITSYDLXEDIRTOIMCUBAOBOJNLNHZRENSIEU'
 score=: 0 0 0 1 1 2 3 5 11 {~ 8 <. #
-nhood=: (,/ ,"0/~ i:1) -. 0 0
+nhood=: <:3 3#:4-.~i.9
 graph_of =: [: -.&_1 &.> [: , [: <"_2 [: ,"_2/ nhood |.!._1 ]
 sub_Q =: ('Q';'QU')&stringreplace^:('Q'&e.)
 letters =: 1 : '(<@sub_Q)"1 @ ({&u)'
-expand_path=: 2 : '< (#~ prefix @ (u letters)) y,"_ 0/ y -.~ ({:y) {:: v'
-expand =: 2 : '([: < [: ; u expand_path v"1 @ >) ^: (0<#@>@]) y'
+expand_path=: 2 : 0
+  < (#~ prefix @ (u letters)) y,"_ 0/ y -.~ ({:y) {:: v
+)
+expand =: 2 : 0
+  ([: < [: ; u expand_path v"1 @ >) ^: (0<#@>@]) y
+)
 boggle =: 3 : 0
-  b =. , y [ g =. graph_of i. $ y
-  (/: #&>) /:~ ~. (#~ exact"0) ; b letters"1 &.> b expand g ^: a: < ,:"0 i. # b
+  ps =. < ,:"0 i. # b =. , y [ g =. graph_of i. $ y
+  ws =. (#~ exact"0) ; b letters"1 &.> b expand g ^: a: ps
+  (/: #&>) /:~ ~. ws
 )
 
 test =: 3 : 0
