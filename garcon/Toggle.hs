@@ -6,23 +6,25 @@ import Gobble.Core
 import Control.Lens
 import qualified Data.Map as M
 import Test.Hspec
+import Data.Time
 
-fanny, alexander :: Player
-fanny = Player (M.fromList [("cat",1),("blaha",1),("maples",1)]) 0 0 10
-alexander = Player (M.fromList [("mouse",1),("haha",1),("blaha",1)]) 0 0 10
+mk'player ws nw = Player ws 0 0 10 nw Here
 
-player'list = M.fromList [("fanny",fanny),("alexander",alexander)]
 solution = M.fromList [("cat","to vomit")
                       ,("mouse","small rodent/to hunt mice")
                       ,("maples","maple, a hardwood tree")]
-player'scores'0 = calculate'scores (0,solution,player'list)
-player'scores'1 = calculate'scores (1,solution,player'list)
 
 infixr 0 ==>
 (==>) :: (HasCallStack, Show a, Eq a) => a -> a -> Expectation
 (==>) = shouldBe
 
 main = do
+  now <- getCurrentTime
+  let fanny = mk'player (M.fromList [("cat",1),("blaha",1),("maples",1)]) now
+      alexander = mk'player (M.fromList [("mouse",1),("haha",1),("blaha",1)]) now
+      player'list = M.fromList [("fanny",fanny),("alexander",alexander)]
+      player'scores'0 = calculate'scores (0,solution,player'list)
+      player'scores'1 = calculate'scores (1,solution,player'list)
   hspec $ describe "Score" $ do
     describe "new round" $ do
       it "round score fanny" $ do
