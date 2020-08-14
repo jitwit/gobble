@@ -219,10 +219,14 @@ fresh'round = liftIO $ do
 run'gobble :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 run'gobble = liftIO $ forever $ do
   gob <- readTVarIO ?gobble
+  now <- getCurrentTime
   let gobble'dt t = diffUTCTime t $ gob ^. board.creation'time
       peeps = gob ^. players & isn't _Empty
       phase = gob ^. game'phase
-  dt <- unsafeCoerce . gobble'dt <$> getCurrentTime
+      dt = unsafeCoerce $ gobble'dt now
+  status'same <- atomically $ stateTVar ?gobble (update'activity now)
+  unless status'same $ tweet'chat >> putStrLn "status changed for someone"
+  tweet'chat
   case phase of
     Ready   -> when peeps $ fresh'round
     Boggled -> if | not peeps -> reset'gobble

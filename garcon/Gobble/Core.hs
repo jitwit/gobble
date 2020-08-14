@@ -46,6 +46,7 @@ data Chat'Message = Chat'Message
 newtype Chat'View = Chat'View Gobble
 newtype Score'View = Score'View Gobble
 newtype Word'List'View = Word'List'View Gobble
+data Player'Status = Player'Status Text Activity
 
 data Chat = Chat { _messages :: Map UTCTime Chat'Message } deriving Show
 
@@ -60,7 +61,7 @@ data Gobble = Gobble
   , _gobble'likes :: Map Name Text
   } -- deriving (Show)
 
-type Game'Log = (Text,Int,Map Text ([Text],Int))
+type Game'Log = (Text,Int,Map Text ([Text],Int,Activity,UTCTime))
 
 makePrisms ''Phase
 makeLenses ''Board
@@ -87,7 +88,7 @@ overall'length = round'length + score'length
 run'length, ready'length, ages'ago :: Int
 run'length = 50000
 ready'length = 500000
-ages'ago = 1000 * 1000 * 3
+ages'ago = 1000*1000*1000*1000*90
 
 round'period :: NominalDiffTime
 round'period = unsafeCoerce $ secondsToDiffTime $
@@ -133,13 +134,17 @@ score'submissions gob = gob & players.~result & game'phase.~Scoring where
 
 game'log'view :: Gobble -> Game'Log
 game'log'view gob = (gob^.board.letters,gob^.current'round,gob^.players<&>vp) where
-  vp p = ((p^.answers & M.keys),p^.total'score)
+  vp p = ((p^.answers & M.keys),p^.total'score,p^.active,p^.last'activity)
 
 update'activity'1 :: UTCTime -> Player -> Player
 update'activity'1 now who
-  | ages'ago < prev = who & active .~ There
-  | otherwise = who
-  where prev = diffUTCTime (who ^. last'activity) now & unsafeCoerce
+  | ages'ago < dt = who & active .~ There
+  | otherwise = who & active .~ Here
+  where dt = diffUTCTime now (who ^. last'activity) & unsafeCoerce
 
-update'activity :: UTCTime -> Gobble -> Gobble
-update'activity now = players . mapped %~ update'activity'1 now
+update'activity :: UTCTime -> Gobble -> (Bool, Gobble)
+update'activity now gob = (flag, gob') where
+  flag = and $ zipWith (==)
+                       (gob'^..players.folded.active)
+                       (gob^..players.folded.active)
+  gob' = gob & players . mapped %~ update'activity'1 now
