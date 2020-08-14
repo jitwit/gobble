@@ -65,9 +65,16 @@ instance ToMarkup Word'List'View where
                        then Shared w else Unique w
                      td (H.text d)
 
+instance ToMarkup Player'Status where
+  toMarkup (Player'Status who act) = case act of
+    Here -> H.text who
+    There -> H.text $ "(" <> who <> "💤)" 
+
 instance ToMarkup Chat'View where
   toMarkup (Chat'View gob) = table $ do
-    thead $ H.text $ T.intercalate ", " (gob^.players.to M.keys)
+    thead $ mconcat $ intersperse (H.text ", ")
+          [ toMarkup $ Player'Status who (plr ^. active)
+          | (who,plr) <- gob^.players.to M.assocs ]
     gob & iforMOf_ (chat'room.messages.ifolded) $ \t (Chat'Message tweet author) ->
       tr $ do td $ H.text author
               td $ H.div ! H.class_ "occurrence" $ do

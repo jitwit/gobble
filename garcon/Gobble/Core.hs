@@ -28,11 +28,15 @@ data Board = Board
   , _word'list :: Map Text Text
   } deriving (Show)
 
+data Activity = Here | There deriving (Show,Eq,Ord)
+
 data Player = Player
   { _answers :: Map Text Int
   , _score :: Int
   , _solo'score :: Int
   , _total'score :: Int
+  , _last'activity :: UTCTime
+  , _active :: Activity
   } deriving (Show)
 
 data Chat'Message = Chat'Message
@@ -42,6 +46,7 @@ data Chat'Message = Chat'Message
 newtype Chat'View = Chat'View Gobble
 newtype Score'View = Score'View Gobble
 newtype Word'List'View = Word'List'View Gobble
+data Player'Status = Player'Status Text Activity
 
 data Chat = Chat { _messages :: Map UTCTime Chat'Message } deriving Show
 
@@ -56,7 +61,7 @@ data Gobble = Gobble
   , _gobble'likes :: Map Name Text
   } -- deriving (Show)
 
-type Game'Log = (Text,Int,Map Text ([Text],Int))
+type Game'Log = (Text,Int,Map Text ([Text],Int,Activity,UTCTime))
 
 makePrisms ''Phase
 makeLenses ''Board
@@ -80,10 +85,10 @@ score'length = 45
 overall'length :: Integer
 overall'length = round'length + score'length
 
-run'length :: Int
+run'length, ready'length, ages'ago :: Int
 run'length = 50000
-ready'length :: Int
 ready'length = 500000
+ages'ago = 1000*1000*1000*1000*90
 
 round'period :: NominalDiffTime
 round'period = unsafeCoerce $ secondsToDiffTime $
@@ -113,7 +118,7 @@ calculate'scores :: (Int,Map Text Text,Map Name Player) -> Map Name Player
 calculate'scores (new,wl,ps) = ps & mapped %~ scr where
   wgt b = 2 * fromEnum b - 1
   all'subs = ps^..folded.answers & M.unionsWith (+)
-  scr p@(Player sol scr ssr tot) = p' where
+  scr p@(Player sol scr ssr tot _ _) = p' where
     p' = p & score .~ pts & solo'score.~spts & total'score.~pts+tot*new
     tot = p^.total'score
     pts = sum ppts - sum npts
@@ -129,4 +134,17 @@ score'submissions gob = gob & players.~result & game'phase.~Scoring where
 
 game'log'view :: Gobble -> Game'Log
 game'log'view gob = (gob^.board.letters,gob^.current'round,gob^.players<&>vp) where
-  vp p = ((p^.answers & M.keys),p^.total'score)
+  vp p = ((p^.answers & M.keys),p^.total'score,p^.active,p^.last'activity)
+
+update'activity'1 :: UTCTime -> Player -> Player
+update'activity'1 now who
+  | ages'ago < dt = who & active .~ There
+  | otherwise = who & active .~ Here
+  where dt = diffUTCTime now (who ^. last'activity) & unsafeCoerce
+
+update'activity :: UTCTime -> Gobble -> (Bool, Gobble)
+update'activity now gob = (flag, gob') where
+  flag = and $ zipWith (==)
+                       (gob'^..players.folded.active)
+                       (gob^..players.folded.active)
+  gob' = gob & players . mapped %~ update'activity'1 now
