@@ -15,7 +15,7 @@ expand =: 2 : 0
 )
 boggle =: 3 : 0
   ps =. < ,:"0 i. # b =. , y [ g =. graph_of i. $ y
-  ws =. (#~ exact"0) ; b letters"1 &.> b expand g ^: a: ps
+  ws =. (#~ exact) ; b letters"1 &.> b expand g ^: a: ps
   (/: #&>) /:~ ~. ws
 )
 
