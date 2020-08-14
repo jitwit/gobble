@@ -52,7 +52,7 @@ new'player :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Connection -> m ()
 new'player who conn = liftIO $ do
   now <- liftIO getCurrentTime
   gob <- atomically $ stateTVar ?gobble $ dup .
-    (players.at who ?~ Player M.empty 0 0 0 now) .
+    (players.at who ?~ Player M.empty 0 0 0 now Here) .
     (connections.at who ?~ conn)
   when (gob ^. game'phase & isn't _Ready) $ do
     reply'json conn $ tag'thing "board" $ html'of'board (gob^.board)
