@@ -33,6 +33,7 @@ data Player = Player
   , _score :: Int
   , _solo'score :: Int
   , _total'score :: Int
+  , _last'activity :: UTCTime
   } deriving (Show)
 
 data Chat'Message = Chat'Message
@@ -113,7 +114,7 @@ calculate'scores :: (Int,Map Text Text,Map Name Player) -> Map Name Player
 calculate'scores (new,wl,ps) = ps & mapped %~ scr where
   wgt b = 2 * fromEnum b - 1
   all'subs = ps^..folded.answers & M.unionsWith (+)
-  scr p@(Player sol scr ssr tot) = p' where
+  scr p@(Player sol scr ssr tot act) = p' where
     p' = p & score .~ pts & solo'score.~spts & total'score.~pts+tot*new
     tot = p^.total'score
     pts = sum ppts - sum npts

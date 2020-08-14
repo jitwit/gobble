@@ -50,8 +50,9 @@ is'name'free name = liftIO $ do
 
 new'player :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Connection -> m ()
 new'player who conn = liftIO $ do
+  now <- liftIO getCurrentTime
   gob <- atomically $ stateTVar ?gobble $ dup .
-    (players.at who ?~ Player M.empty 0 0 0) .
+    (players.at who ?~ Player M.empty 0 0 0 now) .
     (connections.at who ?~ conn)
   when (gob ^. game'phase & isn't _Ready) $ do
     reply'json conn $ tag'thing "board" $ html'of'board (gob^.board)
@@ -93,12 +94,15 @@ wow'wow who word = liftIO $ do
     add'tweet "GOBBLE" $ T.unwords [who,"likes",word]
 
 submit'words :: (?gobble :: TVar Gobble, MonadIO m) => Name -> [Text] -> m ()
-submit'words who words = liftIO $ atomically $ do
-  let ok'word w = T.all isLetter w
-  gob <- readTVar ?gobble
-  when (gob ^. game'phase & isn't _Scoring) $ writeTVar ?gobble $
-    gob & players.ix who.answers
-        %~ flip (foldr (\w -> bool id (at w?~1) (ok'word w))) words
+submit'words who words = liftIO $ do
+  now <- liftIO getCurrentTime
+  atomically $ do
+    let ok'word w = T.all isLetter w
+    gob <- readTVar ?gobble
+    when (gob ^. game'phase & isn't _Scoring) $ writeTVar ?gobble $
+      gob & players.ix who %~
+          ((answers %~ flip (foldr (\w -> bool id (at w?~1) (ok'word w))) words) .
+           (last'activity .~ now))
 
 delete'word :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Text -> m ()
 delete'word who word = liftIO $ atomically $ do
@@ -110,13 +114,15 @@ add'tweet :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Text -> m ()
 add'tweet who tweet = liftIO $ do
   now <- getCurrentTime
   atomically $ modifyTVar' ?gobble $
+    (players.ix who.last'activity.~now) .
     (chat'room.messages.at now?~Chat'Message tweet who) .
     (chat'room.messages %~ \m -> M.drop (M.size m - 10) m)
   tweet'chat
   print (who,tweet)
 
 tweet'chat :: (?gobble :: TVar Gobble, MonadIO m) => m ()
-tweet'chat = liftIO $ tagged'broadcast "chirp" =<< render'chat <$> readTVarIO ?gobble
+tweet'chat = liftIO $ tagged'broadcast "chirp" =<< render'chat <$>
+  readTVarIO ?gobble
 
 handle'control :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Connection -> ControlMessage -> m ()
 handle'control who conn = liftIO . \case
