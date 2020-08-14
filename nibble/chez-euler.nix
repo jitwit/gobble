@@ -15,11 +15,11 @@ stdenv.mkDerivation {
   checkPhase = "make check";
 
   buildPhase = ''
-    export CHEZSCHEMELIBDIRS=${chez-hemlock}/lib/csv-site/
+    export CHEZSCHEMELIBDIRS=${chez-hemlock}/lib/csv9.5-site/
     make chez=${chez}/bin/scheme
   '';
 
-  installPhase = "make install out=$out/lib/csv-site";
+  installPhase = "make install out=$out/lib/csv9.5-site";
   
   meta = {
     description = "Various numerical procedures written while solving project euler problems";

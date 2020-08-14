@@ -14,7 +14,7 @@ stdenv.mkDerivation {
 
   buildPhase = "make chez=${chez}/bin/scheme";
 
-  installPhase = "make install out=$out/lib/csv-site";
+  installPhase = "make install out=$out/lib/csv9.5-site";
 
   meta = {
     description = "Trees and other structures";

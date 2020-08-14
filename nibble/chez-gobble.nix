@@ -17,10 +17,10 @@ stdenv.mkDerivation rec {
 
   
   installPhase = ''
-    mkdir -p $out/lib/csv-site/
+    mkdir -p $out/lib/csv9.5-site/
     mkdir -p $out/share/
     mkdir -p $out/bin/
-    cp *.so $out/lib/csv-site/
+    cp *.so $out/lib/csv9.5-site/
     cp share/trie.fasl $out/share/
     cp share/definitions.txt $out/share/
     echo "#!${chez}/bin/scheme --script" >> $out/bin/gobbler
