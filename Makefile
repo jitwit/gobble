@@ -1,5 +1,5 @@
-actions::= dry-update-gobble update-gobble update-boards update-static ghcid-gobble update-images
-static-dir::= /var/www/gobble/static
+actions = dry-update-gobble update-gobble update-boards update-static ghcid-gobble update-images
+static-dir = /var/www/gobble/static
 
 .PHONY : clean $(actions)
 
@@ -11,6 +11,8 @@ dry-update-gobble :
 update-gobble :
 	nixops modify nibble/aws.nix nibble/app.nix -d gobbler
 	nixops deploy -d gobbler
+	nixops ssh -d gobbler gobble-net systemctl status gobble
+	nixops ssh -d gobbler gobble-net systemctl status cobble
 
 update-static :
 	nixops scp --to gobble-net garcon/static/gobble.css $(static-dir)

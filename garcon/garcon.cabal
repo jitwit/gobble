@@ -38,7 +38,8 @@ common doggle
     hashable,
     random,
     random-shuffle,
-    utf8-string
+    utf8-string,
+    jmacro
   ghc-options:  -O2 -threaded -Wunused-imports
   default-language: Haskell2010
 
