@@ -7,12 +7,10 @@ import Data.Default
 import Data.Time.Clock
 import Network.WebSockets
 import qualified Data.Map as M
-import GHC.IO.Handle
 import Data.Map (Map)
 import Data.HashMap.Strict (HashMap)
 import qualified Data.Text as T
 import Unsafe.Coerce
-import System.Process
 import Data.Text (Text)
 import Control.Lens
 import Control.Concurrent
@@ -30,14 +28,6 @@ data Board = Board
   , _letters :: Text
   , _word'list :: Map Text Text
   } deriving (Show)
-
--- withCreateProcess? ( :: CreateProcess -> (Maybe Handle -> Maybe Handle -> Maybe Handle -> ProcessHandle -> IO a) -> IO a?)
--- createPipe? ( IO (Handle, Handle) )
-data Gobbler = Gobbler
-  { _gobbler'in :: Handle
-  , _gobbler'out :: Handle
-  , _gobbler'proc :: ProcessHandle
-  }
 
 data Activity = Here | There deriving (Show,Eq,Ord)
 
@@ -71,7 +61,6 @@ data Gobble = Gobble
   , _pinou'stream :: [FilePath]
   , _gobble'likes :: Map Name Text
   , _english :: HashMap Text Text
-  , _gobbler :: Gobbler
   } -- deriving (Show)
 
 type Game'Log = (Text,Int,Map Text ([Text],Int,Activity,UTCTime))

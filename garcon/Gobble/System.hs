@@ -8,9 +8,6 @@ import qualified Data.Text.IO as T
 import qualified Data.Map as M
 import qualified Data.HashMap.Strict as H
 import System.Directory
-import System.Process
-import GHC.IO.Handle.FD
-import System.IO
 import System.Random
 import System.Random.Shuffle
 import Data.Time.Clock
@@ -19,23 +16,8 @@ import Data.Default
 import Gobble.Render
 import Gobble.Core
 
-summon'gobbler :: FilePath -> IO Gobbler
-summon'gobbler gobbler'path = do
-  forM_ ["gobble-in","gobble-out"] $ \f -> do
-    b <- doesFileExist f
-    when b $ removeFile f
-  i <- openFileBlocking "gobble-in" ReadWriteMode
-  o <- openFileBlocking "gobble-out" ReadWriteMode
-  let g = RawCommand "bin/gobbler" ["-loop"]
-      s = (shell "gobbler -loop") { std_in = UseHandle i
-                                  , std_out = UseHandle o
-                                  , cwd = Just gobbler'path
-                                  , cmdspec = g }
-  (Nothing,Nothing,Nothing,p) <- createProcess_ "gobbler" s
-  return $ Gobbler i o p
-
-gobbler'fs :: IO (T.Text, [T.Text])
-gobbler'fs = do
+gobbler :: IO (T.Text, [T.Text])
+gobbler = do
   let board'dir = "boards/"
   boards <- listDirectory board'dir
   board <- (boards!!) <$> randomRIO (0,length boards - 1)
@@ -45,18 +27,17 @@ gobbler'fs = do
 
 new'board :: IO Board
 new'board = do
-  (b,as) <- gobbler'fs
+  (b,as) <- gobbler
   t <- getCurrentTime
   write'board b
   return $ Board t b $ M.fromList [ (w,T.unwords def) | w:def <- map T.words as ]
 
-start'state :: FilePath -> IO Gobble
-start'state gobble'path = do
+start'state :: IO Gobble
+start'state = do
   b0 <- new'board
   pinous <- make'pinou'stream
   col <- retrieve'dictionary
-  gob <- summon'gobbler gobble'path
-  return $ Gobble (-1) b0 mempty mempty def (Chat mempty) pinous mempty col gob
+  return $ Gobble (-1) b0 mempty mempty def (Chat mempty) pinous mempty col
 
 retrieve'dictionary :: IO (H.HashMap T.Text T.Text)
 retrieve'dictionary =

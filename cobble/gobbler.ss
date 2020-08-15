@@ -106,7 +106,6 @@ options:
     ((_ "-r")            (random-board))
     ((_ "-rn")           (random-board 'flat))
     ((_ "-h")            (help-message))
-    ((_ "-loop")         (looping))
     (else                (help-message (command-line)))))
 
 (main)

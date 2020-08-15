@@ -310,10 +310,10 @@ boggle'server = pure GobblePage
   :<|> fmap (maybe "idk" id) . definition'of
   :<|> do'gobbler
 
-launch'boggle :: Int -> FilePath -> IO ()
-launch'boggle port gobble'path = do
+launch'boggle :: Int -> IO ()
+launch'boggle port = do
   putStrLn "Initializing GOBBLE"
-  gobble <- newTVarIO =<< start'state gobble'path
+  gobble <- newTVarIO =<< start'state
   putStrLn $ "Starting     GOBBLE on port " <> show port
   let ?gobble = gobble
    in do let back = serve boggle'api boggle'server
@@ -323,7 +323,6 @@ launch'boggle port gobble'path = do
          putStrLn $ "GOBBLE died"
 
 main :: IO ()
-main = getArgs >>= \case
-  [] -> launch'boggle 8011 "/home/jo/code/gobble/cobble"
-  ["-p",x,"-g",g] -> launch'boggle (read x) g
-  args -> error $ "bad args" ++ show args
+main = map read <$> getArgs >>= \case
+  [] -> launch'boggle 8011
+  x:_ -> launch'boggle x
