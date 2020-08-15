@@ -60,7 +60,7 @@ data Gobble = Gobble
   , _chat'room :: Chat
   , _pinou'stream :: [FilePath]
   , _gobble'likes :: Map Name Text
-  , _dictionary :: HashMap Text Text
+  , _english :: HashMap Text Text
   } -- deriving (Show)
 
 type Game'Log = (Text,Int,Map Text ([Text],Int,Activity,UTCTime))

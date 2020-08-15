@@ -1,3 +1,4 @@
+{-# language OverloadedStrings #-}
 
 module Gobble.System where
 

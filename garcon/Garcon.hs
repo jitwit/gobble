@@ -112,6 +112,12 @@ delete'word who word = liftIO $ atomically $ do
   when (gob ^. game'phase & isn't _Scoring) $ writeTVar ?gobble
     (gob & players.ix who.answers.at word .~ Nothing)
 
+parse'chirp :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Text -> m ()
+parse'chirp who chirp = case T.words chirp of
+  ["?help"] -> help'message
+  ["?def",word] -> add'tweet who chirp >> definition'of'ws word
+  _ -> add'tweet who chirp
+
 add'tweet :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Text -> m ()
 add'tweet who tweet = liftIO $ do
   now <- getCurrentTime
@@ -158,7 +164,7 @@ handle'data :: (?gobble :: TVar Gobble, MonadIO m)
 handle'data who conn = liftIO . \case
   Words ws -> submit'words who ws
   Delete w -> delete'word who w
-  Chirp c -> add'tweet who c
+  Chirp c -> parse'chirp who c
   Wow'wow w -> wow'wow who w
   Query "who-else" -> reply'json conn =<< get'players
   Query "words" -> send'words conn who
@@ -242,12 +248,15 @@ run'gobble = liftIO $ forever $ do
     Ready   -> threadDelay $ ready'length
     running -> threadDelay $ run'length
 
-definition'of :: (?gobble :: TVar Gobble, MonadIO m) => T.Text -> m T.Text
-definition'of word = liftIO $ do
-  def <- readTVarIO ?gobble <&> (^?dictionary.ix (T.toUpper word))
-  case def of
-    Nothing -> return "empty search"
-    Just def -> return def
+definition'of'ws :: (?gobble :: TVar Gobble, MonadIO m) => T.Text -> m ()
+definition'of'ws = add'tweet "GOBBLE" . maybe "idk" id <=< definition'of
+
+help'message :: (?gobble :: TVar Gobble, MonadIO m) => m ()
+help'message = add'tweet "GOBBLE" helpmsg where
+  helpmsg = "((?def look up word) (?help this message))"
+
+definition'of :: (?gobble :: TVar Gobble, MonadIO m) => T.Text -> m (Maybe T.Text)
+definition'of word = liftIO $ readTVarIO ?gobble <&> (^?english.ix (T.toUpper word))
 
 -- "ws backend"
 boggle :: (?gobble :: TVar Gobble, MonadIO m) => PendingConnection -> m ()
@@ -283,7 +292,7 @@ boggle'server = pure GobblePage
   :<|> serveDirectoryWebApp "static"
   :<|> check'boards
   :<|> naked'state
-  :<|> definition'of
+  :<|> fmap (maybe "idk" id) . definition'of
 
 launch'boggle :: Int -> IO ()
 launch'boggle port = do
