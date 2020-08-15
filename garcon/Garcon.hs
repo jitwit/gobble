@@ -16,6 +16,7 @@ import Data.Proxy
 import qualified Data.Map as M
 import Unsafe.Coerce
 
+import GHC.IO.Handle
 import Control.Exception (finally)
 import Control.Monad
 import Control.Monad.State
@@ -273,6 +274,14 @@ boggle pend = liftIO $ do
     ControlMessage ctl -> handle'control who conn ctl
     DataMessage _ _ _ msg -> handle'data who conn msg
 
+do'gobbler :: (?gobble :: TVar Gobble) => Handler Text
+do'gobbler = liftIO $ do
+  gob <- readTVarIO ?gobble
+  hPutStr (gob^.gobbler.gobbler'in) "cmon\n\n"
+  hFlushAll (gob^.gobbler.gobbler'in)
+--  T.pack <$> hGetLine
+  return ""
+
 -- "frontend"
 boggle'api :: Proxy BoggleAPI
 boggle'api = Proxy
@@ -283,6 +292,7 @@ type BoggleAPI =
   :<|> "boards" :> Get '[JSON] Int
   :<|> "help" :> "naked" :> Get '[PlainText] String
   :<|> "define" :> Capture "word" Text :> Get '[PlainText] Text
+  :<|> "random" :> Get '[PlainText] Text
 
 check'boards :: Handler Int
 check'boards = liftIO $ length <$> listDirectory "boards/"
@@ -298,6 +308,7 @@ boggle'server = pure GobblePage
   :<|> check'boards
   :<|> naked'state
   :<|> fmap (maybe "idk" id) . definition'of
+  :<|> do'gobbler
 
 launch'boggle :: Int -> FilePath -> IO ()
 launch'boggle port gobble'path = do
@@ -315,4 +326,4 @@ main :: IO ()
 main = getArgs >>= \case
   [] -> launch'boggle 8011 "/home/jo/code/gobble/cobble"
   ["-p",x,"-g",g] -> launch'boggle (read x) g
-  _ -> error "bad args"
+  args -> error $ "bad args" ++ show args

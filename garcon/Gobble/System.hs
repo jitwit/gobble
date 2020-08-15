@@ -2,6 +2,7 @@
 
 module Gobble.System where
 
+import Control.Monad
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Data.Map as M
@@ -20,9 +21,12 @@ import Gobble.Core
 
 summon'gobbler :: FilePath -> IO Gobbler
 summon'gobbler gobbler'path = do
+  forM_ ["gobble-in","gobble-out"] $ \f -> do
+    b <- doesFileExist f
+    when b $ removeFile f
   i <- openFileBlocking "gobble-in" ReadWriteMode
   o <- openFileBlocking "gobble-out" ReadWriteMode
-  let g = RawCommand "scheme" ["--script","gobbler.ss","-loop"]
+  let g = RawCommand "bin/gobbler" ["-loop"]
       s = (shell "gobbler -loop") { std_in = UseHandle i
                                   , std_out = UseHandle o
                                   , cwd = Just gobbler'path

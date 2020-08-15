@@ -68,6 +68,22 @@
     (() (display-board (roll dice-4x4)))
     ((flat) (display (roll dice-4x4)) (newline))))
 
+(define (random-solution)
+  (define board (substring (roll dice-5x5) 0 16))
+  (define solution (gobble board))
+  (cond ((interesting-board? solution)
+	 (display board) (display #\space)
+	 (display solution) (newline))
+	(else (random-solution))))
+
+(define (looping)
+  (define in (current-input-port))
+  (let lp ((cmd (get-line in)))
+    (unless (eof-object? cmd)
+      (random-solution))
+    (sleep (make-time 'time-duration 100000 0))
+    (lp (get-line in))))
+
 (define help-message
   (case-lambda
     (() (format #t "gobbler solves and generates boggle boards.
@@ -76,19 +92,12 @@ options:
     -n <n> -d <dir>    solve n random boards and save to files in given directory
     -b <board>         output solutions to board
     (-r | -rn)         output a random board. use -rn to get flat chars or -r for square
-    -loop              loop that will generate and solve random boards
     -h                 self
 "))
+    ;;     -loop              loop that will generate and solve random boards
     ((args)
      (help-message)
      (format #t "~%got arguments: ~a~%" args))))
-
-(define (looping)
-  (define cmd (get-line (current-input-port)))
-  (unless (eof-object? cmd)
-    (display (string-append "woohoo " cmd))
-    (newline))
-  (looping))
 
 (define (main)
   (match (command-line)

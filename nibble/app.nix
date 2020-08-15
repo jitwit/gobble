@@ -28,7 +28,8 @@ in {
         wantedBy = [ "multi-user.target" ];
         after = [ "network.target" "cobble.service" ];
         wants = [ "cobble.service" ];
+        environment = { CHEZSCHEMELIBDIRS = "${libdirs}"; };
         serviceConfig =
           { WorkingDirectory = webdir;
-            ExecStart = "${gobbler}/bin/garcon 80";
+            ExecStart = "${gobbler}/bin/garcon -p 80 -g ${cobble}";
             Restart = "always"; }; }; }; }; }; }
