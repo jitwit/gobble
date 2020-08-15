@@ -84,7 +84,11 @@ options:
      (format #t "~%got arguments: ~a~%" args))))
 
 (define (looping)
-  (display "did it!") (newline))
+  (define cmd (get-line (current-input-port)))
+  (unless (eof-object? cmd)
+    (display (string-append "woohoo " cmd))
+    (newline))
+  (looping))
 
 (define (main)
   (match (command-line)

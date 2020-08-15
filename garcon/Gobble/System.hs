@@ -8,6 +8,7 @@ import qualified Data.Map as M
 import qualified Data.HashMap.Strict as H
 import System.Directory
 import System.Process
+import GHC.IO.Handle.FD
 import System.IO
 import System.Random
 import System.Random.Shuffle
@@ -19,14 +20,15 @@ import Gobble.Core
 
 summon'gobbler :: FilePath -> IO Gobbler
 summon'gobbler gobbler'path = do
-  i <- openFile "gobble-in" ReadWriteMode
-  o <- openFile "gobble-out" ReadWriteMode
+  i <- openFileBlocking "gobble-in" ReadWriteMode
+  o <- openFileBlocking "gobble-out" ReadWriteMode
   let g = RawCommand "scheme" ["--script","gobbler.ss","-loop"]
       s = (shell "gobbler -loop") { std_in = UseHandle i
                                   , std_out = UseHandle o
-                                  , cwd = Just gobbler'path }
-  withCreateProcess s $ \_ _ _ p -> do
-    return $ Gobbler i o p
+                                  , cwd = Just gobbler'path
+                                  , cmdspec = g }
+  (Nothing,Nothing,Nothing,p) <- createProcess_ "gobbler" s
+  return $ Gobbler i o p
 
 gobbler'fs :: IO (T.Text, [T.Text])
 gobbler'fs = do
