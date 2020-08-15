@@ -76,11 +76,15 @@ options:
     -n <n> -d <dir>    solve n random boards and save to files in given directory
     -b <board>         output solutions to board
     (-r | -rn)         output a random board. use -rn to get flat chars or -r for square
+    -loop              loop that will generate and solve random boards
     -h                 self
 "))
     ((args)
      (help-message)
      (format #t "~%got arguments: ~a~%" args))))
+
+(define (looping)
+  (display "did it!") (newline))
 
 (define (main)
   (match (command-line)
@@ -89,6 +93,7 @@ options:
     ((_ "-r")            (random-board))
     ((_ "-rn")           (random-board 'flat))
     ((_ "-h")            (help-message))
+    ((_ "-loop")         (looping))
     (else                (help-message (command-line)))))
 
 (main)
