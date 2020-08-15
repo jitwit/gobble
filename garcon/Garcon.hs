@@ -80,10 +80,12 @@ remove'player :: (?gobble :: TVar Gobble, MonadIO m) => Name -> m ()
 remove'player who = liftIO $ atomically $ modifyTVar' ?gobble $
   (players.at who .~ Nothing) . (connections.at who .~ Nothing)
 
-reply :: (?gobble :: TVar Gobble, WebSocketsData a, MonadIO m) => Connection -> a -> m ()
+reply :: (?gobble :: TVar Gobble, WebSocketsData a, MonadIO m)
+      => Connection -> a -> m ()
 reply conn = liftIO . sendTextData conn
 
-reply'json :: (?gobble :: TVar Gobble, A.ToJSON j, MonadIO m) => Connection -> j -> m ()
+reply'json :: (?gobble :: TVar Gobble, A.ToJSON j, MonadIO m)
+           => Connection -> j -> m ()
 reply'json conn = reply conn . A.encode
 
 wow'wow :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Text -> m ()
@@ -124,7 +126,8 @@ tweet'chat :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 tweet'chat = liftIO $ tagged'broadcast "chirp" =<< render'chat <$>
   readTVarIO ?gobble
 
-handle'control :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Connection -> ControlMessage -> m ()
+handle'control :: (?gobble :: TVar Gobble, MonadIO m)
+               => Name -> Connection -> ControlMessage -> m ()
 handle'control who conn = liftIO . \case
   Close{}  -> remove'player who >> add'tweet "GOBBLE" (who <> " left the chat.")
   Ping msg -> T.putStrLn (who <> " pinged")
@@ -137,7 +140,8 @@ broadcast msg = liftIO $ readTVarIO ?gobble >>=
 broadcast'val :: (?gobble :: TVar Gobble, A.ToJSON a, MonadIO m) => a -> m ()
 broadcast'val = broadcast . A.encode
 
-tagged'broadcast :: (?gobble :: TVar Gobble, A.ToJSON a, MonadIO m) => Text -> a -> m ()
+tagged'broadcast :: (?gobble :: TVar Gobble, A.ToJSON a, MonadIO m)
+                 => Text -> a -> m ()
 tagged'broadcast tag = broadcast'val . tag'thing tag
 
 broadcast'clear :: (?gobble :: TVar Gobble, MonadIO m) => Text -> m ()
@@ -150,7 +154,7 @@ pattern Wow'wow w <- Text (T.words.T.toUpper.T.pack.B8.toString -> "WOBBLE":w:[]
 pattern Chirp msg <- Text (T.stripPrefix "chirp ".T.pack.B8.toString -> Just msg) _
 
 handle'data :: (?gobble :: TVar Gobble, MonadIO m)
-  => Name -> Connection -> DataMessage -> m ()
+            => Name -> Connection -> DataMessage -> m ()
 handle'data who conn = liftIO . \case
   Words ws -> submit'words who ws
   Delete w -> delete'word who w
@@ -226,7 +230,6 @@ run'gobble = liftIO $ forever $ do
       dt = unsafeCoerce $ gobble'dt now
   status'same <- atomically $ stateTVar ?gobble (update'activity now)
   unless status'same $ tweet'chat >> putStrLn "status changed for someone"
-  tweet'chat
   case phase of
     Ready   -> when peeps $ fresh'round
     Boggled -> if | not peeps -> reset'gobble
@@ -258,6 +261,7 @@ type BoggleAPI =
   :<|> "static" :> Raw
   :<|> "boards" :> Get '[JSON] Int
   :<|> "help" :> "naked" :> Get '[PlainText] String
+--  :<|> "define" :> 
 
 check'boards :: Handler Int
 check'boards = liftIO $ length <$> listDirectory "boards/"

@@ -1,12 +1,22 @@
 - better debugging / *logging*
-- better random images and add images that haven't been added yet
+- better random images and ability to add images
 - add static files to nix
 - handle bad connections better
 - record results
 - flavicon
-- help/about/better chat
+- help/about/better chat/query interface
+- scope visibility of chat messages (eg for help)?
 - use more types and make js/haskell interface better (or at all)
   typed
 - better css/flex-grid?
-- write tests
+- write more tests
 
+- use packed-dawg for moving solver to haskell... this involves
+  figuring out getting custom git repo to nix/cabal
+- definitions
+- better error message when ws connection lost. better handling on
+  client side of lost ws connection
+
+* bigger items
+- multiple games/rooms
+- new languages

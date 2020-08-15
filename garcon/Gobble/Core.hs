@@ -146,5 +146,5 @@ update'activity :: UTCTime -> Gobble -> (Bool, Gobble)
 update'activity now gob = (flag, gob') where
   flag = and $ zipWith (==)
                        (gob'^..players.folded.active)
-                       (gob^..players.folded.active)
+                       (gob ^..players.folded.active)
   gob' = gob & players . mapped %~ update'activity'1 now
