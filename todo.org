@@ -17,6 +17,9 @@
 - better error message when ws connection lost. better handling on
   client side of lost ws connection
 
+
+- block word lookups during rounds!!!!
+
 * bigger items
 - multiple games/rooms
 - new languages

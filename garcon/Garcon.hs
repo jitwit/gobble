@@ -112,10 +112,15 @@ delete'word who word = liftIO $ atomically $ do
   when (gob ^. game'phase & isn't _Scoring) $ writeTVar ?gobble
     (gob & players.ix who.answers.at word .~ Nothing)
 
+game'ongoing :: (?gobble :: TVar Gobble, MonadIO m) => m Bool
+game'ongoing = liftIO $ readTVarIO ?gobble <&> is _Boggled . view game'phase
+
 parse'chirp :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Text -> m ()
 parse'chirp who chirp = case T.words chirp of
   ["?help"] -> help'message
-  ["?def",word] -> add'tweet who chirp >> definition'of'ws word
+  ["?def",word] -> add'tweet who chirp >> game'ongoing >>= \case
+    False -> definition'of'ws word
+    True  -> add'tweet "GOBBLE" $ who <> " has been added to santa's naughty list"
   _ -> add'tweet who chirp
 
 add'tweet :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Text -> m ()
@@ -253,7 +258,7 @@ definition'of'ws = add'tweet "GOBBLE" . maybe "idk" id <=< definition'of
 
 help'message :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 help'message = add'tweet "GOBBLE" helpmsg where
-  helpmsg = "((?def look up word) (?help this message))"
+  helpmsg = "((\"?def\" look up word) (\"?help\" this message))"
 
 definition'of :: (?gobble :: TVar Gobble, MonadIO m) => T.Text -> m (Maybe T.Text)
 definition'of word = liftIO $ readTVarIO ?gobble <&> (^?english.ix (T.toUpper word))
