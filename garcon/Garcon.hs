@@ -242,6 +242,13 @@ run'gobble = liftIO $ forever $ do
     Ready   -> threadDelay $ ready'length
     running -> threadDelay $ run'length
 
+definition'of :: (?gobble :: TVar Gobble, MonadIO m) => T.Text -> m T.Text
+definition'of word = liftIO $ do
+  def <- readTVarIO ?gobble <&> (^?dictionary.ix (T.toUpper word))
+  case def of
+    Nothing -> return "empty search"
+    Just def -> return def
+
 -- "ws backend"
 boggle :: (?gobble :: TVar Gobble, MonadIO m) => PendingConnection -> m ()
 boggle pend = liftIO $ do
@@ -261,7 +268,7 @@ type BoggleAPI =
   :<|> "static" :> Raw
   :<|> "boards" :> Get '[JSON] Int
   :<|> "help" :> "naked" :> Get '[PlainText] String
---  :<|> "define" :> 
+  :<|> "define" :> Capture "word" Text :> Get '[PlainText] Text
 
 check'boards :: Handler Int
 check'boards = liftIO $ length <$> listDirectory "boards/"
@@ -276,11 +283,13 @@ boggle'server = pure GobblePage
   :<|> serveDirectoryWebApp "static"
   :<|> check'boards
   :<|> naked'state
+  :<|> definition'of
 
 launch'boggle :: Int -> IO ()
 launch'boggle port = do
-  putStrLn $ "Starting GOBBLE on port " <> show port
+  putStrLn "Initializing GOBBLE"
   gobble <- newTVarIO =<< start'state
+  putStrLn $ "Starting     GOBBLE on port " <> show port
   let ?gobble = gobble
    in do let back = serve boggle'api boggle'server
          bog'thread <- forkIO $ run port $

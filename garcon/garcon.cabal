@@ -29,6 +29,7 @@ common doggle
     aeson,
     lens-aeson,
     containers,
+    unordered-containers,
     directory,
     base,
     diagrams,

@@ -4,6 +4,7 @@ module Gobble.System where
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Data.Map as M
+import qualified Data.HashMap.Strict as H
 import System.Directory
 import System.Random
 import System.Random.Shuffle
@@ -33,7 +34,13 @@ start'state :: IO Gobble
 start'state = do
   b0 <- new'board
   pinous <- make'pinou'stream
-  return $ Gobble (-1) b0 mempty mempty def (Chat mempty) pinous mempty
+  col <- retrieve'dictionary
+  return $ Gobble (-1) b0 mempty mempty def (Chat mempty) pinous mempty col
+
+retrieve'dictionary :: IO (H.HashMap T.Text T.Text)
+retrieve'dictionary =
+  let parse'line = fmap (T.drop 1) . T.breakOn "\t"
+   in H.fromList . map parse'line . T.lines <$> T.readFile "static/definitions.txt"
 
 -- | nb. we specifically want images in static so they can be
 -- served. this is in contrast to boards which absolutely must not be
