@@ -68,7 +68,6 @@ type Game'Log = (Text,Int,Map Text ([Text],Int,Activity,UTCTime))
 makePrisms ''Phase
 makeLenses ''Board
 makeLenses ''Player
-makeLenses ''Gobbler
 makeLenses ''Gobble
 makeLenses ''Chat'Message
 makeLenses ''Chat

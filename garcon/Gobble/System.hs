@@ -2,7 +2,7 @@
 
 module Gobble.System where
 
-import Control.Monad
+-- import Control.Monad
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Data.Map as M

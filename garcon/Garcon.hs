@@ -16,7 +16,6 @@ import Data.Proxy
 import qualified Data.Map as M
 import Unsafe.Coerce
 
-import GHC.IO.Handle
 import Control.Exception (finally)
 import Control.Monad
 import Control.Monad.State
@@ -119,9 +118,12 @@ game'ongoing = liftIO $ readTVarIO ?gobble <&> is _Boggled . view game'phase
 parse'chirp :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Text -> m ()
 parse'chirp who chirp = case T.words chirp of
   ["?help"] -> help'message
-  ["?def",word] -> add'tweet who chirp >> game'ongoing >>= \case
-    False -> definition'of'ws word
-    True  -> add'tweet "GOBBLE" $ who <> " has been added to santa's naughty list"
+  ["?def",word] -> game'ongoing >>= \case
+    False -> do add'tweet who chirp
+                definition'of'ws word
+    True  -> do add'tweet who $ "?def " <> (T.map (const '*') word)
+                add'tweet "GOBBLE" $
+                  who <> " has been added to santa's naughty list"
   _ -> add'tweet who chirp
 
 add'tweet :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Text -> m ()
@@ -274,14 +276,6 @@ boggle pend = liftIO $ do
     ControlMessage ctl -> handle'control who conn ctl
     DataMessage _ _ _ msg -> handle'data who conn msg
 
-do'gobbler :: (?gobble :: TVar Gobble) => Handler Text
-do'gobbler = liftIO $ do
-  gob <- readTVarIO ?gobble
-  hPutStr (gob^.gobbler.gobbler'in) "cmon\n\n"
-  hFlushAll (gob^.gobbler.gobbler'in)
---  T.pack <$> hGetLine
-  return ""
-
 -- "frontend"
 boggle'api :: Proxy BoggleAPI
 boggle'api = Proxy
@@ -292,7 +286,6 @@ type BoggleAPI =
   :<|> "boards" :> Get '[JSON] Int
   :<|> "help" :> "naked" :> Get '[PlainText] String
   :<|> "define" :> Capture "word" Text :> Get '[PlainText] Text
-  :<|> "random" :> Get '[PlainText] Text
 
 check'boards :: Handler Int
 check'boards = liftIO $ length <$> listDirectory "boards/"
@@ -308,7 +301,6 @@ boggle'server = pure GobblePage
   :<|> check'boards
   :<|> naked'state
   :<|> fmap (maybe "idk" id) . definition'of
-  :<|> do'gobbler
 
 launch'boggle :: Int -> IO ()
 launch'boggle port = do
