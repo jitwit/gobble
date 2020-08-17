@@ -19,10 +19,12 @@ import Gobble.Core
 
 -- gobbler -n 10 -dawg ../gobble/garcon/static/collins.fasl -stdout
 -- readCreateProcess
-sys'gobble :: Int -> IO [T.Text]
-sys'gobble n = do
-  let cmd = proc "gobbler" ["-n",show n,"-dawg","/var/www/gobble/static/collins.fasl","-stdout"]
-  T.lines . T.pack <$> readCreateProcess cmd ""
+sys'gobble :: FilePath -> Int -> IO [T.Text]
+sys'gobble gobbler n = do
+  let cmd = proc gobbler ["-n",show n,"-dawg","/var/www/gobble/static/collins.fasl","-stdout"]
+  res <- readCreateProcess cmd ""
+  print res
+  return $ T.lines $ T.pack res
 
 gobbler :: IO (T.Text, [T.Text])
 gobbler = do

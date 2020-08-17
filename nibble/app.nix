@@ -20,5 +20,5 @@ in {
         environment = { CHEZSCHEMELIBDIRS = "${libdirs}"; };
         serviceConfig =
           { WorkingDirectory = webdir;
-            ExecStart = "${gobbler}/bin/garcon -p 80";
+            ExecStart = "${gobbler}/bin/garcon -p 80 -g ${cobble}/bin/gobbler";
             Restart = "always"; }; }; }; }; }; }
