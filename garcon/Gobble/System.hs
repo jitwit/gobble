@@ -31,8 +31,8 @@ new'board d b = do
 
 refill'pool :: Gobble -> IO Gobble
 refill'pool g = do
-  bs <- sys'gobble (g^.gobbler'path) (100 - (g^.solution'pool & length))
-  return $ g & solution'pool <>~ bs
+  bs <- sys'gobble (g^.gobbler'path) (200 - (g^.solution'pool & length))
+  return $ g & solution'pool<>~bs
 
 start'state :: FilePath -> IO Gobble
 start'state gobbler'path = do
