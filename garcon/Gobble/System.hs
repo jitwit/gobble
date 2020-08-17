@@ -17,14 +17,10 @@ import Data.Default
 import Gobble.Render
 import Gobble.Core
 
--- gobbler -n 10 -dawg ../gobble/garcon/static/collins.fasl -stdout
--- readCreateProcess
 sys'gobble :: FilePath -> Int -> IO [T.Text]
 sys'gobble gobbler n = do
   let cmd = proc gobbler ["-n",show n,"-dawg","/var/www/gobble/static/collins.fasl","-stdout"]
-  res <- readCreateProcess cmd ""
-  print res
-  return $ T.lines $ T.pack res
+  drop 1 . T.lines . T.pack <$> readCreateProcess cmd ""
 
 gobbler :: IO (T.Text, [T.Text])
 gobbler = do
@@ -35,19 +31,20 @@ gobbler = do
   removeFile (board'dir <> board)
   return (T.pack board,T.lines wds)
 
-new'board :: IO Board
-new'board = do
-  (b,as) <- gobbler
+new'board :: H.HashMap T.Text T.Text -> T.Text -> IO Board
+new'board d b = do
+  let b0:bs = T.words b
   t <- getCurrentTime
-  write'board b
-  return $ Board t b $ M.fromList [ (w,T.unwords def) | w:def <- map T.words as ]
+  write'board b0
+  return $ Board t b0 $ M.fromList [ (w,d H.! w) | w <- bs ]
 
-start'state :: IO Gobble
-start'state = do
-  b0 <- new'board
-  pinous <- make'pinou'stream
+start'state :: FilePath -> IO Gobble
+start'state gobbler'path = do
+  b0:boards <- sys'gobble gobbler'path 100
   col <- retrieve'dictionary
-  return $ Gobble (-1) b0 mempty mempty def (Chat mempty) pinous mempty col
+  b0 <- new'board col b0
+  pinous <- make'pinou'stream
+  return $ Gobble (-1) b0 mempty mempty def (Chat mempty) pinous mempty col boards
 
 retrieve'dictionary :: IO (H.HashMap T.Text T.Text)
 retrieve'dictionary =

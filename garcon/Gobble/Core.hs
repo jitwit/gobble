@@ -61,6 +61,7 @@ data Gobble = Gobble
   , _pinou'stream :: [FilePath]
   , _gobble'likes :: Map Name Text
   , _english :: HashMap Text Text
+  , _solution'pool :: [Text]
   } -- deriving (Show)
 
 type Game'Log = (Text,Int,Map Text ([Text],Int,Activity,UTCTime))

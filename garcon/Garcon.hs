@@ -20,7 +20,6 @@ import Control.Exception (finally)
 import Control.Monad
 import Control.Monad.State
 import System.Environment
-import System.Directory
 import Data.Time.Clock
 
 import Control.Concurrent
@@ -216,7 +215,8 @@ reset'gobble = liftIO $ do
 
 fresh'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 fresh'round = liftIO $ do
-  b <- new'board
+  gob <- readTVarIO ?gobble
+  b <- new'board (gob^.english) (gob^.solution'pool._head)
   gob <- (board .~ b) . (game'phase .~ Boggled) .
          (current'round %~ ((`mod`5).succ)) .
          (pinou'stream %~ tail) .
@@ -288,8 +288,8 @@ type BoggleAPI =
   :<|> "define" :> Capture "word" Text :> Get '[PlainText] Text
   :<|> "plz" :> Capture "n" Int :> Get '[JSON] [Text]
 
-check'boards :: Handler Int
-check'boards = liftIO $ length <$> listDirectory "boards/"
+check'boards :: (?gobble :: TVar Gobble, MonadIO m) => m Int
+check'boards = liftIO $ (length . view solution'pool) <$> readTVarIO ?gobble
 
 naked'state :: (?gobble :: TVar Gobble) => Handler String 
 naked'state = liftIO $ do
@@ -307,7 +307,7 @@ boggle'server gobbler'path = pure GobblePage
 launch'boggle :: Int -> FilePath -> IO ()
 launch'boggle port gobbler'path = do
   putStrLn "Initializing GOBBLE"
-  gobble <- newTVarIO =<< start'state
+  gobble <- newTVarIO =<< start'state gobbler'path
   putStrLn $ "Starting     GOBBLE on port " <> show port
   let ?gobble = gobble
    in do let back = serve boggle'api (boggle'server gobbler'path)
