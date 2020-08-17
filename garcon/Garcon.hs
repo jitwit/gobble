@@ -217,7 +217,7 @@ fresh'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 fresh'round = liftIO $ do
   gob <- readTVarIO ?gobble
   b <- new'board (gob^.english) (gob^.solution'pool._head)
-  gob <- (board .~ b) . (game'phase .~ Boggled) .
+  gob <- (board .~ b) . (solution'pool %~ tail) . (game'phase .~ Boggled) .
          (current'round %~ ((`mod`5).succ)) .
          (pinou'stream %~ tail) .
          (gobble'likes .~ mempty) .
@@ -245,7 +245,7 @@ run'gobble = liftIO $ forever $ do
   status'same <- atomically $ stateTVar ?gobble (update'activity now)
   unless status'same $ tweet'chat >> putStrLn "status changed for someone"
   case phase of
-    Ready   -> when peeps $ fresh'round
+    Ready   -> do when peeps $ fresh'round
     Boggled -> if | not peeps -> reset'gobble
                   | dt > (10^12)*round'length -> score'round
                   | otherwise -> mempty

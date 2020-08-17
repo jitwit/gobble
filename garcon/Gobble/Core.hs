@@ -62,6 +62,7 @@ data Gobble = Gobble
   , _gobble'likes :: Map Name Text
   , _english :: HashMap Text Text
   , _solution'pool :: [Text]
+  , _gobbler'path :: FilePath
   } -- deriving (Show)
 
 type Game'Log = (Text,Int,Map Text ([Text],Int,Activity,UTCTime))
