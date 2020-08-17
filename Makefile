@@ -19,6 +19,7 @@ update-static :
 	nixops scp --to gobble-net garcon/static/gobble.js $(static-dir)
 	nixops scp --to gobble-net garcon/static/jquery-3.4.1.slim.js $(static-dir)
 	nixops scp --to gobble-net garcon/static/definitions.txt $(static-dir)
+	nixops scp --to gobble-net garcon/static/collins.fasl $(static-dir)
 
 update-images :
 	nixops scp --to gobble-net garcon/images/ $(static-dir)

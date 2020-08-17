@@ -8,6 +8,7 @@ import qualified Data.Text.IO as T
 import qualified Data.Map as M
 import qualified Data.HashMap.Strict as H
 import System.Directory
+import System.Process
 import System.Random
 import System.Random.Shuffle
 import Data.Time.Clock
@@ -15,6 +16,13 @@ import Data.Default
 
 import Gobble.Render
 import Gobble.Core
+
+-- gobbler -n 10 -dawg ../gobble/garcon/static/collins.fasl -stdout
+-- readCreateProcess
+sys'gobble :: Int -> IO [T.Text]
+sys'gobble n = do
+  let cmd = proc "gobbler" ["-n",show n,"-dawg","/var/www/gobble/static/collins.fasl","-stdout"]
+  T.lines . T.pack <$> readCreateProcess cmd ""
 
 gobbler :: IO (T.Text, [T.Text])
 gobbler = do

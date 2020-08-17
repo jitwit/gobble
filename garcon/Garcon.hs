@@ -286,6 +286,7 @@ type BoggleAPI =
   :<|> "boards" :> Get '[JSON] Int
   :<|> "help" :> "naked" :> Get '[PlainText] String
   :<|> "define" :> Capture "word" Text :> Get '[PlainText] Text
+  :<|> "plz" :> Capture "n" Int :> Get '[JSON] [Text]
 
 check'boards :: Handler Int
 check'boards = liftIO $ length <$> listDirectory "boards/"
@@ -301,6 +302,7 @@ boggle'server = pure GobblePage
   :<|> check'boards
   :<|> naked'state
   :<|> fmap (maybe "idk" id) . definition'of
+  :<|> liftIO . sys'gobble
 
 launch'boggle :: Int -> IO ()
 launch'boggle port = do
@@ -315,6 +317,6 @@ launch'boggle port = do
          putStrLn $ "GOBBLE died"
 
 main :: IO ()
-main = map read <$> getArgs >>= \case
+main = getArgs >>= \case
   [] -> launch'boggle 8011
-  x:_ -> launch'boggle x
+  ["-p",x] -> launch'boggle (read x)

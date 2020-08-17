@@ -11,18 +11,7 @@ in {
   networking.firewall = { allowedTCPPorts = [ 22 80 ]; enable = false; };
   environment.systemPackages = flatten [ gobbler chez chezlibs ];
   systemd = {
-    timers.cobble = {
-      wantedBy = [ "timers.target" ];
-      partOf = [ "cobble.service" ];
-      timerConfig.OnCalendar = "daily"; };
     services = {
-       cobble = {
-         description = "make board for gobble";
-         wantedBy = [ "multi-user.target" ];
-         environment = { CHEZSCHEMELIBDIRS = "${libdirs}"; };
-         serviceConfig = {
-           WorkingDirectory = "${cobble}";
-           ExecStart = "${cobble}/bin/gobbler -n 1000 -d ${webdir}/boards"; }; };
       gobble = {
         description = "boggle-bitch.net";
         wantedBy = [ "multi-user.target" ];
@@ -31,5 +20,5 @@ in {
         environment = { CHEZSCHEMELIBDIRS = "${libdirs}"; };
         serviceConfig =
           { WorkingDirectory = webdir;
-            ExecStart = "${gobbler}/bin/garcon -p 80 -g ${cobble}";
+            ExecStart = "${gobbler}/bin/garcon -p 80";
             Restart = "always"; }; }; }; }; }; }

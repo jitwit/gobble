@@ -24,7 +24,8 @@ stdenv.mkDerivation rec {
     mkdir -p $out/bin/
     cp gobble.so $out/lib/csv9.5-site/
     cp gobbler.so $out/bin/
-    echo "#!${chez}/bin/scheme --libdirs ${libpath} -q --program $out/bin/gobbler.so $@" >> $out/bin/gobbler
+    echo "${chez}/bin/scheme --libdirs ${libpath} -q --program $out/bin/gobbler.so \$@" >> $out/bin/gobbler
+    
     chmod 755 $out/bin/gobbler
   '';
 
