@@ -9,7 +9,7 @@
 (define b '(17 126 255))
 
 (define (letter l)
-  (text (string l) '(bold . "APL385 Unicode") 20))
+  (text (string l) '(bold . "APL385 Unicode") 25))
 
 (define flav.ico
   (cc-superimpose (colorize (filled-rectangle 32 32) y)
