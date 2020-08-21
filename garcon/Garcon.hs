@@ -288,7 +288,7 @@ type BoggleAPI =
   :<|> "boards" :> Get '[JSON] Int
   :<|> "help" :> "naked" :> Get '[PlainText] String
   :<|> "define" :> Capture "word" Text :> Get '[PlainText] Text
-  :<|> "plz" :> Capture "n" Int :> Get '[JSON] [Text]
+  :<|> "cobble" :> Capture "n" Int :> Get '[JSON] [Text]
 
 check'boards :: (?gobble :: TVar Gobble, MonadIO m) => m Int
 check'boards = liftIO $ (length . view solution'pool) <$> readTVarIO ?gobble

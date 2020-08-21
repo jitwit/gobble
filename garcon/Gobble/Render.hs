@@ -156,6 +156,7 @@ instance ToMarkup GobblePage where
     H.head $ do
       title "gobble"
       link ! H.rel "stylesheet" ! H.href "static/gobble.css?11"
+      link ! H.rel "icon" ! H.href "static/icon.png"
       script ! H.src "static/jquery-3.4.1.slim.js" $ ""
       script ! H.src "static/gobble.js?11" $ ""
     H.body $ do
