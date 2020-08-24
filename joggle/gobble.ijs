@@ -19,6 +19,26 @@ boggle =: 3 : 0
   (/: #&>) /:~ ~. ws
 )
 
+NB. shape x, length y
+random_walk =: 4 : 0
+  assert. (1 <: y) *. y <: */ x
+  p =. ? # g =. graph_of i. x
+  while. y > #p do.
+    v =. p -.~ g {::~ {. p
+    if. 0=#v do. p =. ? # g
+    else. p =. p,~({~ ?@#)v end.
+  end. p
+)
+
+NB. x is shape, y is word
+board =: 4 : 0
+  s =. (*/x) # ' '
+  pth =. x random_walk #y
+  out =. (i.$s) -. pth
+  ltr =. (#out) {. shake dice4
+  x $ (y,ltr) (pth,out)}s
+)
+
 test =: 3 : 0
 assert. 24 = +/ score & > boggle 4 4 $ 'DEMODEMODEMODEMO'
 assert. 1254 = # boggle 4 4 $ 'PSLMEAIARNTRGESO'
