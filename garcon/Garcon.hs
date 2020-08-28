@@ -38,6 +38,7 @@ import qualified Data.Aeson as A
 import Gobble.Core
 import Gobble.System
 import Gobble.Render
+import Gobble.Dawggle
 
 fetch'board :: (?gobble :: TVar Gobble, MonadIO m) => m Board
 fetch'board = liftIO $ view board <$> readTVarIO ?gobble
@@ -268,6 +269,11 @@ help'message = add'tweet "GOBBLE" helpmsg where
 definition'of :: (?gobble :: TVar Gobble, MonadIO m) => T.Text -> m (Maybe T.Text)
 definition'of word = liftIO $ readTVarIO ?gobble <&> (^?english.ix (T.toUpper word))
 
+http'boggle :: (?gobble :: TVar Gobble, MonadIO m) => T.Text -> m [T.Text]
+http'boggle board = liftIO $ do
+  dict <- view gobble'dict <$> readTVarIO ?gobble
+  return $ T.pack <$> boggle'search dict (T.unpack board)
+
 -- "ws backend"
 boggle :: (?gobble :: TVar Gobble, MonadIO m) => PendingConnection -> m ()
 boggle pend = liftIO $ do
@@ -289,6 +295,7 @@ type BoggleAPI =
   :<|> "help" :> "naked" :> Get '[PlainText] String
   :<|> "define" :> Capture "word" Text :> Get '[PlainText] Text
   :<|> "cobble" :> Capture "n" Int :> Get '[JSON] [Text]
+  :<|> "dawggle" :> Capture "board" Text :> Get '[JSON] [Text]
 
 check'boards :: (?gobble :: TVar Gobble, MonadIO m) => m Int
 check'boards = liftIO $ (length . view solution'pool) <$> readTVarIO ?gobble
@@ -305,6 +312,7 @@ boggle'server gobbler'path = pure GobblePage
   :<|> naked'state
   :<|> fmap (maybe "idk" id) . definition'of
   :<|> liftIO . sys'gobble gobbler'path
+  :<|> http'boggle
 
 launch'boggle :: Int -> FilePath -> IO ()
 launch'boggle port gobbler'path = do
