@@ -39,15 +39,20 @@ common doggle
     hashable,
     random,
     random-shuffle,
-    utf8-string
-  ghc-options:  -O2 -threaded -Wunused-imports
+    utf8-string,
+    binary,
+    deepseq,
+    vector,
+    vector-binary-instances
+  ghc-options:  -O2 -threaded
   default-language: Haskell2010
 
 -- the server
 executable garcon
   import: doggle
   main-is: Garcon.hs
-  exposed-modules: Gobble.Core, Gobble.Render, Gobble.System
+  exposed-modules:
+    Gobble.Core, Gobble.Dawg, Gobble.Render, Gobble.System, Gobble.Dawggle
 
 -- the tests
 test-suite toggle

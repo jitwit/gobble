@@ -9,11 +9,12 @@ import qualified Data.Map as M
 import qualified Data.HashMap.Strict as H
 import System.Directory
 import System.Process
--- import System.Random
 import System.Random.Shuffle
 import Data.Time.Clock
 import Data.Default
 
+import Gobble.Dawggle
+import qualified Gobble.Dawg as D
 import Gobble.Render
 import Gobble.Core
 
@@ -37,6 +38,7 @@ refill'pool g = do
 start'state :: FilePath -> IO Gobble
 start'state gobbler'path = do
   b0:boards <- sys'gobble gobbler'path 200
+  d <- fetch'dict
   col <- retrieve'dictionary
   b0 <- new'board col b0
   pinous <- make'pinou'stream
@@ -51,6 +53,7 @@ start'state gobbler'path = do
                   col
                   boards
                   gobbler'path
+                  d
 
 retrieve'dictionary :: IO (H.HashMap T.Text T.Text)
 retrieve'dictionary =

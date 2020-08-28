@@ -15,6 +15,8 @@ import Data.Text (Text)
 import Control.Lens
 import Control.Concurrent
 
+import qualified Gobble.Dawg as D
+
 todo :: todo
 todo = error "todo"
 
@@ -63,6 +65,7 @@ data Gobble = Gobble
   , _english :: HashMap Text Text
   , _solution'pool :: [Text]
   , _gobbler'path :: FilePath
+  , _gobble'dict :: D.Node
   } -- deriving (Show)
 
 type Game'Log = (Text,Int,Map Text ([Text],Int,Activity,UTCTime))

@@ -3,7 +3,8 @@
 , filepath, lens, lens-aeson, mtl, process, random, random-shuffle, servant
 , servant-blaze, servant-client, servant-server, stdenv, stm, text, time, unix
 , wai, wai-websockets, warp, websockets, hashable, utf8-string, data-default
-, hspec, unordered-containers
+, hspec, unordered-containers, binary, deepseq, vector, vector-binary-instances
+
 }:
 mkDerivation {
   pname = "gobble";
@@ -17,6 +18,7 @@ mkDerivation {
     process random random-shuffle servant servant-blaze servant-client
     servant-server stm text time unix wai wai-websockets warp
     websockets hashable utf8-string data-default hspec unordered-containers
+    binary deepseq vector vector-binary-instances
   ];
   license = "unknown";
   hydraPlatforms = stdenv.lib.platforms.none;
