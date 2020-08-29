@@ -245,6 +245,8 @@ run'gobble = liftIO $ forever $ do
       dt = unsafeCoerce $ gobble'dt now
   status'same <- atomically $ stateTVar ?gobble (update'activity now)
   unless status'same $ tweet'chat >> putStrLn "status changed for someone"
+  when (gob^.solution'pool&null) $
+    atomically . writeTVar ?gobble =<< refill'pool =<< readTVarIO ?gobble
   case phase of
     Ready   -> when peeps fresh'round
     Boggled -> if | not peeps -> reset'gobble

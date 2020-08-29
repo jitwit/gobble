@@ -32,7 +32,7 @@ new'board d h b = do
 
 refill'pool :: Gobble -> IO Gobble
 refill'pool g = do
-  bs <- sys'gobble (g^.gobbler'path) (200 - (g^.solution'pool & length))
+  bs <- retrieve'boards  
   return $ g & solution'pool <>~ bs
 
 start'state :: FilePath -> IO Gobble
@@ -66,10 +66,6 @@ retrieve'dictionary =
   let parse'line = fmap (T.drop 1) . T.breakOn "\t"
    in H.fromList . map parse'line . T.lines <$> T.readFile "static/definitions.txt"
 
--- | nb. we specifically want images in static so they can be
--- served. this is in contrast to boards which absolutely must not be
--- visible, not that anyone in their right mind would bother combing
--- through them to gain an edge...
 make'pinou'stream :: IO [FilePath]
 make'pinou'stream =
   let img'dir = "static/images/"
