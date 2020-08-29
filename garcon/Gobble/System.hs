@@ -23,24 +23,24 @@ sys'gobble gobbler n = do
   let cmd = proc gobbler ["-n",show n,"-dawg","/var/www/gobble/static/collins.fasl","-stdout"]
   drop 1 . T.lines . T.pack <$> readCreateProcess cmd ""
 
-new'board :: H.HashMap T.Text T.Text -> T.Text -> IO Board
-new'board d b = do
-  let b0:bs = T.words b
+new'board :: D.Node -> H.HashMap T.Text T.Text -> T.Text -> IO Board
+new'board d h b = do
+  let bs = boggle'search d $ T.unpack b
   t <- getCurrentTime
-  write'board b0
-  return $ Board t b0 $ M.fromList [ (w,d H.! w) | w <- bs ]
+  write'board b
+  return $ Board t b $ M.fromList [ (w,h H.! w) | w <- T.pack <$> bs ]
 
 refill'pool :: Gobble -> IO Gobble
 refill'pool g = do
   bs <- sys'gobble (g^.gobbler'path) (200 - (g^.solution'pool & length))
-  return $ g & solution'pool<>~bs
+  return $ g & solution'pool <>~ bs
 
 start'state :: FilePath -> IO Gobble
 start'state gobbler'path = do
-  b0:boards <- sys'gobble gobbler'path 200
+  b0:bs <- retrieve'boards
   d <- fetch'dict
   col <- retrieve'dictionary
-  b0 <- new'board col b0
+  b0 <- new'board d col b0
   pinous <- make'pinou'stream
   return $ Gobble (-1)
                   b0
@@ -51,9 +51,15 @@ start'state gobbler'path = do
                   pinous
                   mempty
                   col
-                  boards
+                  bs
                   gobbler'path
                   d
+
+retrieve'boards :: IO [T.Text]
+retrieve'boards = do
+  (as,bs) <- splitAt 1000 . T.words  <$> T.readFile "static/boards.txt"
+  T.writeFile "static/boards.txt" $ T.unwords bs
+  return as
 
 retrieve'dictionary :: IO (H.HashMap T.Text T.Text)
 retrieve'dictionary =

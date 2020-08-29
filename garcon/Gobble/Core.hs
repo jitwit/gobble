@@ -65,8 +65,8 @@ data Gobble = Gobble
   , _english :: HashMap Text Text
   , _solution'pool :: [Text]
   , _gobbler'path :: FilePath
-  , _gobble'dict :: D.Node
-  } -- deriving (Show)
+  , _gobble'dawg :: D.Node
+  }
 
 type Game'Log = (Text,Int,Map Text ([Text],Int,Activity,UTCTime))
 
@@ -81,7 +81,8 @@ instance Default Phase where
   def = Ready
 
 score'word :: Text -> Int
-score'word = ([0,0,0,1,1,2,3,5,11] !!) . min 8 . T.length
+score'word = ((0:0:fibs)!!) . min 9 . T.length where
+  fibs = 0:zipWith (+) fibs (1:fibs)
 
 round'length :: Integer
 round'length = 90

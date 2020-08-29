@@ -1,11 +1,12 @@
 {-# language LambdaCase #-}
 
-module Gobble.Dawggle ( boggle'search, fetch'dict ) where
+module Gobble.Dawggle ( boggle'search, fetch'dict, roll55 ) where
 
 import Gobble.Dawg
 import System.Directory
 import qualified Data.Vector.Unboxed as U
 import qualified Data.Vector as V
+import System.Random.Shuffle
 import Control.Monad
 import Data.List
 import Data.Tree
@@ -61,4 +62,13 @@ fetch'dict = doesFileExist dawggle >>= \case
          readFile "/home/jo/code/gobble/cobble/share/collins.txt"
        fetch'dict
 
+roll55 :: IO String
+roll55 = map head <$> (shuffleM =<< traverse shuffleM dice55)
 
+dice55 :: [String]
+dice55 =
+  ["QBZJXK","OOOTTU","OVWRGR","AAAFSR","AUMEEG"
+   ,"HHLRDO","NDHTHO","LHNROD","AFAISR","YIFASR"
+   ,"TELPCI","SSNSEU","RIYPHR","DORDLN","CCWNST"
+   ,"TTOTEM","STCIEP","EANDNN","MNNEAG","UOTOWN"
+   ,"AEAEEE","YIFPSR","EEEEMA","ITITIE","EITLIC"]

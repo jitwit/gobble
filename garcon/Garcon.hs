@@ -217,7 +217,7 @@ reset'gobble = liftIO $ do
 fresh'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 fresh'round = liftIO $ do
   gob <- readTVarIO ?gobble
-  b <- new'board (gob^.english) (gob^.solution'pool._head)
+  b <- new'board (gob^.gobble'dawg) (gob^.english) (gob^.solution'pool._head)
   gob <- (board .~ b) . (solution'pool %~ tail) . (game'phase .~ Boggled) .
          (current'round %~ ((`mod`5).succ)) .
          (pinou'stream %~ tail) .
@@ -245,8 +245,6 @@ run'gobble = liftIO $ forever $ do
       dt = unsafeCoerce $ gobble'dt now
   status'same <- atomically $ stateTVar ?gobble (update'activity now)
   unless status'same $ tweet'chat >> putStrLn "status changed for someone"
-  when (gob^.solution'pool&null) $
-    atomically . writeTVar ?gobble =<< refill'pool =<< readTVarIO ?gobble
   case phase of
     Ready   -> when peeps fresh'round
     Boggled -> if | not peeps -> reset'gobble
@@ -271,7 +269,7 @@ definition'of word = liftIO $ readTVarIO ?gobble <&> (^?english.ix (T.toUpper wo
 
 http'boggle :: (?gobble :: TVar Gobble, MonadIO m) => T.Text -> m [T.Text]
 http'boggle board = liftIO $ do
-  dict <- view gobble'dict <$> readTVarIO ?gobble
+  dict <- view gobble'dawg <$> readTVarIO ?gobble
   return $ T.pack <$> boggle'search dict (T.unpack board)
 
 -- "ws backend"
