@@ -289,29 +289,35 @@ type BoggleAPI =
   :<|> "static" :> Raw
   :<|> "help" :> "naked" :> Get '[PlainText] String
   :<|> "define" :> Capture "word" Text :> Get '[PlainText] Text
-  :<|> "cobble" :> Capture "n" Int :> Get '[JSON] [Text]
   :<|> "dawggle" :> Capture "board" Text :> Get '[JSON] [Text]
+  :<|> "pinous" :> Get '[PlainText] Text
 
 naked'state :: (?gobble :: TVar Gobble) => Handler String 
 naked'state = liftIO $ do
   gob <- readTVarIO ?gobble
   return $ unlines [gob & game'log'view & show,"",gob ^. chat'room & show]
 
-boggle'server :: (?gobble :: TVar Gobble) => FilePath -> Server BoggleAPI
-boggle'server gobbler'path = pure GobblePage
+boggle'server :: (?gobble :: TVar Gobble) => Server BoggleAPI
+boggle'server = pure GobblePage
   :<|> serveDirectoryWebApp "static"
   :<|> naked'state
   :<|> fmap (maybe "idk" id) . definition'of
-  :<|> liftIO . sys'gobble gobbler'path
   :<|> http'boggle
+  :<|> refresh'pinous
 
-launch'boggle :: Int -> FilePath -> IO ()
-launch'boggle port gobbler'path = do
+refresh'pinous :: (?gobble :: TVar Gobble, MonadIO m) => m T.Text
+refresh'pinous = liftIO $ do
+  ps <- make'pinou'stream
+  atomically $ modifyTVar' ?gobble $ pinou'stream .~ ps
+  return "OK"
+
+launch'boggle :: Int -> IO ()
+launch'boggle port = do
   putStrLn "Initializing GOBBLE"
-  gobble <- newTVarIO =<< start'state gobbler'path
+  gobble <- newTVarIO =<< start'state
   putStrLn $ "Starting     GOBBLE on port " <> show port
   let ?gobble = gobble
-   in do let back = serve boggle'api (boggle'server gobbler'path)
+   in do let back = serve boggle'api boggle'server
          bog'thread <- forkIO $ run port $
            websocketsOr defaultConnectionOptions boggle back
          run'gobble `E.finally` killThread bog'thread
@@ -319,6 +325,6 @@ launch'boggle port gobbler'path = do
 
 main :: IO ()
 main = getArgs >>= \case
-  [] -> launch'boggle 8011 "gobbler"
-  ["-p",x] -> launch'boggle (read x) "gobbler"
-  ["-p",x,"-g",g] -> launch'boggle (read x) g
+  [] -> launch'boggle 8011
+  ["-p",x] -> launch'boggle (read x)
+  "-p":x:_ -> launch'boggle (read x)

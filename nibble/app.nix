@@ -15,10 +15,9 @@ in {
       gobble = {
         description = "boggle-bitch.net";
         wantedBy = [ "multi-user.target" ];
-        after = [ "network.target" "cobble.service" ];
-        wants = [ "cobble.service" ];
+        after = [ "network.target" ];
         environment = { CHEZSCHEMELIBDIRS = "${libdirs}"; };
         serviceConfig =
           { WorkingDirectory = webdir;
-            ExecStart = "${gobbler}/bin/garcon -p 80 -g ${cobble}/bin/gobbler";
+            ExecStart = "${gobbler}/bin/garcon -p 80";
             Restart = "always"; }; }; }; }; }; }

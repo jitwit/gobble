@@ -66,7 +66,6 @@ data Gobble = Gobble
   , _pinou'stream :: [FilePath]
   , _gobble'likes :: Map Name Text
   , _english :: HashMap Text Text
-  , _gobbler'path :: FilePath
   , _gobble'dawg :: D.Node
   , _gobble'big'words :: V.Vector String
   }

@@ -19,11 +19,6 @@ import qualified Gobble.Dawg as D
 import Gobble.Render
 import Gobble.Core
 
-sys'gobble :: FilePath -> Int -> IO [T.Text]
-sys'gobble gobbler n = do
-  let cmd = proc gobbler ["-n",show n,"-dawg","/var/www/gobble/static/collins.fasl","-stdout"]
-  drop 1 . T.lines . T.pack <$> readCreateProcess cmd ""
-
 new'board :: D.Node -> H.HashMap T.Text T.Text -> V.Vector String -> IO Board
 new'board d h w = do
   b <- T.pack . snd <$> roll w
@@ -32,8 +27,8 @@ new'board d h w = do
   write'board b
   return $ Board t b $ M.fromList [ (w,h H.! w) | w <- T.pack <$> bs ]
 
-start'state :: FilePath -> IO Gobble
-start'state gobbler'path = do
+start'state :: IO Gobble
+start'state = do
   (d,ws) <- fetch'dict
   col <- retrieve'dictionary
   b0 <- new'board d col ws
@@ -47,15 +42,8 @@ start'state gobbler'path = do
                   pinous
                   mempty
                   col
-                  gobbler'path
                   d
                   ws
-
-retrieve'boards :: IO [T.Text]
-retrieve'boards = do
-  (as,bs) <- splitAt 1000 . T.words  <$> T.readFile "static/boards.txt"
-  T.writeFile "static/boards.txt" $ T.unwords bs
-  return as
 
 retrieve'dictionary :: IO (H.HashMap T.Text T.Text)
 retrieve'dictionary =
