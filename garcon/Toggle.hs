@@ -5,7 +5,9 @@ module Main where
 import Gobble.Core
 import Gobble.Dawggle
 import Control.Lens
+import Control.Monad
 import qualified Data.Map as M
+import qualified Data.Text as T
 import Test.Hspec
 import Data.Time
 
@@ -21,6 +23,8 @@ infixr 0 ==>
 
 main = do
   now <- getCurrentTime
+  (trie,big'words) <- fetch'dict
+  sols <- replicateM 100 (roll big'words)
   let fanny = mk'player (M.fromList [("cat",1),("blaha",1),("maples",1)]) now
       alexander = mk'player (M.fromList [("mouse",1),("haha",1),("blaha",1)]) now
       player'list = M.fromList [("fanny",fanny),("alexander",alexander)]
@@ -55,6 +59,15 @@ main = do
       it "total score alexander" $ do
         player'scores'1^?!ix "alexander".total'score ==> 11
 
+    describe "removing qu" $ do
+      it "removes qu" $ do
+        (del'qu "QUASTHOFF") ==> "QASTHOFF"
+      it "keeps no qu" $ do
+        (del'qu "QATAR") ==> "QATAR"
+      it "empty" $ do
+        (del'qu "") ==> ""
+      it "signle" $ do
+        (del'qu "Q") ==> "Q"
 
     describe "removing qu" $ do
       it "removes qu" $ do
@@ -65,4 +78,9 @@ main = do
         (del'qu "") ==> ""
       it "signle" $ do
         (del'qu "Q") ==> "Q"
+
+    describe "word found in derived generated board" $
+      forM_ sols $ \(wd,bd) -> do
+        it (unwords [wd,"in",bd]) $ do
+          (wd `elem` boggle'search trie bd)==> True
 

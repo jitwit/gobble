@@ -26,7 +26,7 @@ sys'gobble gobbler n = do
 
 new'board :: D.Node -> H.HashMap T.Text T.Text -> V.Vector String -> IO Board
 new'board d h w = do
-  b <- T.pack <$> roll w
+  b <- T.pack . snd <$> roll w
   let bs = boggle'search d $ T.unpack b
   t <- getCurrentTime
   write'board b

@@ -95,15 +95,17 @@ del'qu s = s
 len'without'qu :: String -> Int
 len'without'qu = length . del'qu
 
-roll :: V.Vector String -> IO String
+roll :: V.Vector String -> IO (String,String)
 roll words = do
   j <- randomRIO (0,pred $ V.length words)
-  let s = del'qu $ words V.! j
+  let s' = words V.! j
+  let s = del'qu s'
   let n = length s
   p <- random'path n
   let js = [0..15] \\ p
-  xs <- map (toEnum . (+65)) <$> replicateM (16-n) (randomRIO (0,26))
-  return $ U.toList $ (U.replicate 16 'z') U.// zip (p <> js) (del'qu s <> xs)
+  xs <- map (toEnum . (+65)) <$> replicateM (16-n) (randomRIO (0,25))
+  let b = U.toList $ (U.replicate 16 'z') U.// zip (p <> js) (del'qu s <> xs)
+  return (s',b)
 
 pp'board :: String -> IO ()
 pp'board s = case splitAt 4 s of
