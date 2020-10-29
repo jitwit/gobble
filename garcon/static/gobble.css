@@ -18,12 +18,14 @@ h1 {
 
 .occurrence .happening {
     display: none;
-    padding: 3px;
+    padding: 2px;
     text-align: center;
+    font-weight: bold;
     border-radius: 6px;
     position: absolute;
     background-color: #F1D0F3;
     color: #1234AF;
+    cursor: none;
 }
 
 .occurrence:hover .happening {
