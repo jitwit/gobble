@@ -76,10 +76,10 @@ instance ToMarkup Chat'View where
           [ toMarkup $ Player'Status who (plr ^. active)
           | (who,plr) <- gob^.players.to M.assocs ]
     gob & iforMOf_ (chat'room.messages.ifolded) $ \t (Chat'Message tweet author) ->
-      tr $ do td $ H.text author
-              td $ H.div ! H.class_ "occurrence" $ do
-                H.text tweet
+      tr $ do td $ H.div ! H.class_ "occurrence" $ do
                 H.span ! H.class_ "happening" $ H.string $ fmt t
+                H.text author
+              td $ H.text tweet
       where loc = defaultTimeLocale
             zon = hoursToTimeZone (-4)
             fmt = formatTime loc " %H:%M:%S" . utcToZonedTime zon
@@ -155,10 +155,10 @@ instance ToMarkup GobblePage where
   toMarkup _ = html $ do
     H.head $ do
       title "gobble"
-      link ! H.rel "stylesheet" ! H.href "static/gobble.css?12"
+      link ! H.rel "stylesheet" ! H.href "static/gobble.css?13"
       link ! H.rel "icon" ! H.href "static/icon.png"
       script ! H.src "static/jquery-3.4.1.slim.js" $ ""
-      script ! H.src "static/gobble.js?12" $ ""
+      script ! H.src "static/gobble.js?13" $ ""
     H.body $ do
       H.h1 "GOBBLE"
       H.div ! H.class_ "row" $ do

@@ -13,20 +13,21 @@ h1 {
 
 .occurrence {
     position: relative;
-    display: inline-block;
+    display: block;
 }
 
 .occurrence .happening {
-    visibility: hidden;
-    width: 80px;
+    display: none;
+    padding: 3px;
     text-align: center;
     border-radius: 6px;
-    padding: 5px 0;
-    position: relative;
+    position: absolute;
+    background-color: #F1D0F3;
+    color: #1234AF;
 }
 
 .occurrence:hover .happening {
-    visibility: visible;
+    display: block;
 }
 
 .row:after {

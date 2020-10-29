@@ -20,7 +20,7 @@ update-boards :
 
 update-static :
 #	nixops scp --to gobble-net garcon/static/icon.png $(static-dir)
-	nixops scp --to gobble-net garcon/static/boards.txt $(static-dir)
+#	nixops scp --to gobble-net garcon/static/boards.txt $(static-dir)
 #	nixops scp --to gobble-net garcon/static/dawggle.dawg $(static-dir)
 	nixops scp --to gobble-net garcon/static/gobble.css $(static-dir)
 	nixops scp --to gobble-net garcon/static/gobble.js $(static-dir)
