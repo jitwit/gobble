@@ -8,6 +8,7 @@ import Data.Time.Clock
 import Network.WebSockets
 import qualified Data.Map as M
 import Data.Map (Map)
+import qualified Data.Vector as V
 import Data.HashMap.Strict (HashMap)
 import qualified Data.Text as T
 import Unsafe.Coerce
@@ -65,9 +66,9 @@ data Gobble = Gobble
   , _pinou'stream :: [FilePath]
   , _gobble'likes :: Map Name Text
   , _english :: HashMap Text Text
-  , _solution'pool :: [Text]
   , _gobbler'path :: FilePath
   , _gobble'dawg :: D.Node
+  , _gobble'big'words :: V.Vector String
   }
 
 type Game'Log = (Text,Int,Map Text ([Text],Int,Status,UTCTime))

@@ -216,8 +216,8 @@ reset'gobble = liftIO $ do
 fresh'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 fresh'round = liftIO $ do
   gob <- readTVarIO ?gobble
-  b <- new'board (gob^.gobble'dawg) (gob^.english) (gob^.solution'pool._head)
-  gob <- (board .~ b) . (solution'pool %~ tail) . (game'phase .~ Boggled) .
+  b <- new'board (gob^.gobble'dawg) (gob^.english) (gob^.gobble'big'words)
+  gob <- (board .~ b) . (game'phase .~ Boggled) .
          (current'round %~ ((`mod`5).succ)) .
          (pinou'stream %~ tail) .
          (gobble'likes .~ mempty) .
@@ -244,8 +244,6 @@ run'gobble = liftIO $ forever $ do
       dt = unsafeCoerce $ gobble'dt now
   status'same <- atomically $ stateTVar ?gobble (update'activity now)
   unless status'same $ tweet'chat >> putStrLn "status changed for someone"
-  when (gob^.solution'pool&null) $
-    atomically . writeTVar ?gobble =<< refill'pool =<< readTVarIO ?gobble
   case phase of
     Ready   -> when peeps fresh'round
     Boggled -> if | not peeps -> reset'gobble
@@ -289,14 +287,10 @@ boggle'api = Proxy
 type BoggleAPI =
        Get '[HTML] GobblePage
   :<|> "static" :> Raw
-  :<|> "boards" :> Get '[JSON] Int
   :<|> "help" :> "naked" :> Get '[PlainText] String
   :<|> "define" :> Capture "word" Text :> Get '[PlainText] Text
   :<|> "cobble" :> Capture "n" Int :> Get '[JSON] [Text]
   :<|> "dawggle" :> Capture "board" Text :> Get '[JSON] [Text]
-
-check'boards :: (?gobble :: TVar Gobble, MonadIO m) => m Int
-check'boards = liftIO $ (length . view solution'pool) <$> readTVarIO ?gobble
 
 naked'state :: (?gobble :: TVar Gobble) => Handler String 
 naked'state = liftIO $ do
@@ -306,7 +300,6 @@ naked'state = liftIO $ do
 boggle'server :: (?gobble :: TVar Gobble) => FilePath -> Server BoggleAPI
 boggle'server gobbler'path = pure GobblePage
   :<|> serveDirectoryWebApp "static"
-  :<|> check'boards
   :<|> naked'state
   :<|> fmap (maybe "idk" id) . definition'of
   :<|> liftIO . sys'gobble gobbler'path

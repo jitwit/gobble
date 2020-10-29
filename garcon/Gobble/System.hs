@@ -7,6 +7,7 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Data.Map as M
 import qualified Data.HashMap.Strict as H
+import qualified Data.Vector as V
 import System.Directory
 import System.Process
 import System.Random.Shuffle
@@ -23,24 +24,19 @@ sys'gobble gobbler n = do
   let cmd = proc gobbler ["-n",show n,"-dawg","/var/www/gobble/static/collins.fasl","-stdout"]
   drop 1 . T.lines . T.pack <$> readCreateProcess cmd ""
 
-new'board :: D.Node -> H.HashMap T.Text T.Text -> T.Text -> IO Board
-new'board d h b = do
+new'board :: D.Node -> H.HashMap T.Text T.Text -> V.Vector String -> IO Board
+new'board d h w = do
+  b <- T.pack <$> roll w
   let bs = boggle'search d $ T.unpack b
   t <- getCurrentTime
   write'board b
   return $ Board t b $ M.fromList [ (w,h H.! w) | w <- T.pack <$> bs ]
 
-refill'pool :: Gobble -> IO Gobble
-refill'pool g = do
-  bs <- retrieve'boards  
-  return $ g & solution'pool <>~ bs
-
 start'state :: FilePath -> IO Gobble
 start'state gobbler'path = do
-  b0:bs <- retrieve'boards
-  d <- fetch'dict
+  (d,ws) <- fetch'dict
   col <- retrieve'dictionary
-  b0 <- new'board d col b0
+  b0 <- new'board d col ws
   pinous <- make'pinou'stream
   return $ Gobble (-1)
                   b0
@@ -51,9 +47,9 @@ start'state gobbler'path = do
                   pinous
                   mempty
                   col
-                  bs
                   gobbler'path
                   d
+                  ws
 
 retrieve'boards :: IO [T.Text]
 retrieve'boards = do

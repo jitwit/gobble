@@ -1,12 +1,21 @@
-{-# language LambdaCase #-}
+{-# language LambdaCase, TypeApplications #-}
 
-module Gobble.Dawggle ( boggle'search, fetch'dict, roll55 ) where
+module Gobble.Dawggle
+  ( boggle'search
+  , fetch'dict
+  , roll55
+  , random'path
+  , len'without'qu
+  , del'qu
+  , roll
+  ) where
 
 import Gobble.Dawg
 import System.Directory
 import qualified Data.Vector.Unboxed as U
 import qualified Data.Vector as V
 import System.Random.Shuffle
+import System.Random
 import Control.Monad
 import Data.List
 import Data.Tree
@@ -54,13 +63,52 @@ data Path = Path { ix :: {-# unpack #-} !Int
 
 dawggle = "static/dawggle.dawg"
 
-fetch'dict :: IO Node
+fetch'dict :: IO (Node,V.Vector String)
 fetch'dict = doesFileExist dawggle >>= \case
-  True -> fromFile dawggle
+  True -> do trie <- fromFile dawggle
+             return (trie, V.fromList
+                      [ w | w <- toList trie, 10 < len'without'qu w ])
   False ->
     do toFile dawggle =<< fromAscList . map init . lines <$>
          readFile "/home/jo/code/gobble/cobble/share/collins.txt"
        fetch'dict
+
+-- not checked, but n must obviously be in [0,16]
+random'path :: Int -> IO [Int]
+random'path n =
+  let g = graph'of'board $ board'of'string $ take 16 $ cycle "gobble"
+      lp i vs@(v:_)
+        | i == n = pure vs
+        | otherwise = shuffleM (g V.! v \\ vs) >>= \case
+            [] -> lp 1 . (:[]) =<< randomRIO @Int (0,15)
+            u:_ -> lp (1+i) $ u:vs
+   in lp 1 . (:[]) =<< randomRIO @Int (0,15)
+
+no'qu :: String -> (Char,Bool)
+no'qu ('Q':'U':_) = ('U',False)
+no'qu (x:y:_) = (y,True)
+
+del'qu :: String -> String
+del'qu s@(a:_) = a : (map fst $ filter snd $ map no'qu $ init $ init $ tails s)
+del'qu s = s
+
+len'without'qu :: String -> Int
+len'without'qu = length . del'qu
+
+roll :: V.Vector String -> IO String
+roll words = do
+  j <- randomRIO (0,pred $ V.length words)
+  let s = del'qu $ words V.! j
+  let n = length s
+  p <- random'path n
+  let js = p \\ [0..15]
+  xs <- map (toEnum . (+65)) <$> replicateM (16-n) (randomRIO (0,26))
+  return $ U.toList $ (U.replicate 16 'A') U.// zip (p <> js) (del'qu s <> xs)
+
+pp'board :: String -> IO ()
+pp'board s = case splitAt 4 s of
+  (s,[]) -> putStrLn s
+  (x,y) -> putStrLn x >> pp'board y
 
 roll55 :: IO String
 roll55 = map head <$> (shuffleM =<< traverse shuffleM dice55)

@@ -3,6 +3,7 @@
 module Main where
 
 import Gobble.Core
+import Gobble.Dawggle
 import Control.Lens
 import qualified Data.Map as M
 import Test.Hspec
@@ -53,4 +54,15 @@ main = do
         player'scores'1^?!ix "fanny".total'score ==> 14
       it "total score alexander" $ do
         player'scores'1^?!ix "alexander".total'score ==> 11
+
+
+    describe "removing qu" $ do
+      it "removes qu" $ do
+        (del'qu "QUASTHOFF") ==> "QASTHOFF"
+      it "keeps no qu" $ do
+        (del'qu "QATAR") ==> "QATAR"
+      it "empty" $ do
+        (del'qu "") ==> ""
+      it "signle" $ do
+        (del'qu "Q") ==> "Q"
 
