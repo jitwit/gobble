@@ -31,7 +31,7 @@ data Board = Board
   , _word'list :: Map Text Text
   } deriving (Show)
 
-data Activity = Here | There deriving (Show,Eq,Ord)
+data Status = Here | There | Elsewhere deriving (Show,Eq,Ord)
 
 data Player = Player
   { _answers :: Map Text Int
@@ -39,7 +39,7 @@ data Player = Player
   , _solo'score :: Int
   , _total'score :: Int
   , _last'activity :: UTCTime
-  , _active :: Activity
+  , _status :: Status
   } deriving (Show)
 
 data Name'Check = Name'OK | Name'Taken | Name'Too'Long deriving (Show,Eq)
@@ -51,7 +51,7 @@ data Chat'Message = Chat'Message
 newtype Chat'View = Chat'View Gobble
 newtype Score'View = Score'View Gobble
 newtype Word'List'View = Word'List'View Gobble
-data Player'Status = Player'Status Text Activity
+data Player'Status = Player'Status Text Status
 
 data Chat = Chat { _messages :: Map UTCTime Chat'Message } deriving Show
 
@@ -70,7 +70,7 @@ data Gobble = Gobble
   , _gobble'dawg :: D.Node
   }
 
-type Game'Log = (Text,Int,Map Text ([Text],Int,Activity,UTCTime))
+type Game'Log = (Text,Int,Map Text ([Text],Int,Status,UTCTime))
 
 makePrisms ''Phase
 makeLenses ''Board
@@ -144,17 +144,19 @@ score'submissions gob = gob & players.~result & game'phase.~Scoring where
 
 game'log'view :: Gobble -> Game'Log
 game'log'view gob = (gob^.board.letters,gob^.current'round,gob^.players<&>vp) where
-  vp p = ((p^.answers & M.keys),p^.total'score,p^.active,p^.last'activity)
+  vp p = ((p^.answers & M.keys),p^.total'score,p^.status,p^.last'activity)
 
 update'activity'1 :: UTCTime -> Player -> Player
 update'activity'1 now who
-  | ages'ago < dt = who & active .~ There
-  | otherwise = who & active .~ Here
+  | pl == Elsewhere = who
+  | ages'ago < dt = who & status .~ There
+  | otherwise = who & status .~ Here
   where dt = diffUTCTime now (who ^. last'activity) & unsafeCoerce
+        pl = who ^. status
 
 update'activity :: UTCTime -> Gobble -> (Bool, Gobble)
 update'activity now gob = (flag, gob') where
   flag = and $ zipWith (==)
-                       (gob'^..players.folded.active)
-                       (gob ^..players.folded.active)
+                       (gob'^..players.folded.status)
+                       (gob ^..players.folded.status)
   gob' = gob & players . mapped %~ update'activity'1 now

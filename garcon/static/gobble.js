@@ -86,7 +86,9 @@ $(() => {
         if (!(m['scores'] == null)) { $("#scores").html(m['scores']); }
         // idk: { console.log(res); }
     };
-    boggle.onerror = (e) => { console.log(e); };
+    boggle.onerror = (e) => {
+	document.body.innerHTML = `<div id="disconnected">${e}</div>`;
+    };
 
     boggle.onclose = () => {
 	document.body.innerHTML = `<div id="disconnected">lost connection. try refreshing...</div>`;

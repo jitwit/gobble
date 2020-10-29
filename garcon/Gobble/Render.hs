@@ -69,11 +69,12 @@ instance ToMarkup Player'Status where
   toMarkup (Player'Status who act) = case act of
     Here -> H.text who
     There -> H.text $ "(" <> who <> " 💤)"
+    Elsewhere -> H.text $ "{" <> who <> " 👻}"
 
 instance ToMarkup Chat'View where
   toMarkup (Chat'View gob) = table $ do
     thead $ mconcat $ intersperse (H.text ", ")
-          [ toMarkup $ Player'Status who (plr ^. active)
+          [ toMarkup $ Player'Status who (plr ^. status)
           | (who,plr) <- gob^.players.to M.assocs ]
     gob & iforMOf_ (chat'room.messages.ifolded) $ \t (Chat'Message tweet author) ->
       tr $ do td $ H.div ! H.class_ "occurrence" $ do

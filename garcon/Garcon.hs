@@ -16,7 +16,7 @@ import Data.Proxy
 import qualified Data.Map as M
 import Unsafe.Coerce
 
-import Control.Exception (finally)
+import qualified Control.Exception as E
 import Control.Monad
 import Control.Monad.State
 import System.Environment
@@ -79,12 +79,11 @@ name'player conn = liftIO $ do
                    new'player uname conn
                    pure uname
 
-remove'player :: (?gobble :: TVar Gobble, MonadIO m) => Name -> m ()
-remove'player who = do
-  liftIO $ do
-    T.putStrLn $ "removing: " <> who
-    atomically $ modifyTVar' ?gobble $
-      (players.at who .~ Nothing) . (connections.at who .~ Nothing)
+remove'player :: (?gobble :: TVar Gobble, MonadIO m) => Text -> Name -> m ()
+remove'player func who = liftIO $ do
+  print (func, who)
+  atomically $ modifyTVar' ?gobble $
+    (players.at who .~ Nothing) . (connections.at who .~ Nothing)
   add'tweet "GOBBLE" (who <> " left the chat.")
 
 reply :: (?gobble :: TVar Gobble, WebSocketsData a, MonadIO m)
@@ -147,14 +146,6 @@ tweet'chat :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 tweet'chat = liftIO $ tagged'broadcast "chirp" =<< render'chat <$>
   readTVarIO ?gobble
 
-handle'control :: (?gobble :: TVar Gobble, MonadIO m)
-               => Name -> Connection -> ControlMessage -> m ()
-handle'control who conn = liftIO . \case
-  Ping msg -> T.putStrLn (who <> " pinged")
-  Pong msg -> T.putStrLn (who <> " ponged")
-  m@Close{} -> do remove'player who
-                  print ("handle'control",who,m)
-
 broadcast :: (?gobble :: TVar Gobble, WebSocketsData a, MonadIO m) => a -> m ()
 broadcast msg = liftIO $ readTVarIO ?gobble >>=
   mapMOf_ (connections.folded) (`sendTextData` msg)
@@ -178,8 +169,8 @@ pattern Chirp msg <- Text (T.stripPrefix "chirp ".T.pack.B8.toString -> Just msg
 handle'data :: (?gobble :: TVar Gobble, MonadIO m)
             => Name -> Connection -> DataMessage -> m ()
 handle'data who conn = liftIO . \case
-  Words ws -> submit'words who ws
-  Delete w -> delete'word who w
+  Words ws -> print (who,"words",ws) >> submit'words who ws
+  Delete w -> print (who,"delete",w) >> delete'word who w
   Chirp c -> parse'chirp who c
   Wow'wow w -> wow'wow who w
   Query "who-else" -> reply'json conn =<< get'players
@@ -287,10 +278,9 @@ boggle :: (?gobble :: TVar Gobble, MonadIO m) => PendingConnection -> m ()
 boggle pend = liftIO $ do
   conn <- acceptRequest pend
   who <- name'player conn
-  withPingThread conn 30 (pure ()) $ flip finally (remove'player who) $
-    forever $ receive conn >>= \case
-      ControlMessage ctl -> handle'control who conn ctl
-      DataMessage _ _ _ msg -> handle'data who conn msg
+  withPingThread conn 29 (pure ()) $
+    flip E.finally (remove'player "boggle" who) $ forever $
+    receiveDataMessage conn >>= handle'data who conn
 
 -- "frontend"
 boggle'api :: Proxy BoggleAPI
@@ -331,7 +321,7 @@ launch'boggle port gobbler'path = do
    in do let back = serve boggle'api (boggle'server gobbler'path)
          bog'thread <- forkIO $ run port $
            websocketsOr defaultConnectionOptions boggle back
-         run'gobble `finally` killThread bog'thread
+         run'gobble `E.finally` killThread bog'thread
          putStrLn $ "GOBBLE died"
 
 main :: IO ()
