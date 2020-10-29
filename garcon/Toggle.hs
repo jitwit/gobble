@@ -30,7 +30,7 @@ main = do
       player'list = M.fromList [("fanny",fanny),("alexander",alexander)]
       player'scores'0 = calculate'scores (0,solution,player'list)
       player'scores'1 = calculate'scores (1,solution,player'list)
-  hspec $ describe "Score" $ do
+  hspec $ describe "Gobble" $ do
     describe "new round" $ do
       it "round score fanny" $ do
         player'scores'0^?!ix "fanny".score ==> 4
@@ -82,5 +82,5 @@ main = do
     describe "word found in derived generated board" $
       forM_ sols $ \(wd,bd) -> do
         it (unwords [wd,"in",bd]) $ do
-          (wd `elem` boggle'search trie bd)==> True
+          (wd `elem` boggle'search trie bd) ==> True
 
