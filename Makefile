@@ -12,21 +12,21 @@ update-gobble :
 	nixops modify nibble/aws.nix nibble/app.nix -d gobbler
 	nixops deploy -d gobbler
 	nixops ssh -d gobbler gobble-net systemctl status gobble
-	nixops ssh -d gobbler gobble-net systemctl status cobble
+#	nixops ssh -d gobbler gobble-net systemctl status cobble
 
 update-boards :
 	cd ../joggle && rm boards.txt && make boards.txt
 	nixops scp --to gobble-net ../joggle/boards.txt $(static-dir)
 
 update-static :
-	nixops scp --to gobble-net garcon/static/icon.png $(static-dir)
+#	nixops scp --to gobble-net garcon/static/icon.png $(static-dir)
 	nixops scp --to gobble-net garcon/static/boards.txt $(static-dir)
-	nixops scp --to gobble-net garcon/static/dawggle.dawg $(static-dir)
+#	nixops scp --to gobble-net garcon/static/dawggle.dawg $(static-dir)
 	nixops scp --to gobble-net garcon/static/gobble.css $(static-dir)
 	nixops scp --to gobble-net garcon/static/gobble.js $(static-dir)
-	nixops scp --to gobble-net garcon/static/jquery-3.4.1.slim.js $(static-dir)
-	nixops scp --to gobble-net garcon/static/definitions.txt $(static-dir)
-	nixops scp --to gobble-net garcon/static/collins.fasl $(static-dir)
+#	nixops scp --to gobble-net garcon/static/jquery-3.4.1.slim.js $(static-dir)
+#	nixops scp --to gobble-net garcon/static/definitions.txt $(static-dir)
+#	nixops scp --to gobble-net garcon/static/collins.fasl $(static-dir)
 
 update-images :
 	nixops scp --to gobble-net garcon/images/ $(static-dir)

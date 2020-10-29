@@ -286,11 +286,11 @@ http'boggle board = liftIO $ do
 boggle :: (?gobble :: TVar Gobble, MonadIO m) => PendingConnection -> m ()
 boggle pend = liftIO $ do
   conn <- acceptRequest pend
-  forkPingThread conn 30
   who <- name'player conn
-  flip finally (remove'player who) $ forever $ receive conn >>= \case
-    ControlMessage ctl -> handle'control who conn ctl
-    DataMessage _ _ _ msg -> handle'data who conn msg
+  withPingThread conn 30 (pure ()) $ flip finally (remove'player who) $
+    forever $ receive conn >>= \case
+      ControlMessage ctl -> handle'control who conn ctl
+      DataMessage _ _ _ msg -> handle'data who conn msg
 
 -- "frontend"
 boggle'api :: Proxy BoggleAPI
