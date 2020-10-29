@@ -42,6 +42,8 @@ data Player = Player
   , _active :: Activity
   } deriving (Show)
 
+data Name'Check = Name'OK | Name'Taken | Name'Too'Long deriving (Show,Eq)
+
 data Chat'Message = Chat'Message
   { _contents :: Text
   , _author :: Name } deriving Show

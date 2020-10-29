@@ -87,3 +87,10 @@ body {
 #scores > table {
     border-collapse: collapse;
 }
+
+#disconnected {
+    color: #F50953;
+    font-size: x-large;
+    font-weight: bold;
+    padding: 50px;
+}

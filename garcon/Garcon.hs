@@ -43,10 +43,12 @@ import Gobble.Dawggle
 fetch'board :: (?gobble :: TVar Gobble, MonadIO m) => m Board
 fetch'board = liftIO $ view board <$> readTVarIO ?gobble
 
-is'name'free :: (?gobble :: TVar Gobble, MonadIO m) => Name -> m Bool
-is'name'free name = liftIO $ do
+is'name'ok :: (?gobble :: TVar Gobble, MonadIO m) => Name -> m Name'Check
+is'name'ok name = liftIO $ do
   check'1 <- not.isn't _Nothing.preview (players.ix name) <$> readTVarIO ?gobble
-  return $ name /= "" && name /= "null" && check'1
+  if | 12 < T.length name -> pure Name'Too'Long
+     | not $ name /= "" && name /= "null" && check'1 -> pure Name'Taken
+     | otherwise -> pure Name'OK
 
 new'player :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Connection -> m ()
 new'player who conn = liftIO $ do
@@ -70,11 +72,12 @@ new'player who conn = liftIO $ do
 name'player :: (?gobble :: TVar Gobble, MonadIO m) => Connection -> m Name
 name'player conn = liftIO $ do
   uname <- receiveData conn
-  is'name'free uname >>= \case
-    False -> reply'json @Text conn "name-is-taken" >> name'player conn
-    True  -> do T.putStrLn $ uname <> " joined the chat."
-                new'player uname conn
-                pure uname
+  is'name'ok uname >>= \case
+    Name'Taken -> reply'json @Text conn "name-is-taken" >> name'player conn
+    Name'Too'Long -> reply'json @Text conn "name-too-long" >> name'player conn
+    Name'OK  -> do T.putStrLn $ uname <> " joined the chat."
+                   new'player uname conn
+                   pure uname
 
 remove'player :: (?gobble :: TVar Gobble, MonadIO m) => Name -> m ()
 remove'player who = liftIO $ atomically $ modifyTVar' ?gobble $

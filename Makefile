@@ -14,6 +14,10 @@ update-gobble :
 	nixops ssh -d gobbler gobble-net systemctl status gobble
 	nixops ssh -d gobbler gobble-net systemctl status cobble
 
+update-boards :
+	cd ../joggle && rm boards.txt && make boards.txt
+	nixops scp --to gobble-net ../joggle/boards.txt $(static-dir)
+
 update-static :
 	nixops scp --to gobble-net garcon/static/icon.png $(static-dir)
 	nixops scp --to gobble-net garcon/static/boards.txt $(static-dir)

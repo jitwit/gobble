@@ -25,7 +25,7 @@ $(() => {
     };
     
     clear_new_round = () => {
-	$("#scratch").val(""); $("#scratch").focus(); query_words ();
+	$("#scratch").val(""); $("#scratch").focus(); query_words();
     };
 
     $("#mush").submit((e) => {
@@ -51,6 +51,11 @@ $(() => {
         like_word($(e.target).text());
     });
 
+    $("#disconnected").on("click","p",(e) => {
+	console.log("hiho");
+//	location.reload();
+    });
+
     timer = async (expires,round=90,pause=30) => {
         var end = expires.getTime();
         var show = async () => {
@@ -68,19 +73,22 @@ $(() => {
     boggle.onopen = (e) => { set_name(); };
 
     boggle.onmessage = (msg) => {
-        var res = JSON.parse(msg.data);
-        if (res === "name-is-taken") { set_name(msg=" (previous one is taken)"); }
-        if (!(res['board'] == null)) { $("#gobble").html(res['board']); clear_new_round (); }
-        if (!(res['words'] == null)) { $("#submissions").html(res['words']); }
-        if (!(res['peeps'] == null)) { $("#people").html(res['peeps']); } // defns, actually
-        if (!(res['chirp'] == null)) { $("#tweets").html(res['chirp']); }
-        if (!(res['pinou'] == null)) { $("#pinou").html(res['pinou']); }
-        if (!(res['time'] == null)) { timer(new Date (res['time']),res['round'],res['pause']); }
-        if (!(res['solution'] == null)) { $("#solution").html(res['solution']); }
-        if (!(res['scores'] == null)) { $("#scores").html(res['scores']); }
+        var m = JSON.parse(msg.data);
+        if (m === "name-is-taken") { set_name(msg=" (previous one is taken)"); }
+        if (m === "name-too-long") { set_name(msg=" (name too long, should at most 12 letters)"); }
+        if (!(m['board'] == null)) { $("#gobble").html(m['board']); clear_new_round (); }
+        if (!(m['words'] == null)) { $("#submissions").html(m['words']); }
+        if (!(m['peeps'] == null)) { $("#people").html(m['peeps']); } // defns, actually
+        if (!(m['chirp'] == null)) { $("#tweets").html(m['chirp']); }
+        if (!(m['pinou'] == null)) { $("#pinou").html(m['pinou']); }
+        if (!(m['time'] == null)) { timer(new Date (m['time']),m['round'],m['pause']); }
+        if (!(m['solution'] == null)) { $("#solution").html(m['solution']); }
+        if (!(m['scores'] == null)) { $("#scores").html(m['scores']); }
         // idk: { console.log(res); }
     };
     boggle.onerror = (e) => { console.log(e); };
 
-    boggle.onclose = () => { alert("lost connection. refresh, unless the whole thing went down.");  };
+    boggle.onclose = () => {
+	document.body.innerHTML = `<div id="disconnected">lost connection. try refreshing...</div>`;
+    }; 
 });
