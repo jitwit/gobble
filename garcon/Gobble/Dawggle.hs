@@ -101,9 +101,9 @@ roll words = do
   let s = del'qu $ words V.! j
   let n = length s
   p <- random'path n
-  let js = p \\ [0..15]
+  let js = [0..15] \\ p
   xs <- map (toEnum . (+65)) <$> replicateM (16-n) (randomRIO (0,26))
-  return $ U.toList $ (U.replicate 16 'A') U.// zip (p <> js) (del'qu s <> xs)
+  return $ U.toList $ (U.replicate 16 'z') U.// zip (p <> js) (del'qu s <> xs)
 
 pp'board :: String -> IO ()
 pp'board s = case splitAt 4 s of
