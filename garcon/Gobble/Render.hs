@@ -68,7 +68,7 @@ instance ToMarkup Word'List'View where
 instance ToMarkup Player'Status where
   toMarkup (Player'Status who act) = case act of
     Here -> H.text who
-    There -> H.text $ "(" <> who <> "💤)" 
+    There -> H.text $ "(" <> who <> " 💤)"
 
 instance ToMarkup Chat'View where
   toMarkup (Chat'View gob) = table $ do
@@ -155,10 +155,10 @@ instance ToMarkup GobblePage where
   toMarkup _ = html $ do
     H.head $ do
       title "gobble"
-      link ! H.rel "stylesheet" ! H.href "static/gobble.css?11"
+      link ! H.rel "stylesheet" ! H.href "static/gobble.css?12"
       link ! H.rel "icon" ! H.href "static/icon.png"
       script ! H.src "static/jquery-3.4.1.slim.js" $ ""
-      script ! H.src "static/gobble.js?11" $ ""
+      script ! H.src "static/gobble.js?12" $ ""
     H.body $ do
       H.h1 "GOBBLE"
       H.div ! H.class_ "row" $ do

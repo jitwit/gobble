@@ -80,8 +80,12 @@ name'player conn = liftIO $ do
                    pure uname
 
 remove'player :: (?gobble :: TVar Gobble, MonadIO m) => Name -> m ()
-remove'player who = liftIO $ atomically $ modifyTVar' ?gobble $
-  (players.at who .~ Nothing) . (connections.at who .~ Nothing)
+remove'player who = do
+  liftIO $ do
+    T.putStrLn $ "removing: " <> who
+    atomically $ modifyTVar' ?gobble $
+      (players.at who .~ Nothing) . (connections.at who .~ Nothing)
+  add'tweet "GOBBLE" (who <> " left the chat.")
 
 reply :: (?gobble :: TVar Gobble, WebSocketsData a, MonadIO m)
       => Connection -> a -> m ()
@@ -146,9 +150,10 @@ tweet'chat = liftIO $ tagged'broadcast "chirp" =<< render'chat <$>
 handle'control :: (?gobble :: TVar Gobble, MonadIO m)
                => Name -> Connection -> ControlMessage -> m ()
 handle'control who conn = liftIO . \case
-  Close{}  -> remove'player who >> add'tweet "GOBBLE" (who <> " left the chat.")
   Ping msg -> T.putStrLn (who <> " pinged")
   Pong msg -> T.putStrLn (who <> " ponged")
+  m@Close{} -> do remove'player who
+                  print ("handle'control",who,m)
 
 broadcast :: (?gobble :: TVar Gobble, WebSocketsData a, MonadIO m) => a -> m ()
 broadcast msg = liftIO $ readTVarIO ?gobble >>=
