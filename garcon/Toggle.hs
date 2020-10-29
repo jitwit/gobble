@@ -71,16 +71,6 @@ main = do
       it "signle" $ do
         (del'qu "Q") ==> "Q"
 
-    describe "removing qu" $ do
-      it "removes qu" $ do
-        (del'qu "QUASTHOFF") ==> "QASTHOFF"
-      it "keeps no qu" $ do
-        (del'qu "QATAR") ==> "QATAR"
-      it "empty" $ do
-        (del'qu "") ==> ""
-      it "signle" $ do
-        (del'qu "Q") ==> "Q"
-
     describe "word found in derived generated board" $
       forM_ sols $ \(wd,bd) -> do
         it (unwords [wd,"in",bd]) $ do
