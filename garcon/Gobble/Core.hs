@@ -31,7 +31,7 @@ data Board = Board
   , _word'list :: Map Text Text
   } deriving (Show)
 
-data Status = Here | There | Elsewhere deriving (Show,Eq,Ord)
+data Status = Here | There deriving (Show,Eq,Ord)
 
 data Player = Player
   { _answers :: Map Text Int
@@ -148,7 +148,6 @@ game'log'view gob = (gob^.board.letters,gob^.current'round,gob^.players<&>vp) wh
 
 update'activity'1 :: UTCTime -> Player -> Player
 update'activity'1 now who
-  | pl == Elsewhere = who
   | ages'ago < dt = who & status .~ There
   | otherwise = who & status .~ Here
   where dt = diffUTCTime now (who ^. last'activity) & unsafeCoerce

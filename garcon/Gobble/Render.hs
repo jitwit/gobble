@@ -69,7 +69,7 @@ instance ToMarkup Player'Status where
   toMarkup (Player'Status who act) = case act of
     Here -> H.text who
     There -> H.text $ "(" <> who <> " 💤)"
-    Elsewhere -> H.text $ "{" <> who <> " 👻}"
+--    Elsewhere -> H.text $ "{" <> who <> " 👻}"
 
 instance ToMarkup Chat'View where
   toMarkup (Chat'View gob) = table $ do
@@ -168,7 +168,7 @@ instance ToMarkup GobblePage where
         H.div ! H.class_ "column" $ do
           H.div ! H.id "timer" $ ""
           H.form ! H.id "mush" $ do
-            H.input ! H.autocomplete "off" ! H.spellcheck "off"
+            H.input ! H.autocomplete "off" ! H.spellcheck "false"
               ! H.type_ "text" ! H.id "scratch"
             H.input ! H.type_ "submit" ! H.hidden "mush!"
           H.ul ! H.id "submissions" $ ""
