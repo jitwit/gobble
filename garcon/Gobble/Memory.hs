@@ -38,6 +38,7 @@ create'board'table = unlines
 create'solution'table = unlines
   [ "CREATE TABLE IF NOT EXISTS solution ("
   ,   "who TEXT NOT NULL,"
+  ,   "score INTEGER NOT NULL,"
   ,   "boardid INTEGER NOT NULL,"
   ,   "FOREIGN KEY (boardid)"
   ,     "REFERENCES board (boardid)"
@@ -62,16 +63,21 @@ record'board c b = liftIO $ do
   commit c
   head.head <$> quickQuery' c "SELECT last_insert_rowid()" []
 
-record'player :: (MonadIO m) => Connection -> SqlValue -> Text -> m SqlValue
-record'player c bid p = liftIO $ do
-  s <- prepare c "INSERT INTO solution VALUES (?,?)"
-  execute s [p&toSql, bid]
+record'player :: (MonadIO m)
+  => Connection -> SqlValue -> Text -> Int -> m SqlValue
+record'player c bid p n = liftIO $ do
+  s <- prepare c "INSERT INTO solution VALUES (?,?,?)"
+  execute s [p&toSql,n&toSql,bid]
   commit c
   head.head <$> quickQuery' c "SELECT last_insert_rowid()" []
 
-record'words :: (MonadIO m) => Connection -> SqlValue -> SqlValue -> [Text] -> m ()
-record'words c b p ws = liftIO $ do
-  pure ()
+record'words :: (MonadIO m)
+  => Connection -> [SqlValue] -> [[Text]] -> m ()
+record'words c ps wss = liftIO $ do
+  s <- prepare c "INSERT INTO word VALUES (?,?)"
+  forM_ (zip ps wss) $ \(p, ws) ->
+    forM_ ws $ \w -> execute s [p,w&toSql]
+  commit c
 
 -- COM
 connect'db :: MonadIO m => m Connection
@@ -90,5 +96,5 @@ dummy = do
   setup'db c
   bid <- record'board c b
   print bid
-  print <- record'player c bid "pinou"
+  print <- record'player c bid "pinou" 10
   disconnect c
