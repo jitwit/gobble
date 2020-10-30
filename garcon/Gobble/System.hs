@@ -27,6 +27,9 @@ new'board d h w = do
   write'board b
   return $ Board t b $ M.fromList [ (w,h H.! w) | w <- T.pack <$> bs ]
 
+new'board'gobble :: Gobble -> IO Board
+new'board'gobble g = new'board (g^.gobble'dawg) (g^.english) (g^.gobble'big'words)
+
 start'state :: IO Gobble
 start'state = do
   (d,ws) <- fetch'dict

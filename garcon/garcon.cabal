@@ -43,7 +43,11 @@ common doggle
     binary,
     deepseq,
     vector,
-    vector-binary-instances
+    vector-binary-instances,
+    HDBC,
+    HDBC-sqlite3
+--    persistent,
+--    persistent-sqlite
   ghc-options:  -O2 -threaded
   default-language: Haskell2010
 
@@ -52,7 +56,8 @@ executable garcon
   import: doggle
   main-is: Garcon.hs
   exposed-modules:
-    Gobble.Core, Gobble.Dawg, Gobble.Render, Gobble.System, Gobble.Dawggle
+    Gobble.Core, Gobble.Dawg, Gobble.Render,
+    Gobble.System, Gobble.Dawggle, Gobble.Memory
 
 -- the tests
 test-suite toggle

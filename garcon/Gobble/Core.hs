@@ -88,7 +88,6 @@ score'word = ((0:0:fibs)!!) . min 9 . T.length where
 
 round'length :: Integer
 round'length = 90
-
 score'length :: Integer
 score'length = 45
 

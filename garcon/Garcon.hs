@@ -39,6 +39,7 @@ import Gobble.Core
 import Gobble.System
 import Gobble.Render
 import Gobble.Dawggle
+import Gobble.Memory
 
 fetch'board :: (?gobble :: TVar Gobble, MonadIO m) => m Board
 fetch'board = liftIO $ view board <$> readTVarIO ?gobble
@@ -315,6 +316,7 @@ launch'boggle :: Int -> IO ()
 launch'boggle port = do
   putStrLn "Initializing GOBBLE"
   gobble <- newTVarIO =<< start'state
+--  gobble'conn <- connect'db
   putStrLn $ "Starting     GOBBLE on port " <> show port
   let ?gobble = gobble
    in do let back = serve boggle'api boggle'server
