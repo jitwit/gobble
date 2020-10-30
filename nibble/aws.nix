@@ -12,4 +12,6 @@ let region = "ca-central-1";
 #          route53.hostName = "boggle-bitch.net";
 #          route53.accessKeyId = accessKeyId;
         }; };
-in { gobble-net = ec2; resources.ec2KeyPairs.my-key-pair = { inherit region accessKeyId; }; }
+in { gobble-net = ec2;
+     resources.ec2KeyPairs.my-key-pair = { inherit region accessKeyId; };
+   }

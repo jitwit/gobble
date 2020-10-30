@@ -166,17 +166,17 @@ pattern Delete w <- Text (T.words.T.toUpper.T.pack.B8.toString -> "DOBBLE":w:[])
 pattern Wow'wow w <- Text (T.words.T.toUpper.T.pack.B8.toString -> "WOBBLE":w:[]) _
 pattern Chirp msg <- Text (T.stripPrefix "chirp ".T.pack.B8.toString -> Just msg) _
 
-handle'data :: (?gobble :: TVar Gobble, MonadIO m)
+ws'handle :: (?gobble :: TVar Gobble, MonadIO m)
             => Name -> Connection -> DataMessage -> m ()
-handle'data who conn = liftIO . \case
-  Words ws -> print (who,"words",ws) >> submit'words who ws
-  Delete w -> print (who,"delete",w) >> delete'word who w
+ws'handle who conn = liftIO . \case
+  Words ws -> submit'words who ws
+  Delete w -> delete'word who w
   Chirp c -> parse'chirp who c
   Wow'wow w -> wow'wow who w
   Query "who-else" -> reply'json conn =<< get'players
   Query "words" -> send'words conn who
-  Text msg _ -> print msg >> reply'json @Text conn "idk/text"
-  Binary msg -> print msg >> reply'json @Text conn "idk/bin"
+  Text msg _ -> reply'json @Text conn "idk/text"
+  Binary msg -> reply'json @Text conn "idk/bin"
 
 get'players :: (?gobble :: TVar Gobble) => IO [Name]
 get'players = M.keys . view players <$> readTVarIO ?gobble
@@ -278,7 +278,7 @@ boggle pend = liftIO $ do
   who <- name'player conn
   withPingThread conn 29 (pure ()) $
     flip E.finally (remove'player "boggle" who) $ forever $
-    receiveDataMessage conn >>= handle'data who conn
+    receiveDataMessage conn >>= ws'handle who conn
 
 -- "frontend"
 boggle'api :: Proxy BoggleAPI
