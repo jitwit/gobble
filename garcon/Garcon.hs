@@ -334,4 +334,4 @@ main :: IO ()
 main = getArgs >>= \case
   [] -> launch'boggle 8011
   ["-p",x] -> launch'boggle (read x)
-  args -> error $ "idk what to do with: " <> unwords args 
+  args -> error $ "idk what to do with: " <> unwords args

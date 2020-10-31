@@ -154,7 +154,7 @@ update'activity'1 now who
   where dt = diffUTCTime now (who ^. last'activity) & unsafeCoerce
         pl = who ^. status
 
-update'activity :: UTCTime -> Gobble -> (Bool, Gobble)
+update'activity :: UTCTime -> Gobble -> (Bool,Gobble)
 update'activity now gob = (flag, gob') where
   flag = and $ zipWith (==)
                        (gob'^..players.folded.status)

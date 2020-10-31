@@ -1,4 +1,4 @@
-{-# language OverloadedStrings #-}
+{-# language OverloadedStrings, LambdaCase #-}
 
 module Gobble.System where
 
@@ -11,6 +11,7 @@ import qualified Data.Vector as V
 import qualified Data.Text as T
 import Data.Text (Text)
 import qualified Data.Text.IO as T
+import Text.Printf
 import qualified Data.Map as M
 import qualified Data.HashMap.Strict as H
 import qualified Data.Vector as V
@@ -145,7 +146,41 @@ record'round g = liftIO $ do
   record'words c ids (g^..players.folded.answers.to M.keys)
 
 -- QUERY
+query'past'users :: (MonadIO m) => Connection -> m [Name]
+query'past'users c = liftIO $
+  map fromSql . join <$> quickQuery' c "select distinct name from solution;" []
 
+query'last'boardid :: (MonadIO m) => Connection -> m (Maybe Int64)
+query'last'boardid c = liftIO $ do
+ res <- quickQuery' c "select rowid from board order by rowid desc limit 1;" []
+ pure $ case join res of
+   x:_ -> Just $ fromSql x
+   _ -> Nothing
+
+query'last'round :: (MonadIO m) => Connection -> m [[SqlValue]]
+query'last'round c = liftIO $ query'last'boardid c >>= \case
+  Nothing -> pure []
+  Just j -> do
+    let s = printf "select * from solution where solution.boardid == %d" j
+    quickQuery' c s []
+
+query'all'my'words :: (MonadIO m) => Name -> Connection -> m [Text]
+query'all'my'words who c = liftIO $ do
+  let s = unlines
+            [ "select * from word inner join solution"
+            , "where word.solutionid == solution.rowid and"
+            , printf "solution.name == '%s'" who
+            , "order by length(word.letters) desc" ]
+  map (fromSql.head) <$> quickQuery' c s []
+
+query'db :: (MonadIO m) => Gobble -> (Connection -> m a) -> m a
+query'db g q = q (g^.gobble'db'conn)
+
+best'words :: (MonadIO m) => Gobble -> Name -> Int -> m [Text]
+best'words g who n = do
+  let d = g^.english
+  ws <- query'db g (query'all'my'words who)
+  return $ take n [ w | w <- ws, w `H.member` d ]
 
 -- COM
 connect'db :: MonadIO m => m Connection
@@ -154,5 +189,5 @@ connect'db = liftIO $ connectSqlite3 db'file
 dummy :: IO ()
 dummy = do
   c <- connect'db
-  mapM_ print =<< quickQuery' c "select * from word inner join solution on solution.rowid == word.solutionid where solution.name == 'jingo';" []
+  print =<< query'all'my'words ("pinou"::Text) c
   disconnect c
