@@ -13,6 +13,7 @@ import Data.HashMap.Strict (HashMap)
 import qualified Data.Text as T
 import Unsafe.Coerce
 import Data.Text (Text)
+import qualified Database.HDBC.Sqlite3 as DB
 import Control.Lens
 import Control.Concurrent
 
@@ -68,6 +69,7 @@ data Gobble = Gobble
   , _english :: HashMap Text Text
   , _gobble'dawg :: D.Node
   , _gobble'big'words :: V.Vector String
+  , _gobble'db'conn :: DB.Connection
   }
 
 type Game'Log = (Text,Int,Map Text ([Text],Int,Status,UTCTime))

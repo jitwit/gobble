@@ -13,11 +13,14 @@ import System.Process
 import System.Random.Shuffle
 import Data.Time.Clock
 import Data.Default
+import Database.HDBC
+import Database.HDBC.Sqlite3
 
 import Gobble.Dawggle
 import qualified Gobble.Dawg as D
 import Gobble.Render
 import Gobble.Core
+import Gobble.Memory
 
 new'board :: D.Node -> H.HashMap T.Text T.Text -> V.Vector String -> IO Board
 new'board d h w = do
@@ -36,6 +39,8 @@ start'state = do
   col <- retrieve'dictionary
   b0 <- new'board d col ws
   pinous <- make'pinou'stream
+  conn <- connect'db
+  setup'db conn
   return $ Gobble (-1)
                   b0
                   mempty
@@ -47,6 +52,7 @@ start'state = do
                   col
                   d
                   ws
+                  conn
 
 retrieve'dictionary :: IO (H.HashMap T.Text T.Text)
 retrieve'dictionary =

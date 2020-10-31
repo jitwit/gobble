@@ -198,6 +198,7 @@ send'words conn who = liftIO $ do
 score'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 score'round = liftIO $ do
   gob <- atomically $ stateTVar ?gobble (dup.score'submissions)
+  record'round gob
   putStrLn "Scored Round... "
   print $ game'log'view gob
   broadcast'clear "words"
@@ -244,7 +245,7 @@ run'gobble = liftIO $ forever $ do
       phase = gob ^. game'phase
       dt = unsafeCoerce $ gobble'dt now
   status'same <- atomically $ stateTVar ?gobble (update'activity now)
-  unless status'same $ tweet'chat >> putStrLn "status changed for someone"
+  unless status'same $ tweet'chat
   case phase of
     Ready   -> when peeps fresh'round
     Boggled -> if | not peeps -> reset'gobble
@@ -316,7 +317,6 @@ launch'boggle :: Int -> IO ()
 launch'boggle port = do
   putStrLn "Initializing GOBBLE"
   gobble <- newTVarIO =<< start'state
---  gobble'conn <- connect'db
   putStrLn $ "Starting     GOBBLE on port " <> show port
   let ?gobble = gobble
    in do let back = serve boggle'api boggle'server
