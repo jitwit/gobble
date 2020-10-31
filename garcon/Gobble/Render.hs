@@ -116,8 +116,16 @@ board'dia b = D.vcat [ D.hcat [ block x | x <- T.unpack r ] | r <- board'rows b 
     let ls = case x of
           'Q' -> "Qu"
           _ -> [x]
-        back = D.square 1 & D.bg (sRGB24 0xF1 0xD0 0xF3)
-        fore = D.text ls & D.scale 0.45 & D.translate (V2 0 (-0.025)) & D.font "Georgia"
+        back = D.square 1
+          & D.bg (sRGB24 0 0 0)
+          & D.lc (sRGB24 245 28 44)
+        -- (sRGB24 0xF1 0xD0 0xF3)
+        fore = D.text ls
+          & D.scale 0.45
+          & D.translate (V2 0 (-0.025))
+          & D.font "Georgia"
+          & D.fc (sRGB24 255 106 15)
+-- 255 106 101
      in fore <> back
 
 write'board :: Text -> IO ()
@@ -156,10 +164,10 @@ instance ToMarkup GobblePage where
   toMarkup _ = html $ do
     H.head $ do
       title "gobble"
-      link ! H.rel "stylesheet" ! H.href "static/gobble.css?13"
+      link ! H.rel "stylesheet" ! H.href "static/gobble.css?14"
       link ! H.rel "icon" ! H.href "static/icon.png"
       script ! H.src "static/jquery-3.4.1.slim.js" $ ""
-      script ! H.src "static/gobble.js?13" $ ""
+      script ! H.src "static/gobble.js?14" $ ""
     H.body $ do
       H.h1 "GOBBLE"
       H.div ! H.class_ "row" $ do
