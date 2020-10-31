@@ -197,7 +197,6 @@ send'words conn who = liftIO $ do
 score'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 score'round = liftIO $ do
   gob <- atomically $ stateTVar ?gobble (dup.score'submissions)
-  record'round gob
   putStrLn "Scored Round... "
   print $ game'log'view gob
   broadcast'clear "words"
@@ -205,6 +204,7 @@ score'round = liftIO $ do
   broadcast'val $ A.object
     [ "solution" A..= render'solution gob
     , "scores"   A..= render'scores gob ]
+  record'round gob
 
 reset'gobble :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 reset'gobble = liftIO $ do

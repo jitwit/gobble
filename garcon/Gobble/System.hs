@@ -135,7 +135,7 @@ record'words :: (MonadIO m)
 record'words c ps wss = liftIO $ do
   s <- prepare c "INSERT INTO word VALUES (?,?)"
   forM_ (zip ps wss) $ \(p, ws) ->
-    forM_ ws $ \w -> execute s [p,w&toSql]
+    forM_ ws $ \w -> execute s [w&toSql,p]
   commit c
 
 record'round :: (MonadIO m) => Gobble -> m ()
