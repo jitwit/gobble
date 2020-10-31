@@ -56,8 +56,7 @@ executable garcon
   import: doggle
   main-is: Garcon.hs
   exposed-modules:
-    Gobble.Core, Gobble.Dawg, Gobble.Render,
-    Gobble.System, Gobble.Dawggle, Gobble.Memory
+    Gobble.Core, Gobble.Dawg, Gobble.Render, Gobble.System, Gobble.Dawggle
 
 -- the tests
 test-suite toggle

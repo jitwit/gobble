@@ -39,7 +39,6 @@ import Gobble.Core
 import Gobble.System
 import Gobble.Render
 import Gobble.Dawggle
-import Gobble.Memory
 
 fetch'board :: (?gobble :: TVar Gobble, MonadIO m) => m Board
 fetch'board = liftIO $ view board <$> readTVarIO ?gobble
