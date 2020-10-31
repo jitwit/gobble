@@ -7,6 +7,7 @@ import Control.Lens
 import Control.Monad
 import Control.Monad.IO.Class
 import Data.Int
+import qualified Data.Vector as V
 import qualified Data.Text as T
 import Data.Text (Text)
 import qualified Data.Text.IO as T
@@ -15,6 +16,7 @@ import qualified Data.HashMap.Strict as H
 import qualified Data.Vector as V
 import System.Directory
 import System.Process
+import System.Random
 import System.Random.Shuffle
 import Data.Time.Clock
 import Data.Time.Clock.POSIX
@@ -67,10 +69,9 @@ retrieve'dictionary =
 make'pinou'stream :: IO [FilePath]
 make'pinou'stream =
   let img'dir = "static/images/"
-   in do ps1 <- shuffleM =<< listDirectory img'dir
-         ps2 <- shuffleM ps1
-         ps3 <- shuffleM ps2
-         return [ img'dir <> pinou | pinou <- cycle $ ps1 <> ps2 <> ps3 ]
+   in do imgs <- fmap (img'dir<>) . V.fromList <$> listDirectory img'dir
+         gen <- newStdGen
+         return [ imgs V.! j | j <- randomRs (0,V.length imgs - 1) gen ]
 
 -- CONFIG
 db'file = "data/gobble.db"
@@ -121,8 +122,8 @@ record'board c r b = liftIO $ do
   head.head <$> quickQuery' c "SELECT last_insert_rowid()" []
 
 record'solution :: (MonadIO m)
-  => Connection -> SqlValue -> Name -> Player -> m SqlValue
-record'solution c bid n p = liftIO $ do
+  => Connection -> SqlValue -> (Name,Player) -> m SqlValue
+record'solution c bid (n,p) = liftIO $ do
   s <- prepare c "INSERT INTO solution VALUES (?,?,?,?)"
   execute s [n&toSql,p^.score&toSql,p^.solo'score&toSql,bid]
   commit c
@@ -140,25 +141,18 @@ record'round :: (MonadIO m) => Gobble -> m ()
 record'round g = liftIO $ do
   let c = g^.gobble'db'conn
   bid <- record'board c (g^.current'round) (g^.board)
-  ids <- forM (g^@..players.itraversed) $ \(n,p) -> record'solution c bid n p
+  ids <- forM (g^@..players.itraversed) $ record'solution c bid
   record'words c ids (g^..players.folded.answers.to M.keys)
+
+-- QUERY
+
 
 -- COM
 connect'db :: MonadIO m => m Connection
 connect'db = liftIO $ connectSqlite3 db'file
 
--- dummy :: IO ()
--- dummy = do
---   b <- doesFileExist db'file
---   when b $ removeFile db'file
---   print "load"
---   g <- start'state
---   print "gen"
---   b <- new'board'gobble g
---   print "con"
---   c <- connect'db
---   setup'db c
---   bid <- record'board c 0 b
---   print bid
--- --  print <- record'player c bid "pinou" 10
---   disconnect c
+dummy :: IO ()
+dummy = do
+  c <- connect'db
+  mapM_ print =<< quickQuery' c "select * from word inner join solution on solution.rowid == word.solutionid where solution.name == 'jingo';" []
+  disconnect c

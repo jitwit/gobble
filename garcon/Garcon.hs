@@ -286,11 +286,17 @@ boggle'api :: Proxy BoggleAPI
 boggle'api = Proxy
 
 type BoggleAPI =
+  -- home page
        Get '[HTML] GobblePage
+  -- serve static stuff
   :<|> "static" :> Raw
+  -- debug view
   :<|> "help" :> "naked" :> Get '[PlainText] String
+  -- api endpoint to query dictionary
   :<|> "define" :> Capture "word" Text :> Get '[PlainText] Text
+  -- api endpoint to solve board
   :<|> "dawggle" :> Capture "board" Text :> Get '[JSON] [Text]
+  -- api endpoint to reorder image stream
   :<|> "pinous" :> Get '[PlainText] Text
 
 naked'state :: (?gobble :: TVar Gobble) => Handler String 
@@ -328,4 +334,4 @@ main :: IO ()
 main = getArgs >>= \case
   [] -> launch'boggle 8011
   ["-p",x] -> launch'boggle (read x)
-  "-p":x:_ -> launch'boggle (read x)
+  args -> error $ "idk what to do with: " <> unwords args 
