@@ -92,7 +92,7 @@ create'board'table = unlines
 
 create'solution'table = unlines
   [ "CREATE TABLE IF NOT EXISTS solution ("
-  ,   "who TEXT NOT NULL,"
+  ,   "name TEXT NOT NULL,"
   ,   "score INTEGER NOT NULL,"
   ,   "soloscore INTEGER NOT NULL,"
   ,   "boardid INTEGER NOT NULL,"
