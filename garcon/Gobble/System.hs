@@ -1,4 +1,4 @@
-{-# language OverloadedStrings, LambdaCase #-}
+{-# language OverloadedStrings, LambdaCase, ViewPatterns, BangPatterns #-}
 
 module Gobble.System where
 
@@ -7,6 +7,7 @@ import Control.Lens
 import Control.Monad
 import Control.Monad.IO.Class
 import Data.Int
+import qualified Data.List as L
 import qualified Data.Vector as V
 import qualified Data.Text as T
 import Data.Text (Text)
@@ -30,13 +31,13 @@ import qualified Gobble.Dawg as D
 import Gobble.Render
 import Gobble.Core
 
-new'board :: D.Node -> H.HashMap T.Text T.Text -> V.Vector String -> IO Board
+new'board :: D.Node -> H.HashMap T.Text Boggle'Word -> V.Vector String -> IO Board
 new'board d h w = do
   b <- T.pack . snd <$> roll w
   let bs = boggle'search d $ T.unpack b
   t <- getCurrentTime
   write'board b
-  return $ Board t b $ M.fromList [ (w,h H.! w) | w <- T.pack <$> bs ]
+  return $ Board t b $ M.fromList [ (w,h H.! w ^. definition) | w <- T.pack <$> bs ]
 
 new'board'gobble :: Gobble -> IO Board
 new'board'gobble g = new'board (g^.gobble'dawg) (g^.english) (g^.gobble'big'words)
@@ -49,7 +50,7 @@ start'state = do
   pinous <- make'pinou'stream
   conn <- connect'db
   setup'db conn
-  return $ Gobble (-1)
+  let g0 = Gobble (-1)
                   b0
                   mempty
                   mempty
@@ -61,11 +62,18 @@ start'state = do
                   d
                   ws
                   conn
+  set'previously'seen g0
 
-retrieve'dictionary :: IO (H.HashMap T.Text T.Text)
+retrieve'dictionary :: IO (H.HashMap T.Text Boggle'Word)
 retrieve'dictionary =
-  let parse'line = fmap (T.drop 1) . T.breakOn "\t"
+  let parse'line (T.breakOn "\t" -> (w,d)) = (w, Boggle'Word False $ T.drop 1 d)
    in H.fromList . map parse'line . T.lines <$> T.readFile "static/definitions.txt"
+
+set'previously'seen :: MonadIO m => Gobble -> m Gobble
+set'previously'seen g = do
+  ws <- query'db g query'all'words
+  return $! g & english %~
+    \d -> L.foldl' (flip $ H.adjust $ been'seen .~ True) d ws
 
 make'pinou'stream :: IO [FilePath]
 make'pinou'stream =
@@ -140,7 +148,7 @@ record'words c ps wss = liftIO $ do
 
 record'round :: (MonadIO m) => Gobble -> m ()
 record'round g = liftIO $ do
-  let c = g^.gobble'db'conn
+  let c = g^.gobble'connection
   bid <- record'board c (g^.current'round) (g^.board)
   ids <- forM (g^@..players.itraversed) $ record'solution c bid
   record'words c ids (g^..players.folded.answers.to M.keys)
@@ -173,14 +181,18 @@ query'all'my'words who c = liftIO $ do
             , "order by length(word.letters) desc" ]
   map (fromSql.head) <$> quickQuery' c s []
 
-query'db :: (MonadIO m) => Gobble -> (Connection -> m a) -> m a
-query'db g q = q (g^.gobble'db'conn)
+query'all'words :: (MonadIO m) => Connection -> m [Text]
+query'all'words c = liftIO $ do
+  map fromSql . join <$> quickQuery' c "select distinct letters from word" []
 
 best'words :: (MonadIO m) => Gobble -> Name -> Int -> m [Text]
 best'words g who n = do
   let d = g^.english
   ws <- query'db g (query'all'my'words who)
   return $ take n [ w | w <- ws, w `H.member` d ]
+
+query'db :: (MonadIO m) => Gobble -> (Connection -> m a) -> m a
+query'db g q = q (g^.gobble'connection)
 
 -- COM
 connect'db :: MonadIO m => m Connection

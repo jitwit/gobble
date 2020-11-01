@@ -50,6 +50,10 @@ data Chat'Message = Chat'Message
   { _contents :: Text
   , _author :: Name } deriving Show
 
+data Boggle'Word = Boggle'Word
+  { _been'seen :: Bool, _definition :: Text }
+  deriving (Show)
+
 newtype Chat'View = Chat'View Gobble
 newtype Score'View = Score'View Gobble
 newtype Word'List'View = Word'List'View Gobble
@@ -66,11 +70,10 @@ data Gobble = Gobble
   , _chat'room :: Chat
   , _pinou'stream :: [FilePath]
   , _gobble'likes :: Map Name Text
-  , _english :: HashMap Text Text
+  , _english :: HashMap Text Boggle'Word
   , _gobble'dawg :: D.Node
   , _gobble'big'words :: V.Vector String
-  , _gobble'db'conn :: DB.Connection
-  }
+  , _gobble'connection :: DB.Connection }
 
 type Game'Log = (Text,Int,Map Text ([Text],Int,Status,UTCTime))
 
@@ -79,6 +82,7 @@ makeLenses ''Board
 makeLenses ''Player
 makeLenses ''Gobble
 makeLenses ''Chat'Message
+makeLenses ''Boggle'Word
 makeLenses ''Chat
 
 instance Default Phase where

@@ -63,7 +63,7 @@ instance ToMarkup Word'List'View where
            table $ forM_ wl $ \(w,d) ->
              tr $ do td $ toMarkup $ if gotten^.contains w
                        then Shared w else Unique w
-                     td (H.text d)
+                     td (H.text $ d)
 
 instance ToMarkup Player'Status where
   toMarkup (Player'Status who act) = case act of
