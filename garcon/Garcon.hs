@@ -9,6 +9,7 @@ import Control.Lens.Extras
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Data.ByteString.Lazy.UTF8 as B8
+import qualified Data.HashMap.Strict as H
 import Data.Bool
 import Data.Char
 import Data.Text (Text)
@@ -197,14 +198,16 @@ send'words conn who = liftIO $ do
 score'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 score'round = liftIO $ do
   gob <- atomically $ stateTVar ?gobble (dup.score'submissions)
-  putStrLn "Scored Round... "
-  print $ game'log'view gob
+  putStrLn "Scored round... "
   broadcast'clear "words"
   tagged'broadcast "pinou" $ html'of'pinou $ gob ^. pinou'stream._head
   broadcast'val $ A.object
     [ "solution" A..= render'solution gob
     , "scores"   A..= render'scores gob ]
   record'round gob
+  putStrLn "Added round to DB..."
+  atomically $ modifyTVar ?gobble update'previously'seen
+  putStrLn "Recorded round..."
 
 reset'gobble :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 reset'gobble = liftIO $ do
@@ -299,6 +302,8 @@ type BoggleAPI =
   :<|> "dawggle" :> Capture "board" Text :> Get '[JSON] [Text]
   -- api endpoint to reorder image stream
   :<|> "pinous" :> Get '[PlainText] Text
+  :<|> "help" :> "seen" :> Get '[JSON] [Text]
+  :<|> "help" :> "seen" :> Capture "w" Text :> Get '[JSON] Bool
 
 naked'state :: (?gobble :: TVar Gobble) => Handler String 
 naked'state = liftIO $ do
@@ -312,6 +317,18 @@ boggle'server = pure GobblePage
   :<|> fmap (maybe "idk" id) . definition'of
   :<|> http'boggle
   :<|> refresh'pinous
+  :<|> debug'seen
+  :<|> debug'seen'1
+
+debug'seen :: (?gobble :: TVar Gobble, MonadIO m) => m [Text]
+debug'seen = liftIO $ do
+  gob <- readTVarIO ?gobble
+  return $ [ w | (w,Boggle'Word True _) <- gob^.english&H.toList ]
+
+debug'seen'1 :: (?gobble :: TVar Gobble, MonadIO m) => Text -> m Bool
+debug'seen'1 w = liftIO $ do
+  gob <- readTVarIO ?gobble
+  return $ Just True == gob ^? english . ix w . been'seen
 
 refresh'pinous :: (?gobble :: TVar Gobble, MonadIO m) => m T.Text
 refresh'pinous = liftIO $ do
