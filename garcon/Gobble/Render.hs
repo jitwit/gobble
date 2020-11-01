@@ -21,6 +21,7 @@ import Text.Blaze.Html.Renderer.Text
 import qualified Text.Blaze.Html5.Attributes as H hiding (form,span)
 import qualified Data.Aeson as A
 import qualified Data.Map as M
+import qualified Data.HashMap.Strict as H
 import Data.Map (Map)
 import Data.List
 import Data.Function
@@ -29,26 +30,30 @@ import Gobble.Core
 
 type H = TLI.Text
 
-data WordResult = Unique Text | Shared Text | Mistake Text | Gaffe Text | Idk'Oops Text
-data RoundResult = RoundResult (Map Text Text) (Map Text Int)
+data WordResult = New Text | Unique Text | Shared Text | Mistake Text | Gaffe Text | Idk'Oops Text
+data RoundResult = RoundResult (H.HashMap Text Boggle'Word) (Map Text Text) (Map Text Int)
 
-word'result :: Text -> Int -> WordResult
-word'result w n | n == 1  = Unique w
-                | n > 1   = Shared w
-                | n == -1 = Mistake w
-                | n < -1  = Gaffe w
-                | otherwise = Idk'Oops w
+word'result :: H.HashMap Text Boggle'Word -> Text -> Int -> WordResult
+word'result d w n
+  -- can only be seen if in dictionary
+  | Just False == d^?ix w.been'seen = New w
+  | n == 1  = Unique w
+  | n > 1   = Shared w
+  | n == -1 = Mistake w
+  | n < -1  = Gaffe w
+  | otherwise = Idk'Oops w
 
 classify'words :: RoundResult -> Map Text WordResult
 classify'words = \case
-  RoundResult sol subs ->
+  RoundResult dict sol subs ->
     let misses = negate <$> subs .- sol
         hits   = subs .* sol
-     in M.mapWithKey word'result (misses .+ hits)
+     in M.mapWithKey (word'result dict) (misses .+ hits)
 
 instance ToMarkup WordResult where
   toMarkup = \case
     Unique w   -> H.div $ H.text w
+    New w      -> H.div ! H.style "color:#007A5A;" $ H.text w
     Shared w   -> H.div ! H.style "color:#969696;" $ H.text w
     Mistake w  -> H.div ! H.style "color:#FE160E;" $ H.text w
     Gaffe w    -> H.div ! H.style "color:#EE8509;" $ H.text w
@@ -89,7 +94,8 @@ instance ToMarkup Score'View where
   toMarkup (Score'View gob) = report where
     sol = gob ^. board.word'list
     subs = gob^..players.traversed.answers
-    res = classify'words $ RoundResult sol $ M.unionsWith (+) subs
+    dict = gob ^. english
+    res = classify'words $ RoundResult dict sol (M.unionsWith (+) subs)
     report = table $ do
       thead $ do td $ ""
                  gob & mapMOf_ (players.to M.keys.folded) (th.H.text)

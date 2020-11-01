@@ -69,11 +69,18 @@ retrieve'dictionary =
   let parse'line (T.breakOn "\t" -> (w,d)) = (w, Boggle'Word False $ T.drop 1 d)
    in H.fromList . map parse'line . T.lines <$> T.readFile "static/definitions.txt"
 
+include'previously'seen :: [Text] -> Gobble -> Gobble
+include'previously'seen ws g = g & english %~ up where
+  up d = L.foldl' (flip $ H.adjust $ been'seen .~ True) d ws
+
 set'previously'seen :: MonadIO m => Gobble -> m Gobble
 set'previously'seen g = do
   ws <- query'db g query'all'words
-  return $! g & english %~
-    \d -> L.foldl' (flip $ H.adjust $ been'seen .~ True) d ws
+  return $! include'previously'seen ws g
+
+update'previously'seen :: Gobble -> Gobble
+update'previously'seen g = include'previously'seen ws g where
+  ws = M.keys $ M.unionsWith (+) $ g ^.. players.folded.answers
 
 make'pinou'stream :: IO [FilePath]
 make'pinou'stream =
