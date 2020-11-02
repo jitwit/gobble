@@ -1,10 +1,10 @@
 body {
-    #    background-color: #FFFFDC;
-    background-color: #FFEEDA;
+    background-color: #FFFFE1;
+#    background-color: #FFEEDA;
 }
 
 h1 {
-    color: #F50953;
+    color: #F51988;
 }
 
 .column {
@@ -93,7 +93,7 @@ body {
 }
 
 #disconnected {
-    color: #F50953;
+    color: #F51988;
     font-size: x-large;
     font-weight: bold;
     padding: 50px;

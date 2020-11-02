@@ -68,7 +68,7 @@ new'player who conn = liftIO $ do
       [ "pinou"    A..= (html'of'pinou $ gob^.pinou'stream._head)
       , "solution" A..= render'solution gob
       , "scores"   A..= render'scores gob ]
-  add'tweet "G🕸️BBLE" (who <> " joined the chat.")
+  add'tweet "GOBBLE" (who <> " joined the chat.")
 
 name'player :: (?gobble :: TVar Gobble, MonadIO m) => Connection -> m Name
 name'player conn = liftIO $ do
@@ -85,7 +85,7 @@ remove'player func who = liftIO $ do
   print (func, who)
   atomically $ modifyTVar' ?gobble $
     (players.at who .~ Nothing) . (connections.at who .~ Nothing)
-  add'tweet "G🕸️BBLE" (who <> " left the chat.")
+  add'tweet "GOBBLE" (who <> " left the chat.")
 
 reply :: (?gobble :: TVar Gobble, WebSocketsData a, MonadIO m)
       => Connection -> a -> m ()
@@ -100,7 +100,7 @@ wow'wow who word = liftIO $ do
   gob <- readTVarIO ?gobble
   when (Just word /= (gob^.gobble'likes.at who)) $ do
     atomically $ writeTVar ?gobble $ gob & gobble'likes.at who ?~ word
-    add'tweet "G🕸️BBLE" $ T.unwords [who,"likes",word]
+    add'tweet "GOBBLE" $ T.unwords [who,"likes",word]
 
 submit'words :: (?gobble :: TVar Gobble, MonadIO m) => Name -> [Text] -> m ()
 submit'words who words = liftIO $ do
@@ -129,7 +129,7 @@ parse'chirp who chirp = case T.words chirp of
     False -> do add'tweet who chirp
                 definition'of'ws word
     True  -> do add'tweet who $ "?def " <> (T.map (const '*') word)
-                add'tweet "G🕸️BBLE" $
+                add'tweet "GOBBLE" $
                   who <> " has been added to santa's naughty list"
   _ -> add'tweet who chirp
 
@@ -261,10 +261,10 @@ run'gobble = liftIO $ forever $ do
     running -> threadDelay $ run'length
 
 definition'of'ws :: (?gobble :: TVar Gobble, MonadIO m) => T.Text -> m ()
-definition'of'ws = add'tweet "G🕸️BBLE" . maybe "idk" id <=< definition'of
+definition'of'ws = add'tweet "GOBBLE" . maybe "idk" id <=< definition'of
 
 help'message :: (?gobble :: TVar Gobble, MonadIO m) => m ()
-help'message = add'tweet "G🕸️BBLE" helpmsg where
+help'message = add'tweet "GOBBLE" helpmsg where
   helpmsg = "((\"?def\" look up word) (\"?help\" this message))"
 
 definition'of :: (?gobble :: TVar Gobble, MonadIO m) => T.Text -> m (Maybe T.Text)
