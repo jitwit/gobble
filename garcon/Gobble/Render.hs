@@ -131,7 +131,7 @@ board'dia b = D.vcat [ D.hcat [ block x | x <- T.unpack r ] | r <- board'rows b 
                 'Q' -> "Qu"
                 _ -> [x]
               back = D.square 1
-                & D.bg (sRGB24 226 248 255)
+                & D.bg (sRGB24 220 246 255)
               fore = D.text ls
                 & D.scale 0.45
                 & D.translate (V2 0 (-0.025))
@@ -219,4 +219,4 @@ instance ToMarkup All'History'Page where
       H.div ! H.style "font-family:monospace;" $
         table $ forM_ res $ \(w,ps) ->
           H.tr $ do H.td ! H.style "min-width: 150px;" $ H.text w
-                    H.td $ H.text $ T.intercalate ", " ps
+                    H.td $ H.text $ T.intercalate ", " (nub ps)

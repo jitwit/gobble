@@ -9,7 +9,7 @@ let gobbler  = import ../garcon/default.nix {};
     webdir   = "/var/www/gobble";
 in {
   networking.firewall = { allowedTCPPorts = [ 22 80 ]; enable = false; };
-  environment.systemPackages = flatten [ gobbler ];
+  environment.systemPackages = flatten [ gobbler sqlite ];
   systemd = {
     services = {
       gobble = {

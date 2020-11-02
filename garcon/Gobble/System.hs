@@ -212,6 +212,15 @@ best'words g who n = do
   ws <- query'db g (query'all'my'words who)
   return $ take n [ w | w <- ws, w `H.member` d ]
 
+run'update'solution'name :: (MonadIO m) => Name -> Name -> Connection  -> m ()
+run'update'solution'name a b c = liftIO $ do
+  let s = unlines
+            [ "update solution"
+            , printf "set name = '%s'" b
+            , printf "where name = '%s';" a ]
+  quickQuery' c s []
+  commit c
+
 query'db :: (MonadIO m) => Gobble -> (Connection -> m a) -> m a
 query'db g q = q (g^.gobble'connection)
 

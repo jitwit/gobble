@@ -137,7 +137,7 @@ calculate'scores (new,wl,ps) = ps & mapped %~ scr where
     p' = p & score .~ pts & solo'score.~spts & total'score.~pts+tot*new
     tot = p^.total'score
     pts = sum ppts - sum npts
-    spts = sum [ score'word word * (wgt (word `M.member` wl)) | word <- M.keys sol ]
+    spts = sum [ score'word word * wgt (word `M.member` wl) | word <- M.keys sol ]
     ppts = [ score'word word | (word,1) <- M.toList $ all'subs .* sol .* wl ]
     npts = [ score'word word | (word,1) <- M.toList $ all'subs .* (sol .- wl) ]
 

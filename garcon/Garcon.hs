@@ -304,7 +304,8 @@ type BoggleAPI =
   :<|> "dawggle" :> Capture "board" Text :> Get '[JSON] [Text]
   -- endpoint to reorder image stream
   :<|> "pinous" :> Get '[PlainText] Text
---  :<|> "help" :> "seen" :> Get '[JSON] [Text]
+  -- danger
+  :<|> "fix" :> "name" :> Capture "from" Text :> Capture "to" Text :> Get '[JSON] ()
 
 naked'state :: (?gobble :: TVar Gobble) => Handler String 
 naked'state = liftIO $ do
@@ -319,8 +320,14 @@ boggle'server = pure GobblePage
   :<|> fmap (maybe "idk" id) . definition'of
   :<|> http'boggle
   :<|> refresh'pinous
+  :<|> fix'username'for
 --  :<|> debug'seen
 --  :<|> debug'seen'1
+
+fix'username'for :: (?gobble :: TVar Gobble, MonadIO m) => Text -> Text -> m ()
+fix'username'for a b = liftIO $ do
+  g <- readTVarIO ?gobble
+  query'db g (run'update'solution'name a b)
 
 all'history'page :: (?gobble :: TVar Gobble, MonadIO m) => m All'History'Page
 all'history'page = liftIO $
