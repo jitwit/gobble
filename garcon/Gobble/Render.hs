@@ -180,7 +180,7 @@ instance ToMarkup GobblePage where
       script ! H.src "static/jquery-3.4.1.slim.js" $ ""
       script ! H.src "static/gobble.js?15" $ ""
     H.body $ do
-      H.h1 "G🎃BBLE"
+      H.h1 "GOBBLE"
       H.div ! H.class_ "row" $ do
         H.div ! H.class_ "column" $ do
           H.div ! H.id "gobble" $ ""

@@ -294,18 +294,17 @@ type BoggleAPI =
        Get '[HTML] GobblePage
   -- serve static stuff
   :<|> "static" :> Raw
-  -- all history
+  -- view all history
   :<|> "previously" :> Get '[HTML] All'History'Page
   -- debug view
   :<|> "help" :> "naked" :> Get '[PlainText] String
-  -- api endpoint to query dictionary
+  -- endpoint to query dictionary
   :<|> "define" :> Capture "word" Text :> Get '[PlainText] Text
-  -- api endpoint to solve board
+  -- endpoint to solve board
   :<|> "dawggle" :> Capture "board" Text :> Get '[JSON] [Text]
-  -- api endpoint to reorder image stream
+  -- endpoint to reorder image stream
   :<|> "pinous" :> Get '[PlainText] Text
-  :<|> "help" :> "seen" :> Get '[JSON] [Text]
-  :<|> "help" :> "seen" :> Capture "w" Text :> Get '[JSON] Bool
+--  :<|> "help" :> "seen" :> Get '[JSON] [Text]
 
 naked'state :: (?gobble :: TVar Gobble) => Handler String 
 naked'state = liftIO $ do
@@ -320,8 +319,8 @@ boggle'server = pure GobblePage
   :<|> fmap (maybe "idk" id) . definition'of
   :<|> http'boggle
   :<|> refresh'pinous
-  :<|> debug'seen
-  :<|> debug'seen'1
+--  :<|> debug'seen
+--  :<|> debug'seen'1
 
 all'history'page :: (?gobble :: TVar Gobble, MonadIO m) => m All'History'Page
 all'history'page = liftIO $
