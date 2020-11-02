@@ -16,7 +16,7 @@ generating and solving boards. Now there's a more sensible structure,
 but here are the old parts factored out:
 
 + [[https://github.com/jitwit/cobble][cobble]] - scheme boggle solver
-+ [[file:joggle/][joggle]] - J boggle solver
++ [[https://github.com/jitwit/joggle][joggle]] - J boggle solver
 
 The scheme one is the fastest, though the J one is my preferred
 solver.
