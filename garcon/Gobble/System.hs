@@ -75,7 +75,7 @@ include'previously'seen ws g = g & english %~ up where
 
 set'previously'seen :: MonadIO m => Gobble -> m Gobble
 set'previously'seen g = do
-  ws <- query'db g query'all'words
+  ws <- query'db g query'distinct'words
   return $! include'previously'seen ws g
 
 update'previously'seen :: Gobble -> Gobble
@@ -188,9 +188,23 @@ query'all'my'words who c = liftIO $ do
             , "order by length(word.letters) desc" ]
   map (fromSql.head) <$> quickQuery' c s []
 
-query'all'words :: (MonadIO m) => Connection -> m [Text]
-query'all'words c = liftIO $ do
+query'distinct'words :: (MonadIO m) => Connection -> m [Text]
+query'distinct'words c = liftIO $ do
   map fromSql . join <$> quickQuery' c "select distinct letters from word" []
+
+query'all'solutions :: (MonadIO m) => Connection -> m [(Text,Text)]
+query'all'solutions c = liftIO $ do
+  let s = unlines
+            [ "select * from word inner join solution"
+            , "where word.solutionid == solution.rowid" ]
+  res <- quickQuery' c s []
+  return [ (fromSql w,fromSql p) | w:_:p:_ <- res ]
+
+fetch'all'solutions :: (MonadIO m) => Gobble -> m (M.Map Text [Text])
+fetch'all'solutions g = do
+  let d = g^.english
+  ws <- query'db g query'all'solutions
+  return $ M.fromListWith (<>) [ (w,[p]) | (w,p) <- ws, w `H.member` d ]
 
 best'words :: (MonadIO m) => Gobble -> Name -> Int -> m [Text]
 best'words g who n = do

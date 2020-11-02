@@ -30,18 +30,26 @@ import Gobble.Core
 
 type H = TLI.Text
 
-data WordResult = New Text | Unique Text | Shared Text | Mistake Text | Gaffe Text | Idk'Oops Text
-data RoundResult = RoundResult (H.HashMap Text Boggle'Word) (Map Text Text) (Map Text Int)
+data WordResult
+  = New Text
+  | Unique Text
+  | Shared Text
+  | Mistake Text
+  | Gaffe Text
+  | Idk'Oops Text
+
+data RoundResult
+  = RoundResult (H.HashMap Text Boggle'Word) (Map Text Text) (Map Text Int)
 
 word'result :: H.HashMap Text Boggle'Word -> Text -> Int -> WordResult
 word'result d w n
-  -- can only be seen if in dictionary
-  | Just False == d^?ix w.been'seen = New w
-  | n == 1  = Unique w
-  | n > 1   = Shared w
-  | n == -1 = Mistake w
-  | n < -1  = Gaffe w
-  | otherwise = Idk'Oops w
+  | is'new && n == 1 = New w
+  | n == 1           = Unique w
+  | n > 1            = Shared w
+  | n == -1          = Mistake w
+  | n < -1           = Gaffe w
+  | otherwise        = Idk'Oops w
+  where is'new = Just False == d^?ix w.been'seen
 
 classify'words :: RoundResult -> Map Text WordResult
 classify'words = \case
@@ -105,7 +113,7 @@ instance ToMarkup Score'View where
           td ! H.style "text-align:center;" $ H.text $ T.pack $ show n
       tr $ do
         let r = ((gob^.current'round)`mod`5)+1
-        td $ H.string ("total (" <> (show r) <> "/5)")
+        td $ H.string $ join ["total (", (show r), "/5)"]
         gob & forMOf_ (players.traversed.total'score) $ \n ->
           td ! H.style "text-align:center;" $ H.text $ T.pack $ show n
       when (1 < length subs) $
@@ -117,25 +125,26 @@ instance ToMarkup Score'View where
                 td $ ul $ mconcat [ toMarkup $ res M.! w | w <- ws ]
 
 board'dia :: Text -> Diagram B
-board'dia b = D.vcat [ D.hcat [ block x | x <- T.unpack r ] | r <- board'rows b ] where
-  block x =
-    let ls = case x of
-          'Q' -> "Qu"
-          _ -> [x]
-        back = D.square 1
-          & D.bg (sRGB24 0 0 0)
-          & D.lc (sRGB24 245 28 44)
-        -- (sRGB24 0xF1 0xD0 0xF3)
-        fore = D.text ls
-          & D.scale 0.45
-          & D.translate (V2 0 (-0.025))
-          & D.font "Georgia"
-          & D.fc (sRGB24 255 106 15)
--- 255 106 101
-     in fore <> back
+board'dia b = D.vcat [ D.hcat [ block x | x <- T.unpack r ] | r <- board'rows b ]
+  where block x =
+          let ls = case x of
+                'Q' -> "Qu"
+                _ -> [x]
+              back = D.square 1
+                & D.bg (sRGB24 0 0 0)
+                & D.lc (sRGB24 245 28 44)
+              -- (sRGB24 0xF1 0xD0 0xF3)
+              fore = D.text ls
+                & D.scale 0.45
+                & D.translate (V2 0 (-0.025))
+                & D.font "Georgia"
+                & D.fc (sRGB24 255 106 15)
+  -- 255 106 101
+           in fore <> back
 
 write'board :: Text -> IO ()
-write'board = renderSVG "static/board.svg" (D.mkSizeSpec $ Just <$> V2 300 300) . board'dia
+write'board = renderSVG "static/board.svg" (D.mkSizeSpec $ Just <$> V2 300 300)
+  . board'dia
 
 tag'thing :: A.ToJSON v => Text -> v -> A.Value
 tag'thing tag val = A.object [ tag A..= val ]
@@ -197,3 +206,20 @@ instance ToMarkup GobblePage where
         H.div ! H.class_ "column" $ do
           H.div ! H.id "solution" $ ""
         H.div ! H.id "scores" $ ""
+
+---- All words history page
+newtype All'History'Page = All'History'Page (M.Map Text [Text])
+
+instance ToMarkup All'History'Page where
+  toMarkup (All'History'Page h) = html $ do
+    H.head $ do
+      title "gobble"
+      link ! H.rel "stylesheet" ! H.href "static/gobble.css?14"
+      link ! H.rel "icon" ! H.href "static/icon.png"
+      script ! H.src "static/jquery-3.4.1.slim.js" $ ""
+    H.body $ do
+      let res = sortOn (negate . T.length . fst) $ M.toList h
+      H.h1 "HISTORY"
+      table $ forM_ res $ \(w,ps) ->
+        H.tr $ do H.td $ H.text w
+                  H.td $ H.text $ T.intercalate ", " ps
