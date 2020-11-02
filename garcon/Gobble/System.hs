@@ -17,7 +17,6 @@ import qualified Data.Map as M
 import qualified Data.HashMap.Strict as H
 import qualified Data.Vector as V
 import System.Directory
-import System.Process
 import System.Random
 import System.Random.Shuffle
 import Data.Time.Clock

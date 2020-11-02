@@ -1,6 +1,6 @@
 { mkDerivation, aeson, base, blaze-html, bytestring, colour
 , containers, diagrams, diagrams-lib, diagrams-svg, directory
-, filepath, lens, lens-aeson, mtl, process, random, random-shuffle, servant
+, filepath, lens, lens-aeson, mtl, random, random-shuffle, servant
 , servant-blaze, servant-client, servant-server, stdenv, stm, text, time, unix
 , wai, wai-websockets, warp, websockets, hashable, utf8-string, data-default
 , hspec, unordered-containers, binary, deepseq, vector, vector-binary-instances
@@ -16,7 +16,7 @@ mkDerivation {
   executableHaskellDepends = [
     aeson base blaze-html bytestring colour containers diagrams
     diagrams-lib diagrams-svg directory filepath lens lens-aeson mtl
-    process random random-shuffle servant servant-blaze servant-client
+    random random-shuffle servant servant-blaze servant-client
     servant-server stm text time unix wai wai-websockets warp
     websockets hashable utf8-string data-default hspec unordered-containers
     binary deepseq vector vector-binary-instances HDBC HDBC-sqlite3

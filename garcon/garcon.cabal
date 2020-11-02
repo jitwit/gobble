@@ -17,7 +17,6 @@ common doggle
     servant-blaze,
     unix,
     text,
-    process,
     websockets,
     lens,
     mtl,
