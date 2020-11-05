@@ -15,7 +15,6 @@ common doggle
     data-default,
     servant-client,
     servant-blaze,
-    unix,
     text,
     websockets,
     lens,

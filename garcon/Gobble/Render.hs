@@ -131,7 +131,8 @@ board'dia b = D.vcat [ D.hcat [ block x | x <- T.unpack r ] | r <- board'rows b 
                 'Q' -> "Qu"
                 _ -> [x]
               back = D.square 1
-                & D.bg (sRGB24 220 246 255)
+                & D.bg (sRGB24 214 225 255)
+                             --220 246 255)
               fore = D.text ls
                 & D.scale 0.45
                 & D.translate (V2 0 (-0.025))
