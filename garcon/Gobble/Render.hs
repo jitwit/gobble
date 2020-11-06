@@ -220,4 +220,4 @@ instance ToMarkup All'History'Page where
       H.div ! H.style "font-family:monospace;" $
         table $ forM_ res $ \(w,ps) ->
           H.tr $ do H.td ! H.style "min-width: 150px;" $ H.text w
-                    H.td $ H.text $ T.intercalate ", " (nub ps)
+                    H.td $ H.text $ T.intercalate ", " $ reverse $ nub ps
