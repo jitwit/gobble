@@ -11,12 +11,13 @@ Boggle game.
 
 ** Previously
 
-Before, the haskell code was responsible just for games, not for
-generating and solving boards. Now there's a more sensible structure,
-but here are the old parts factored out:
+Previously, the haskell code was responsible only for games,
+generating and solving boards was either left to scheme or J. Now,
+there's a more sensible structure, in which haskell does it all. Here
+here are the old parts factored out:
 
 + [[https://github.com/jitwit/cobble][cobble]] - scheme boggle solver
 + [[https://github.com/jitwit/joggle][joggle]] - J boggle solver
 
-The scheme one is the fastest, though the J one is my preferred
-solver.
+The scheme one is the fastest (of the three), but the J one is my
+favorite one.
