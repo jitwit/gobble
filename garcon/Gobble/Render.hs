@@ -89,8 +89,10 @@ instance ToMarkup Chat'View where
     thead $ mconcat $ intersperse (H.text ", ")
           [ toMarkup $ Player'Status who (plr ^. status)
           | (who,plr) <- gob^.players.to M.assocs ]
+    -- plz make less ugly with long messages by dumping table or
+    -- figuring something else out
     gob & iforMOf_ (chat'room.messages.ifolded) $ \t (Chat'Message tweet author) ->
-      tr $ do td $ H.div ! H.class_ "occurrence" $ do
+      tr $ do td $ H.div ! H.class_ "occurrence" ! H.style "min-width: 80px;" $ do
                 H.span ! H.class_ "happening" $ H.string $ fmt t
                 H.text author
               td $ H.text tweet
