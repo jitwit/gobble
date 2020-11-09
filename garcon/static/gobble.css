@@ -62,7 +62,10 @@ body {
     text-align: center;
     height: 100%;
     position: relative;
+    font-family: source-code-pro,Lucida Console,monaco,monospace;
 }
+
+input { font-family:inherit; }
 
 #gobble > table > tbody > tr > td {
     border-style: solid;
