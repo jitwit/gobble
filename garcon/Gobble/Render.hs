@@ -178,10 +178,10 @@ instance ToMarkup GobblePage where
   toMarkup _ = html $ do
     H.head $ do
       title "gobble"
-      link ! H.rel "stylesheet" ! H.href "static/gobble.css?17"
+      link ! H.rel "stylesheet" ! H.href "static/gobble.css?18"
       link ! H.rel "icon" ! H.href "static/icon.png"
       script ! H.src "static/jquery-3.4.1.slim.js" $ ""
-      script ! H.src "static/gobble.js?17" $ ""
+      script ! H.src "static/gobble.js?18" $ ""
     H.body $ do
       H.h1 "GOBBLE"
       H.div ! H.class_ "row" $ do
@@ -210,16 +210,16 @@ instance ToMarkup GobblePage where
 newtype All'History'Page = All'History'Page (M.Map Text [Text])
 
 instance ToMarkup All'History'Page where
-  toMarkup (All'History'Page h) = html $ do
-    H.head $ do
+  toMarkup (All'History'Page h) = html $ do 
+   H.head $ do
       title "gobble"
-      link ! H.rel "stylesheet" ! H.href "static/gobble.css?15"
+      link ! H.rel "stylesheet" ! H.href "static/gobble.css?18"
       link ! H.rel "icon" ! H.href "static/icon.png"
       script ! H.src "static/jquery-3.4.1.slim.js" $ ""
-    H.body $ do
+    H.body ! H.style "width: 500px; margin: auto;" $ do
       let res = sortOn (negate . T.length . fst) $ M.toList h
       H.h1 "HISTORY"
-      H.div ! H.style "font-family:monospace;" $
-        table $ forM_ res $ \(w,ps) ->
-          H.tr $ do H.td ! H.style "min-width: 150px;" $ H.text w
-                    H.td $ H.text $ T.intercalate ", " $ reverse $ nub ps
+      table $ forM_ res $ \(w,ps) ->
+        H.tr $
+           do H.td ! H.style "min-width: 170px;" $ H.text w
+              H.td $ H.text $ T.intercalate ", " $ reverse $ nub ps

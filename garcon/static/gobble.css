@@ -58,11 +58,13 @@ ul {
     max-height: 400px;
 }
 
+@font-face { font-family: "APL"; src: url("Apl385.ttf"); }
 body {
     text-align: center;
     height: 100%;
     position: relative;
-    font-family: source-code-pro,Lucida Console,monaco,monospace;
+    font-family: "APL";
+    # source-code-pro,Lucida Console,monaco,monospace;
 }
 
 input { font-family:inherit; }

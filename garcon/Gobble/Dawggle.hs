@@ -54,7 +54,7 @@ boggle'search d s =
   let b = board'of'string s; g = graph'of'board b
       look (Path j js n) = (guard $ endOfWord n) >> (Just $ board'ref b =<< reverse (j:js))
       forest = unfoldForest (\p -> (look p, adjacent b g p)) $ start d b
-   in nub . sort . join . map catMaybes =<< (drop 2 $ transpose $ levels <$> forest)
+   in nub . sort . join . map catMaybes =<< (transpose $ levels <$> forest)
 
 data Path = Path { ix :: {-# unpack #-} !Int
                  , ixes :: [Int]

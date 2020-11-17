@@ -1,4 +1,4 @@
-actions = dry-update-gobble update-gobble update-static ghcid-gobble update-images
+actions = dry-update-gobble update-gobble update-static ghcid-gobble update-images download-db
 static-dir = /var/www/gobble/static
 
 .PHONY : clean $(actions)
@@ -19,6 +19,7 @@ update-gobble :
 update-static :
 	nixops scp --to gobble-net garcon/static/gobble.css $(static-dir)
 	nixops scp --to gobble-net garcon/static/gobble.js $(static-dir)
+	nixops scp --to gobble-net garcon/static/Apl385.ttf $(static-dir)
 #	nixops scp --to gobble-net garcon/static/icon.png $(static-dir)
 #	nixops scp --to gobble-net garcon/static/boards.txt $(static-dir)
 #	nixops scp --to gobble-net garcon/static/dawggle.dawg $(static-dir)
@@ -28,6 +29,9 @@ update-static :
 
 update-images :
 	nixops scp --to gobble-net garcon/images/ $(static-dir)
+
+download-db :
+	nixops scp --from gobble-net /var/www/gobble/data/gobble.db gobble.db
 
 clean :
 	find . -name "*~" -exec rm {} \;
