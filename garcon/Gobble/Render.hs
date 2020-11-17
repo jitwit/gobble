@@ -210,8 +210,8 @@ instance ToMarkup GobblePage where
 newtype All'History'Page = All'History'Page (M.Map Text [Text])
 
 instance ToMarkup All'History'Page where
-  toMarkup (All'History'Page h) = html $ do 
-   H.head $ do
+  toMarkup (All'History'Page h) = html $ do
+    H.head $ do
       title "gobble"
       link ! H.rel "stylesheet" ! H.href "static/gobble.css?18"
       link ! H.rel "icon" ! H.href "static/icon.png"
