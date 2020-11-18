@@ -199,17 +199,30 @@ query'all'solutions c = liftIO $ do
   res <- quickQuery' c s []
   return [ (fromSql w,fromSql p) | w:_:p:_ <- res ]
 
+query'solvers :: (MonadIO m) => Text -> Connection -> m [Text]
+query'solvers word c = liftIO $ do
+  let s = unlines
+            [ "select letters,name from word inner join solution"
+            , "where word.solutionid == solution.rowid and"
+            , printf "word.letters == '%s'" word
+            , "group by name" ]
+  res <- quickQuery' c s []
+  return $ [ fromSql w | [_,w] <- res ]
+
 fetch'all'solutions :: (MonadIO m) => Gobble -> m (M.Map Text [Text])
 fetch'all'solutions g = do
   let d = g^.english
-  ws <- query'db g query'all'solutions
-  return $ M.fromListWith (<>) [ (w,[p]) | (w,p) <- ws, w `H.member` d ]
+  res <- query'db g query'all'solutions
+  return $ M.fromListWith (<>) [ (w,[p]) | (w,p) <- res, w `H.member` d ]
 
 best'words :: (MonadIO m) => Gobble -> Name -> Int -> m [Text]
 best'words g who n = do
   let d = g^.english
   ws <- query'db g (query'all'my'words who)
   return $ take n [ w | w <- ws, w `H.member` d ]
+
+past'solvers :: (MonadIO m) => Gobble -> Text -> m [Text]
+past'solvers g w = query'db g (query'solvers w)
 
 run'update'solution'name :: (MonadIO m) => Name -> Name -> Connection  -> m ()
 run'update'solution'name a b c = liftIO $ do

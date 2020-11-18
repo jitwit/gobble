@@ -75,6 +75,7 @@ $(() => {
     boggle.onmessage = (msg) => {
         var m = JSON.parse(msg.data);
         if (m === "name-is-taken") { set_name(msg=" (previous one is taken)"); }
+        if (m === "name-is-empty") { set_name(msg=" (name must be something)"); }
         if (m === "name-too-long") { set_name(msg=" (name too long, should at most 12 letters)"); }
         if (!(m['board'] == null)) { $("#gobble").html(m['board']); clear_new_round (); }
         if (!(m['words'] == null)) { $("#submissions").html(m['words']); }

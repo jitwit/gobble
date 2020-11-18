@@ -48,6 +48,7 @@ is'name'ok :: (?gobble :: TVar Gobble, MonadIO m) => Name -> m Name'Check
 is'name'ok name = liftIO $ do
   check'1 <- not.isn't _Nothing.preview (players.ix name) <$> readTVarIO ?gobble
   if | 12 < T.length name -> pure Name'Too'Long
+     | name == "" -> pure Name'Is'Empty
      | not $ name /= "" && name /= "null" && check'1 -> pure Name'Taken
      | otherwise -> pure Name'OK
 
@@ -75,6 +76,7 @@ name'player conn = liftIO $ do
   uname <- receiveData conn
   is'name'ok uname >>= \case
     Name'Taken -> reply'json @Text conn "name-is-taken" >> name'player conn
+    Name'Is'Empty -> reply'json @Text conn "name-is-empty" >> name'player conn
     Name'Too'Long -> reply'json @Text conn "name-too-long" >> name'player conn
     Name'OK  -> do T.putStrLn $ uname <> " joined the chat."
                    new'player uname conn
@@ -131,6 +133,13 @@ parse'chirp who chirp = case T.words chirp of
     True  -> do add'tweet who $ "?def " <> (T.map (const '*') word)
                 add'tweet "GOBBLE" $
                   who <> " has been added to santa's naughty list"
+  ["?who",word] -> liftIO $ do
+    g <- readTVarIO ?gobble
+    ps <- past'solvers g (T.toUpper word)
+    let msg = case ps of
+          [] -> "..."
+          ws -> T.intercalate ", " ps
+    add'tweet "GOBBLE" msg
   _ -> add'tweet who chirp
 
 add'tweet :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Text -> m ()
