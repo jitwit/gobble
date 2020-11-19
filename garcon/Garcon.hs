@@ -134,6 +134,7 @@ parse'chirp who chirp = case T.words chirp of
                 add'tweet "GOBBLE" $
                   who <> " has been added to santa's naughty list"
   ["?who",word] -> liftIO $ do
+    add'tweet who chirp
     g <- readTVarIO ?gobble
     ps <- past'solvers g (T.toUpper word)
     let msg = case ps of

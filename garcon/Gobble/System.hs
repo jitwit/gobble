@@ -202,10 +202,12 @@ query'all'solutions c = liftIO $ do
 query'solvers :: (MonadIO m) => Text -> Connection -> m [Text]
 query'solvers word c = liftIO $ do
   let s = unlines
-            [ "select letters,name from word inner join solution"
+            [ "select word.letters,name from word"
+            , "inner join solution inner join board"
             , "where word.solutionid == solution.rowid and"
+            , "solution.boardid == board.rowid and"
             , printf "word.letters == '%s'" word
-            , "group by name" ]
+            , "group by name order by board.time asc" ]
   res <- quickQuery' c s []
   return $ [ fromSql w | [_,w] <- res ]
 
