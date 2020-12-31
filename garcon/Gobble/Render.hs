@@ -36,6 +36,7 @@ data WordResult
   | Shared Text
   | Mistake Text
   | Gaffe Text
+  | New'Shared Text
   | Idk'Oops Text
 
 data RoundResult
@@ -44,6 +45,7 @@ data RoundResult
 word'result :: H.HashMap Text Boggle'Word -> Text -> Int -> WordResult
 word'result d w n
   | is'new && n == 1 = New w
+  | is'new && n > 1  = New'Shared w
   | n == 1           = Unique w
   | n > 1            = Shared w
   | n == -1          = Mistake w
@@ -60,12 +62,13 @@ classify'words = \case
 
 instance ToMarkup WordResult where
   toMarkup = \case
-    Unique w   -> H.div $ H.text w
-    New w      -> H.div ! H.style "color:#007A5A;" $ H.text w
-    Shared w   -> H.div ! H.style "color:#969696;" $ H.text w
-    Mistake w  -> H.div ! H.style "color:#FE160E;" $ H.text w
-    Gaffe w    -> H.div ! H.style "color:#EE8509;" $ H.text w
-    Idk'Oops w -> H.div ! H.style "color:#854B21;" $ H.text w
+    Unique w     -> H.div $ H.text w
+    New w        -> H.div ! H.style "color:#007A5A;" $ H.text w
+    Shared w     -> H.div ! H.style "color:#969696;" $ H.text w
+    New'Shared w -> H.div ! H.style "color:#93D3FF;" $ H.text w
+    Mistake w    -> H.div ! H.style "color:#FE160E;" $ H.text w
+    Gaffe w      -> H.div ! H.style "color:#EE8509;" $ H.text w
+    Idk'Oops w   -> H.div ! H.style "color:#854B21;" $ H.text w
 
 instance ToMarkup Word'List'View where
   toMarkup (Word'List'View gob) = 
