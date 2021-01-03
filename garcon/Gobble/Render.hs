@@ -100,7 +100,7 @@ instance ToMarkup Chat'View where
                 H.text author
               td $ H.text tweet
       where loc = defaultTimeLocale
-            zon = hoursToTimeZone (-4)
+            zon = hoursToTimeZone (-5)
             fmt = formatTime loc " %H:%M:%S" . utcToZonedTime zon
 
 instance ToMarkup Score'View where
