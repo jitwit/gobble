@@ -1,17 +1,12 @@
 - ability to add images
-- add static files to nix expression
-- handle bad connections better (kind of done, but there was that one
-  time it all crashed)
+- add static files to nix expression?
 - help/about/better chat/query interface
-- scope visibility of chat messages (eg for help)?
+- scope visibility of chat messages (eg for help and multiple rooms)?
 - use more types and make js/haskell interface better (or at all)
   typed
 - better css/flex-grid?
 - write more tests
-
 - better error message when ws connection lost. better handling on
   client side of lost ws connection
-
-* bigger items
 - multiple games/rooms
-- new languages
+- new languages (eg french)
