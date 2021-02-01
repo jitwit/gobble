@@ -1,5 +1,4 @@
-{-# language PatternSynonyms, MultiWayIf, LambdaCase, OverloadedStrings #-}
-{-# language TypeOperators, DataKinds, TypeApplications, ViewPatterns #-}
+{-# language LambdaCase, OverloadedStrings #-}
 
 module Gobble.Message where
 
@@ -11,15 +10,25 @@ import qualified Data.ByteString.Lazy.UTF8 as B8
 import Gobble.Core
 
 data Status'Query = Who'Query | Word'List'Query
-
+  deriving (Show)
+-- besides Chirp, messages (requests mostly) that the client sends to
+-- update state
 data Gobble'Message
   = Status'Message Status'Query
   | Submit'Message [T.Text]
   | Delete'Message T.Text
   | Like'Message T.Text
-  | Chirp'Message T.Text
+  | Chirp'Message Chirp
   | IDK'Message T.Text
+  deriving (Show)
 
+data Chirp
+  = Help'Me
+  | Define T.Text
+  | Who's'Gotten T.Text
+  | Chirp T.Text
+  deriving (Show)
+-- should use real parser?
 parse'ws'message :: DataMessage -> Gobble'Message
 parse'ws'message (Text t _) =
   let t' = T.pack $ B8.toString t
@@ -28,15 +37,13 @@ parse'ws'message (Text t _) =
     "DOBBLE":w:[] -> Delete'Message w
     "WOBBLE":w:[] -> Like'Message w
     _ -> case T.stripPrefix "chirp " t' of
-      Just chirp -> Chirp'Message chirp
-      Nothing -> case t' of
-        "who-else" -> Status'Message Who'Query
-        "words" -> Status'Message Word'List'Query
-        _ -> IDK'Message t'
+           Just msg -> case T.words msg of
+             ["?def",w] -> Chirp'Message $ Define w
+             ["?who",w] -> Chirp'Message $ Who's'Gotten w
+             ["?help"] -> Chirp'Message $ Help'Me
+             _ -> Chirp'Message $ Chirp msg
+           Nothing -> case t' of
+             "who-else" -> Status'Message Who'Query
+             "words" -> Status'Message Word'List'Query
+             _ -> IDK'Message t'
 parse'ws'message (Binary m) = IDK'Message $ T.pack $ B8.toString m
-  
-pattern Query cmd <- Text cmd _
-pattern Words ws <- Text (T.words.T.toUpper.T.pack.B8.toString -> "GOBBLE":ws) _
-pattern Delete w <- Text (T.words.T.toUpper.T.pack.B8.toString -> "DOBBLE":w:[]) _
-pattern Wow'wow w <- Text (T.words.T.toUpper.T.pack.B8.toString -> "WOBBLE":w:[]) _
-pattern Chirp msg <- Text (T.stripPrefix "chirp ".T.pack.B8.toString -> Just msg) _

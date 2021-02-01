@@ -125,24 +125,24 @@ delete'word who word = liftIO $ atomically $ do
 game'ongoing :: (?gobble :: TVar Gobble, MonadIO m) => m Bool
 game'ongoing = liftIO $ readTVarIO ?gobble <&> is _Boggled . view game'phase
 
-parse'chirp :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Text -> m ()
-parse'chirp who chirp = case T.words chirp of
-  ["?help"] -> help'message
-  ["?def",word] -> game'ongoing >>= \case
-    False -> do add'tweet who chirp
-                definition'of'ws word
-    True  -> do add'tweet who $ "?def " <> (T.map (const '*') word)
-                add'tweet "GOBBLE" $
-                  who <> " has been added to santa's naughty list"
-  ["?who",word] -> liftIO $ do
-    add'tweet who chirp
+handle'chirp :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Chirp -> m ()
+handle'chirp who = \case
+  Help'Me -> help'message
+  Who's'Gotten word -> liftIO $ do
+    add'tweet who $ "?who " <> word
     g <- readTVarIO ?gobble
     ps <- past'solvers g (T.toUpper word)
     let msg = case ps of
           [] -> "..."
           ws -> T.intercalate ", " ps
     add'tweet "GOBBLE" msg
-  _ -> add'tweet who chirp
+  Define word -> game'ongoing >>= \case
+    False -> do add'tweet who $ "?def " <> word -- hmmmmmmm
+                definition'of'ws word
+    True  -> do add'tweet who $ "?def " <> (T.map (const '*') word)
+                add'tweet "GOBBLE" $
+                  who <> " has been added to santa's naughty list"
+  Chirp chirp -> add'tweet who chirp
 
 add'tweet :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Text -> m ()
 add'tweet who tweet = liftIO $ do
@@ -180,7 +180,7 @@ ws'handle who conn d'm = liftIO $ case parse'ws'message d'm of
   Submit'Message ws -> submit'words who ws
   Delete'Message w -> delete'word who w
   Like'Message w -> wow'wow who w
-  Chirp'Message w -> parse'chirp who w
+  Chirp'Message w -> print w >> handle'chirp who w
   IDK'Message idk -> reply'json @Text conn "idk"
 
 get'players :: (?gobble :: TVar Gobble) => IO [Name]
