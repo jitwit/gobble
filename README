@@ -6,18 +6,16 @@ Boggle game.
 
 ** Currently
 
-+ [[file:garcon/][garcon]] - haskell websocket server
-+ [[file:nibble/][nibble]] - nix expressions to get on the network
++ [[file:garcon/][garcon]] - game server
++ [[file:nibble/][nibble]] - nix expressions to get running on the network
 
 ** Previously
 
-Previously, the haskell code was responsible only for games,
-generating and solving boards was either left to scheme or J. Now,
-there's a more sensible structure, in which haskell does it all. Here
-here are the old parts factored out:
+Previously, other languages did the solving. Now, there's a simpler
+structure where haskell does it all. Here are the former solvers,
+factored out:
 
 + [[https://github.com/jitwit/cobble][cobble]] - scheme boggle solver
 + [[https://github.com/jitwit/joggle][joggle]] - J boggle solver
 
-The scheme one is the fastest (of the three), but the J one is my
-favorite one.
+The scheme one is the fastest, but the J one is the most fun.

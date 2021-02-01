@@ -1,3 +1,4 @@
+- multiple games/rooms(!)
 - ability to add images
 - add static files to nix expression?
 - help/about/better chat/query interface
@@ -8,5 +9,4 @@
 - write more tests
 - better error message when ws connection lost. better handling on
   client side of lost ws connection
-- multiple games/rooms
-- new languages (eg french)
+- new languages (eg french, where can i find a dictionary!?)

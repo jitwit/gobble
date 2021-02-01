@@ -28,7 +28,8 @@ data Chirp
   | Who's'Gotten T.Text
   | Chirp T.Text
   deriving (Show)
--- should use real parser?
+
+-- should use real parser, no?
 parse'ws'message :: DataMessage -> Gobble'Message
 parse'ws'message (Text t _) =
   let t' = T.pack $ B8.toString t
