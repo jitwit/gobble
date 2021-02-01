@@ -40,6 +40,7 @@ import Gobble.Core
 import Gobble.System
 import Gobble.Render
 import Gobble.Dawggle
+import Gobble.Message
 
 fetch'board :: (?gobble :: TVar Gobble, MonadIO m) => m Board
 fetch'board = liftIO $ view board <$> readTVarIO ?gobble
@@ -171,23 +172,16 @@ tagged'broadcast tag = broadcast'val . tag'thing tag
 broadcast'clear :: (?gobble :: TVar Gobble, MonadIO m) => Text -> m ()
 broadcast'clear what = tagged'broadcast what clear'html
 
-pattern Query cmd <- Text cmd _
-pattern Words ws <- Text (T.words.T.toUpper.T.pack.B8.toString -> "GOBBLE":ws) _
-pattern Delete w <- Text (T.words.T.toUpper.T.pack.B8.toString -> "DOBBLE":w:[]) _
-pattern Wow'wow w <- Text (T.words.T.toUpper.T.pack.B8.toString -> "WOBBLE":w:[]) _
-pattern Chirp msg <- Text (T.stripPrefix "chirp ".T.pack.B8.toString -> Just msg) _
-
 ws'handle :: (?gobble :: TVar Gobble, MonadIO m)
             => Name -> Connection -> DataMessage -> m ()
-ws'handle who conn = liftIO . \case
-  Words ws -> submit'words who ws
-  Delete w -> delete'word who w
-  Chirp c -> parse'chirp who c
-  Wow'wow w -> wow'wow who w
-  Query "who-else" -> reply'json conn =<< get'players
-  Query "words" -> send'words conn who
-  Text msg _ -> reply'json @Text conn "idk/text"
-  Binary msg -> reply'json @Text conn "idk/bin"
+ws'handle who conn d'm = liftIO $ case parse'ws'message d'm of
+  Status'Message Who'Query -> reply'json conn =<< get'players
+  Status'Message Word'List'Query -> send'words conn who
+  Submit'Message ws -> submit'words who ws
+  Delete'Message w -> delete'word who w
+  Like'Message w -> wow'wow who w
+  Chirp'Message w -> parse'chirp who w
+  IDK'Message idk -> reply'json @Text conn "idk"
 
 get'players :: (?gobble :: TVar Gobble) => IO [Name]
 get'players = M.keys . view players <$> readTVarIO ?gobble
