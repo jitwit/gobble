@@ -55,7 +55,7 @@ executable garcon
   main-is: Garcon.hs
   exposed-modules:
     Gobble.Core, Gobble.Dawg, Gobble.Render,
-    Gobble.System, Gobble.Dawggle, Gobble.Message
+    Gobble.System, Gobble.Dawggle
 
 -- the tests
 test-suite toggle

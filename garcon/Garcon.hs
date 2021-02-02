@@ -40,7 +40,6 @@ import Gobble.Core
 import Gobble.System
 import Gobble.Render
 import Gobble.Dawggle
-import Gobble.Message
 
 fetch'board :: (?gobble :: TVar Gobble, MonadIO m) => m Board
 fetch'board = liftIO $ view board <$> readTVarIO ?gobble
@@ -285,7 +284,7 @@ boggle :: (?gobble :: TVar Gobble, MonadIO m) => PendingConnection -> m ()
 boggle pend = liftIO $ do
   conn <- acceptRequest pend
   who <- name'player conn
-  withPingThread conn 29 (pure ()) $
+  withPingThread conn 30 (pure ()) $
     flip E.finally (remove'player "boggle" who) $ forever $
     receiveDataMessage conn >>= ws'handle who conn
 
@@ -325,8 +324,6 @@ boggle'server = pure GobblePage
   :<|> http'boggle
   :<|> refresh'pinous
   :<|> fix'username'for
---  :<|> debug'seen
---  :<|> debug'seen'1
 
 fix'username'for :: (?gobble :: TVar Gobble, MonadIO m) => Text -> Text -> m ()
 fix'username'for a b = liftIO $ do

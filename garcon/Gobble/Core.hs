@@ -3,6 +3,7 @@
 
 module Gobble.Core where
 
+import qualified Data.ByteString.Lazy.UTF8 as B8
 import Data.Default
 import Data.Time.Clock
 import Network.WebSockets
@@ -14,6 +15,7 @@ import qualified Data.Text as T
 import Unsafe.Coerce
 import Data.Text (Text)
 import qualified Database.HDBC.Sqlite3 as DB
+-- import Control.Exception
 import Control.Lens
 import Control.Concurrent
 
@@ -75,6 +77,57 @@ data Gobble = Gobble
   , _gobble'dawg :: D.Node
   , _gobble'big'words :: V.Vector String
   , _gobble'connection :: DB.Connection }
+
+data Visibility = Global | Private [Text]
+
+data Gobble'Room = Gobble'Room
+  { _room'members :: Map Name Player
+  , _room'chat :: Chat
+  , _room'likes :: Map Name Text
+  , _room'phase :: Phase
+  , _room'round :: Int
+  , _room'board :: Board
+  , _room'visibility :: Visibility }
+
+data Status'Query = Who'Query | Word'List'Query
+  deriving (Show)
+-- besides Chirp, messages (requests mostly) that the client sends to
+-- update state
+data Gobble'Message
+  = Status'Message Status'Query
+  | Submit'Message [T.Text]
+  | Delete'Message T.Text
+  | Like'Message T.Text
+  | Chirp'Message Chirp
+  | IDK'Message T.Text
+  deriving (Show)
+
+data Chirp
+  = Help'Me
+  | Define T.Text
+  | Who's'Gotten T.Text
+  | Chirp T.Text
+  deriving (Show)
+
+-- should use real parser, no?
+parse'ws'message :: DataMessage -> Gobble'Message
+parse'ws'message (Text t _) =
+  let t' = T.pack $ B8.toString t
+  in case T.words $ T.toUpper t' of
+    "GOBBLE":ws -> Submit'Message ws
+    "DOBBLE":w:[] -> Delete'Message w
+    "WOBBLE":w:[] -> Like'Message w
+    _ -> case T.stripPrefix "chirp " t' of
+           Just msg -> case T.words msg of
+             ["?def",w] -> Chirp'Message $ Define w
+             ["?who",w] -> Chirp'Message $ Who's'Gotten w
+             ["?help"] -> Chirp'Message $ Help'Me
+             _ -> Chirp'Message $ Chirp msg
+           Nothing -> case t' of
+             "who-else" -> Status'Message Who'Query
+             "words" -> Status'Message Word'List'Query
+             _ -> IDK'Message t'
+parse'ws'message (Binary m) = IDK'Message $ T.pack $ B8.toString m
 
 type Game'Log = (Text,Int,Map Text ([Text],Int,Status,UTCTime))
 
