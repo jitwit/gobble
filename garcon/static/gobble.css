@@ -7,9 +7,10 @@ h1 {
     color: #F51988;
 }
 
-.column {
-    float: left;
-    width: 33.33%;
+.gobble {
+    display: grid;
+    grid-template-columns: repeat(3,1fr);
+    gap: 40px;
 }
 
 .occurrence {
@@ -31,12 +32,6 @@ h1 {
 
 .occurrence:hover .happening {
     display: block;
-}
-
-.row:after {
-    content: "";
-    display: table;
-    clear: both;
 }
 
 @media screen and (max-width: 600px) {
@@ -68,6 +63,18 @@ body {
 }
 
 input { font-family:inherit; }
+
+.blahaleft {
+    grid-column: 1;
+}
+
+.blahamid {
+    grid-column: 2;
+}
+
+.blaharight {
+    grid-column: 3;
+}
 
 #gobble > table > tbody > tr > td {
     border-style: solid;
