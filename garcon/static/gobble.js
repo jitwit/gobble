@@ -16,6 +16,7 @@ $(() => {
     like_word = (word) => { boggle.send('wobble ' + word); };
     chirp = (tweet) => { boggle.send('chirp ' + tweet); };
     query_words = () => { boggle.send('words'); };
+    score_preview = () => { boggle.send('preview'); };
 
     set_name = (msg="") => {
 	whoami = prompt('name ?' + msg, whoami || "");
@@ -33,6 +34,7 @@ $(() => {
         add_word($("#scratch").val());
         $("#scratch").val("");
         query_words();
+//	score_preview();
     });
     
     $("#tweet").submit((e) => {
@@ -45,6 +47,7 @@ $(() => {
         $("#scratch").focus();
         del_word($(e.target).text());
         query_words();
+//	score_preview();
     });
 
     $("#scores").on("click","div",(e) => {
@@ -52,7 +55,7 @@ $(() => {
     });
 
     $("#disconnected").on("click","p",(e) => {
-	console.log("hiho");
+//	console.log("hiho");
 //	location.reload();
     });
 

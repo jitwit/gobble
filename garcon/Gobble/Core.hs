@@ -60,6 +60,7 @@ data Boggle'Word = Boggle'Word
 newtype Chat'View = Chat'View Gobble
 newtype Score'View = Score'View Gobble
 newtype Word'List'View = Word'List'View Gobble
+newtype Score'Preview = Score'Preview Gobble
 data Player'Status = Player'Status Text Status
 
 data Chat = Chat { _messages :: Map UTCTime Chat'Message } deriving Show
@@ -126,6 +127,7 @@ parse'ws'message (Text t _) =
            Nothing -> case t' of
              "who-else" -> Status'Message Who'Query
              "words" -> Status'Message Word'List'Query
+--             "preview" -> Status'Message Score'Preview'Query
              _ -> IDK'Message t'
 parse'ws'message (Binary m) = IDK'Message $ T.pack $ B8.toString m
 
@@ -197,9 +199,11 @@ calculate'scores (new,wl,ps) = ps & mapped %~ scr where
 
 score'submissions :: Gobble -> Gobble
 score'submissions gob = gob & players.~result & game'phase.~Scoring where
-  result = calculate'scores (gob^.current'round.to signum
-                            ,gob^.board.word'list
-                            ,gob^.players)
+  result = current'scores gob
+
+current'scores :: Gobble -> Map Name Player
+current'scores gob = calculate'scores
+  (gob^.current'round.to signum,gob^.board.word'list,gob^.players)
 
 game'log'view :: Gobble -> Game'Log
 game'log'view gob = (gob^.board.letters,gob^.current'round,gob^.players<&>vp) where

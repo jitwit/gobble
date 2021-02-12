@@ -84,7 +84,6 @@ name'player conn = liftIO $ do
 
 remove'player :: (?gobble :: TVar Gobble, MonadIO m) => Text -> Name -> m ()
 remove'player func who = liftIO $ do
-  print (func, who)
   atomically $ modifyTVar' ?gobble $
     (players.at who .~ Nothing) . (connections.at who .~ Nothing)
   add'tweet "GOBBLE" (who <> " left the chat.")
@@ -198,6 +197,12 @@ send'words conn who = liftIO $ do
   when (gob ^. game'phase & isn't _Scoring) $
     reply'json conn $ tag'thing "words" $ render'words who gob
 
+send'preview :: (?gobble :: TVar Gobble, MonadIO m) => m ()
+send'preview = liftIO $ do
+  gob <- readTVarIO ?gobble
+  when (gob ^. game'phase & isn't _Scoring) $
+    tagged'broadcast "solution" $ render'preview gob
+
 score'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 score'round = liftIO $ do
   gob <- atomically $ stateTVar ?gobble (dup.score'submissions)
@@ -262,6 +267,9 @@ run'gobble = liftIO $ forever $ do
   case phase of
     Ready   -> threadDelay $ ready'length
     running -> threadDelay $ run'length
+
+preview'loop :: (?gobble :: TVar Gobble, MonadIO m) => m ()
+preview'loop = liftIO $ forever $ threadDelay (1000*1000*5) >> send'preview
 
 definition'of'ws :: (?gobble :: TVar Gobble, MonadIO m) => T.Text -> m ()
 definition'of'ws = add'tweet "GOBBLE" . maybe "idk" id <=< definition'of
@@ -359,7 +367,10 @@ launch'boggle port = do
    in do let back = serve boggle'api boggle'server
          bog'thread <- forkIO $ run port $
            websocketsOr defaultConnectionOptions boggle back
-         run'gobble `E.finally` killThread bog'thread
+         preview'thread <- forkIO $ preview'loop
+         E.finally run'gobble $ do
+           killThread bog'thread
+           killThread preview'thread
          putStrLn $ "GOBBLE died"
 
 main :: IO ()

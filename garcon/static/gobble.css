@@ -1,6 +1,11 @@
 body {
     background-color: #FFFFE1;
-#    background-color: #FFEEDA;
+    #    background-color: #FFEEDA;
+    text-align: center;
+    height: 100%;
+    position: relative;
+    font-family: "APL";
+    # source-code-pro,Lucida Console,monaco,monospace;
 }
 
 h1 {
@@ -10,7 +15,7 @@ h1 {
 .gobble {
     display: grid;
     grid-template-columns: repeat(3,1fr);
-    gap: 40px;
+    gap: 20px;
 }
 
 .occurrence {
@@ -34,12 +39,6 @@ h1 {
     display: block;
 }
 
-@media screen and (max-width: 600px) {
-  .column {
-    width: 100%;
-  }
-}
-
 ul {
     list-style-type: none;
 }
@@ -54,13 +53,6 @@ ul {
 }
 
 @font-face { font-family: "APL"; src: url("Apl385.ttf"); }
-body {
-    text-align: center;
-    height: 100%;
-    position: relative;
-    font-family: "APL";
-    # source-code-pro,Lucida Console,monaco,monospace;
-}
 
 input { font-family:inherit; }
 

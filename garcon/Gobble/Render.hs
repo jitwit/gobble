@@ -103,6 +103,13 @@ instance ToMarkup Chat'View where
             zon = hoursToTimeZone (-5)
             fmt = formatTime loc " %H:%M:%S" . utcToZonedTime zon
 
+instance ToMarkup Score'Preview where
+  toMarkup (Score'Preview gob) = do
+    mconcat $ intersperse (H.text ", ")
+          [ H.text $ who <> " " <> plr^.score.to (T.pack.show)
+          | (who,plr) <- M.assocs $ current'scores gob,
+            Here == plr^.status ]
+
 instance ToMarkup Score'View where
   toMarkup (Score'View gob) = report where
     sol = gob ^. board.word'list
@@ -160,6 +167,9 @@ render'solution = renderHtml . toMarkup . Word'List'View
 render'scores :: Gobble -> H
 render'scores = renderHtml . toMarkup . Score'View
 
+render'preview :: Gobble -> H
+render'preview = renderHtml . toMarkup . Score'Preview
+
 html'of'board :: Board -> H
 html'of'board b = renderHtml $ img ! H.src board'source where
   board'source = "static/board.svg?" <> stringValue (b^.letters&show)
@@ -184,7 +194,7 @@ instance ToMarkup GobblePage where
       link ! H.rel "stylesheet" ! H.href "static/gobble.css?19"
       link ! H.rel "icon" ! H.href "static/icon.png"
       script ! H.src "static/jquery-3.4.1.slim.js" $ ""
-      script ! H.src "static/gobble.js?19" $ ""
+      script ! H.src "static/gobble.js?20" $ ""
     H.body $ do
       H.h1 "GOBBLE"
       H.div ! H.class_ "gobble" $ do
@@ -214,7 +224,7 @@ instance ToMarkup All'History'Page where
   toMarkup (All'History'Page h) = html $ do
     H.head $ do
       title "gobble"
-      link ! H.rel "stylesheet" ! H.href "static/gobble.css?18"
+      link ! H.rel "stylesheet" ! H.href "static/gobble.css?20"
       link ! H.rel "icon" ! H.href "static/icon.png"
       script ! H.src "static/jquery-3.4.1.slim.js" $ ""
     H.body ! H.style "width: 500px; margin: auto;" $ do
@@ -224,3 +234,4 @@ instance ToMarkup All'History'Page where
         H.tr $
            do H.td ! H.style "min-width: 170px;" $ H.text w
               H.td $ H.text $ T.intercalate ", " $ reverse $ nub ps
+
