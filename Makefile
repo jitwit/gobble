@@ -14,6 +14,8 @@ dry-update-gobble :
 update-gobble :
 	nixops modify nibble/aws.nix nibble/app.nix -d gobbler
 	nixops deploy -d gobbler
+	nixops scp --to gobble-net garcon/static/gobble.css $(static-dir)
+	nixops scp --to gobble-net garcon/static/gobble.js $(static-dir)
 	nixops ssh -d gobbler gobble-net systemctl status gobble
 
 update-static :

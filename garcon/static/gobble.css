@@ -23,6 +23,14 @@ h1 {
     display: block;
 }
 
+#solution {
+    padding: 20px;
+}
+
+#scores {
+    padding: 20px;
+}
+
 .occurrence .happening {
     display: none;
     padding: 2px;

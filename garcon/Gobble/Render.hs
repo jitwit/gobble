@@ -191,15 +191,16 @@ instance ToMarkup GobblePage where
   toMarkup _ = html $ do
     H.head $ do
       title "gobble"
-      link ! H.rel "stylesheet" ! H.href "static/gobble.css?19"
+      link ! H.rel "stylesheet" ! H.href "static/gobble.css?21"
       link ! H.rel "icon" ! H.href "static/icon.png"
       script ! H.src "static/jquery-3.4.1.slim.js" $ ""
-      script ! H.src "static/gobble.js?20" $ ""
+      script ! H.src "static/gobble.js?21" $ ""
     H.body $ do
       H.h1 "GOBBLE"
       H.div ! H.class_ "gobble" $ do
           H.div ! H.class_ "blahaleft" $ do
             H.div ! H.id "gobble" $ ""
+            H.div ! H.id "solution" $ ""
           H.div ! H.class_ "blahamid" $ do
             H.div ! H.id "timer" $ ""
             H.form ! H.id "mush" $ do
@@ -208,14 +209,13 @@ instance ToMarkup GobblePage where
               H.input ! H.type_ "submit" ! H.hidden "mush!"
             H.ul ! H.id "submissions" $ ""
             H.div ! H.id "pinou" $ ""
+            H.div ! H.id "scores" $ ""
           H.div ! H.class_ "blaharight" $ do
             H.div ! H.id "twitter" $ do
               H.div ! H.id "tweets" $ ""
             H.form ! H.id "tweet" $ do
               H.input ! H.type_ "text" ! H.autocomplete "off" ! H.id "scribble"
               H.input ! H.type_ "submit" ! H.hidden ""
-          H.div ! H.id "solution" $ ""
-          H.div ! H.id "scores" $ ""
 
 ---- All words history page
 newtype All'History'Page = All'History'Page (M.Map Text [Text])
