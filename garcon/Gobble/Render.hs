@@ -104,11 +104,13 @@ instance ToMarkup Chat'View where
             fmt = formatTime loc " %H:%M:%S" . utcToZonedTime zon
 
 instance ToMarkup Score'Preview where
-  toMarkup (Score'Preview gob) = do
-    mconcat $ intersperse (H.text ", ")
-          [ H.text $ who <> " " <> plr^.score.to (T.pack.show)
-          | (who,plr) <- M.assocs $ current'scores gob,
-            Here == plr^.status ]
+  -- if only 1 person playing, don't show current score.
+  toMarkup (Score'Preview gob) = case peeps of
+    _:_:_ -> mconcat $ intersperse (H.text ", ") peeps
+    _ -> mempty
+    where peeps = [ H.text $ who <> " " <> plr^.score.to (T.pack.show)
+                  | (who,plr) <- M.assocs $ current'scores gob,
+                    Here == plr^.status ]
 
 instance ToMarkup Score'View where
   toMarkup (Score'View gob) = report where
@@ -234,4 +236,3 @@ instance ToMarkup All'History'Page where
         H.tr $
            do H.td ! H.style "min-width: 170px;" $ H.text w
               H.td $ H.text $ T.intercalate ", " $ reverse $ nub ps
-

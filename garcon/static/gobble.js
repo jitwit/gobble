@@ -96,5 +96,5 @@ $(() => {
 
     boggle.onclose = () => {
 	document.body.innerHTML = `<div id="disconnected">lost connection. try refreshing...</div>`;
-    }; 
+    };
 });
