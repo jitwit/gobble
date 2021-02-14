@@ -15,7 +15,6 @@ import qualified Data.Text as T
 import Unsafe.Coerce
 import Data.Text (Text)
 import qualified Database.HDBC.Sqlite3 as DB
--- import Control.Exception
 import Control.Lens
 import Control.Concurrent
 

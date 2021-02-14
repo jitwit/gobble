@@ -46,10 +46,10 @@ fetch'board = liftIO $ view board <$> readTVarIO ?gobble
 
 is'name'ok :: (?gobble :: TVar Gobble, MonadIO m) => Name -> m Name'Check
 is'name'ok name = liftIO $ do
-  check'1 <- not.isn't _Nothing.preview (players.ix name) <$> readTVarIO ?gobble
+  check'1 <- isn't _Nothing.preview (players.ix name) <$> readTVarIO ?gobble
   if | 12 < T.length name -> pure Name'Too'Long
-     | name == "" -> pure Name'Is'Empty
-     | not $ name /= "" && name /= "null" && check'1 -> pure Name'Taken
+     | name == "" || name == "null" -> pure Name'Is'Empty
+     | check'1 -> pure Name'Taken
      | otherwise -> pure Name'OK
 
 new'player :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Connection -> m ()
