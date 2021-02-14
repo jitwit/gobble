@@ -4,7 +4,7 @@
 , servant-blaze, servant-client, servant-server, stdenv, stm, text, time, unix
 , wai, wai-websockets, warp, websockets, hashable, utf8-string, data-default
 , hspec, unordered-containers, binary, deepseq, vector, vector-binary-instances
-, HDBC, HDBC-sqlite3
+, HDBC, HDBC-sqlite3, servant-auth-server
 # , persistent, persistent-sqlite, esqueleto
 }:
 mkDerivation {
@@ -20,6 +20,7 @@ mkDerivation {
     servant-server stm text time unix wai wai-websockets warp
     websockets hashable utf8-string data-default hspec unordered-containers
     binary deepseq vector vector-binary-instances HDBC HDBC-sqlite3
+    servant-auth-server
 #    esqueleto persistent persistent-sqlite
   ];
   license = "unknown";

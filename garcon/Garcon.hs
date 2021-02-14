@@ -371,7 +371,7 @@ launch'boggle port = do
          E.finally run'gobble $ do
            killThread bog'thread
            killThread preview'thread
-         putStrLn $ "GOBBLE died"
+           putStrLn $ "GOBBLE died"
 
 main :: IO ()
 main = getArgs >>= \case

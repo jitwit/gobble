@@ -3,6 +3,7 @@
 module Gobble.System where
 
 import Control.Applicative
+import qualified Control.Exception as E
 import Control.Lens
 import Control.Monad
 import Control.Monad.IO.Class
