@@ -61,6 +61,7 @@ newtype Score'View = Score'View Gobble
 newtype Word'List'View = Word'List'View Gobble
 newtype Score'Preview = Score'Preview Gobble
 data Player'Status = Player'Status Text Status
+newtype Round'View = Round'View Int
 
 data Chat = Chat { _messages :: Map UTCTime Chat'Message } deriving Show
 
@@ -80,8 +81,9 @@ data Gobble = Gobble
 
 data Visibility = Global | Private [Text]
 
-data Gobble'Room = Gobble'Room
-  { _room'members :: Map Name Player
+data Room = Room
+  { _room'name :: Name
+  , _room'members :: Map Name Player
   , _room'chat :: Chat
   , _room'likes :: Map Name Text
   , _room'phase :: Phase
@@ -169,9 +171,6 @@ isqrt = floor . sqrt . fromIntegral
 
 board'rows :: Text -> [Text]
 board'rows b = T.chunksOf (isqrt $ T.length b) b
-
-threadDelayS :: Integer -> IO ()
-threadDelayS = threadDelay . fromIntegral . (*10^6) 
 
 dup :: a -> (a,a)
 dup x = (x,x)

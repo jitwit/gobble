@@ -88,6 +88,7 @@ $(() => {
         if (!(m['time'] == null)) { timer(new Date (m['time']),m['round'],m['pause']); }
         if (!(m['solution'] == null)) { $("#solution").html(m['solution']); }
         if (!(m['scores'] == null)) { $("#scores").html(m['scores']); }
+        if (!(m['rounds'] == null)) { $("#rounds").html(m['rounds']); }
         // idk: { console.log(res); }
     };
     boggle.onerror = (e) => {

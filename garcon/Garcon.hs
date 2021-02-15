@@ -244,7 +244,8 @@ fresh'round = liftIO $ do
     , "pause"    A..= score'length
     , "round"    A..= round'length
     , "scores"   A..= clear'html
-    , "solution" A..= clear'html ]
+    , "solution" A..= clear'html
+    , "rounds" A..= render'round'view gob ]
 
 run'gobble :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 run'gobble = liftIO $ forever $ do
