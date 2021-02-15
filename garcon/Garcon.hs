@@ -63,12 +63,15 @@ new'player who conn = liftIO $ do
     reply'json conn $ A.object
       [ "time" A..= (gob^.board.creation'time.to (addUTCTime round'period))
       , "pause" A..= score'length
-      , "round" A..= round'length ]
+      , "round" A..= round'length
+      , "rounds" A..= render'round'view gob
+      ]
     when (gob ^. game'phase & is _Scoring) $
       reply'json conn $ A.object
       [ "pinou"    A..= (html'of'pinou $ gob^.pinou'stream._head)
       , "solution" A..= render'solution gob
-      , "scores"   A..= render'scores gob ]
+      , "scores"   A..= render'scores gob
+      ]
   add'tweet "GOBBLE" (who <> " joined the chat.")
 
 name'player :: (?gobble :: TVar Gobble, MonadIO m) => Connection -> m Name
