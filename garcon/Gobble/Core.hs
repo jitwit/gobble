@@ -25,6 +25,7 @@ todo :: todo
 todo = error "todo"
 
 type Name = Text
+type Room'ID = Name
 
 data Phase = Boggled | Scoring | Ready
   deriving (Eq,Show)
@@ -67,7 +68,7 @@ newtype Round'View = Round'View Int
 data Chat = Chat { _messages :: Map UTCTime Chat'Message } deriving Show
 
 data Gobble = Gobble
-  { _arena :: Room -- soon to be map name room
+  { _arena :: Map Name Room -- soon to be map name room
   , _connections :: Map Name Connection
   , _pinou'stream :: [FilePath]
   , _english :: HashMap Text Boggle'Word
@@ -78,8 +79,7 @@ data Gobble = Gobble
 data Visibility = Global | Private [Text]
 
 data Room = Room
-  { _name :: Name
-  , _players :: Map Name Player
+  { _players :: Map Name Player
   , _chat :: Chat
   , _likes :: Map Name Text
   , _phase :: Phase
@@ -94,7 +94,7 @@ instance Default Chat where
   def = Chat mempty
 
 instance Default Room where
-  def = Room "home" mempty def mempty Ready (-1) def Global
+  def = Room mempty def mempty Ready (-1) def Global
 
 data Status'Query = Who'Query | Word'List'Query
   deriving (Show)
@@ -223,6 +223,6 @@ update'activity'1 now who
 update'activity :: UTCTime -> Gobble -> (Bool,Gobble)
 update'activity now gob = (flag, gob') where
   flag = and $ zipWith (==)
-                       (gob'^..arena.players.folded.status)
-                       (gob ^..arena.players.folded.status)
-  gob' = gob & arena . players . mapped %~ update'activity'1 now
+                       (gob'^..arena.folded.players.folded.status)
+                       (gob ^..arena.folded.players.folded.status)
+  gob' = gob & arena . traversed . players . mapped %~ update'activity'1 now

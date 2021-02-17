@@ -50,7 +50,7 @@ start'state = do
   pinous <- make'pinou'stream
   conn <- connect'db
   setup'db conn
-  let g0 = Gobble def
+  let g0 = Gobble (M.singleton "home" def)
                   mempty
                   pinous
                   col
@@ -73,9 +73,9 @@ set'previously'seen g = do
   ws <- query'db g query'distinct'words
   return $! include'previously'seen ws g
 
-update'previously'seen :: Gobble -> Gobble
-update'previously'seen g = include'previously'seen ws g where
-  ws = M.keys $ M.unionsWith (+) $ g ^.. arena.players.folded.answers
+update'previously'seen :: Room'ID -> Gobble -> Gobble
+update'previously'seen r g = include'previously'seen ws g where
+  ws = M.keys $ M.unionsWith (+) $ g ^.. arena.ix r.players.folded.answers
 
 make'pinou'stream :: IO [FilePath]
 make'pinou'stream =
