@@ -57,21 +57,21 @@ new'player who conn = liftIO $ do
   gob <- atomically $ stateTVar ?gobble $ dup .
     (arena.ix "home".players.at who ?~ Player M.empty 0 0 0 now Here) .
     (connections.at who ?~ conn)
-  when (gob ^? arena.ix "home" . phase & isn't (_Just._Ready)) $ do
+  when (gob ^?! arena.ix "home" . phase & isn't _Ready) $ do
     reply'json conn $ tag'thing "board" $ html'of'board
-      (gob^?arena.ix "home".board&fromMaybe def)
+      (gob^?!arena.ix "home".board)
     reply'json conn $ A.object
-      [ "time" A..= (gob^?arena.ix "home".board.creation'time.
-                     to (addUTCTime round'period)&fromMaybe (unsafeCoerce 0))
+      [ "time" A..= (gob^?!arena.ix "home".board.creation'time.
+                     to (addUTCTime round'period))
       , "pause" A..= score'length
       , "round" A..= round'length
-      , "rounds" A..= render'round'view (gob^?arena.ix "home"&fromMaybe def)
+      , "rounds" A..= render'round'view (gob^?!arena.ix "home")
       ]
-    when (gob ^? arena.ix "home" . phase & is (_Just._Scoring)) $
+    when (gob ^?! arena.ix "home" . phase & is _Scoring) $
       reply'json conn $ A.object
       [ "pinou"    A..= (html'of'pinou $ gob^.pinou'stream._head)
-      , "solution" A..= render'solution (gob^?arena.ix "home"&fromMaybe def)
-      , "scores"   A..= render'scores (gob^.english) (gob^?arena.ix "home"&fromMaybe def)
+      , "solution" A..= render'solution (gob^?!arena.ix "home")
+      , "scores"   A..= render'scores (gob^.english) (gob^?!arena.ix "home")
       ]
   add'tweet "GOBBLE" (who <> " joined the chat.")
 
@@ -113,7 +113,7 @@ submit'words who words = liftIO $ do
   atomically $ do
     let ok'word w = T.all isLetter w
     gob <- readTVar ?gobble
-    when (gob ^? arena.ix "home" . phase & isn't (_Just._Scoring)) $ writeTVar ?gobble $
+    when (gob ^?! arena.ix "home" . phase & isn't _Scoring) $ writeTVar ?gobble $
       gob & arena.ix "home".players.ix who %~
           ((answers %~ flip (foldr (\w -> bool id (at w?~1) (ok'word w))) words) .
            (last'activity .~ now))
@@ -121,12 +121,12 @@ submit'words who words = liftIO $ do
 delete'word :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Text -> m ()
 delete'word who word = liftIO $ atomically $ do
   gob <- readTVar ?gobble
-  when (gob ^? arena.ix "home" . phase & isn't (_Just._Scoring)) $ writeTVar ?gobble
+  when (gob ^?! arena.ix "home" . phase & isn't _Scoring) $ writeTVar ?gobble
     (gob & arena.ix "home".players.ix who.answers.at word .~ Nothing)
 
 game'ongoing :: (?gobble :: TVar Gobble, MonadIO m) => m Bool
-game'ongoing = liftIO $ readTVarIO ?gobble <&> is (_Just._Boggled) .
-  preview (arena.ix "home".phase)
+game'ongoing = liftIO $ readTVarIO ?gobble <&>
+  is _Boggled . (^?!arena.ix "home".phase)
 
 handle'chirp :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Chirp -> m ()
 handle'chirp who = \case
@@ -159,7 +159,7 @@ add'tweet who tweet = liftIO $ do
 
 tweet'chat :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 tweet'chat = liftIO $ tagged'broadcast "chirp" =<< render'chat .
-  fromMaybe def . preview (arena.ix "home") <$> readTVarIO ?gobble
+  (^?!arena.ix "home") <$> readTVarIO ?gobble
 
 broadcast :: (?gobble :: TVar Gobble, WebSocketsData a, MonadIO m) => a -> m ()
 broadcast msg = liftIO $ readTVarIO ?gobble >>=
@@ -204,14 +204,14 @@ update'phase = liftIO $ atomically $ modifyTVar' ?gobble switch'phase where
 send'words :: (?gobble :: TVar Gobble, MonadIO m) => Connection -> Name -> m ()
 send'words conn who = liftIO $ do
   gob <- readTVarIO ?gobble
-  when (gob ^? arena.ix "home" . phase & isn't (_Just._Scoring)) $
-    reply'json conn $ tag'thing "words" $ render'words who (gob^?arena.ix "home"&fromMaybe def)
+  when (gob ^?! arena.ix "home" . phase & isn't _Scoring) $
+    reply'json conn $ tag'thing "words" $ render'words who (gob^?!arena.ix "home")
 
 send'preview :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 send'preview = liftIO $ do
   gob <- readTVarIO ?gobble
-  when (gob ^? arena.ix "home" . phase & isn't (_Just._Scoring)) $
-    tagged'broadcast "solution" $ render'preview (gob^?arena.ix "home"&fromMaybe def)
+  when (gob ^?! arena.ix "home" . phase & isn't _Scoring) $
+    tagged'broadcast "solution" $ render'preview (gob^?!arena.ix "home")
 
 score'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 score'round = liftIO $ do
@@ -220,9 +220,9 @@ score'round = liftIO $ do
   broadcast'clear "words"
   tagged'broadcast "pinou" $ html'of'pinou $ gob ^. pinou'stream._head
   broadcast'val $ A.object
-    [ "solution" A..= render'solution (gob^?arena.ix "home"&fromMaybe def)
-    , "scores"   A..= render'scores (gob^.english) (gob^?arena.ix "home"&fromMaybe def) ]
-  record'round (gob^.gobble'connection) (gob^?arena.ix "home"&fromMaybe def)
+    [ "solution" A..= render'solution (gob^?!arena.ix "home")
+    , "scores"   A..= render'scores (gob^.english) (gob^?!arena.ix "home") ]
+  record'round (gob^.gobble'connection) (gob^?!arena.ix "home")
   putStrLn "Added round to DB..."
   atomically $ modifyTVar ?gobble (update'previously'seen "home")
   putStrLn "Recorded round..."
@@ -255,15 +255,15 @@ fresh'round = liftIO $ do
     , "round"    A..= round'length
     , "scores"   A..= clear'html
     , "solution" A..= clear'html
-    , "rounds" A..= render'round'view (gob^?arena.ix "home"&fromMaybe def) ]
+    , "rounds" A..= render'round'view (gob^?!arena.ix "home") ]
 
 run'gobble :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 run'gobble = liftIO $ forever $ do
   gob <- readTVarIO ?gobble
   now <- getCurrentTime
-  let gobble'dt t = diffUTCTime t $ gob ^? arena.ix "home".board.creation'time & fromMaybe (unsafeCoerce 0)
+  let gobble'dt t = diffUTCTime t $ gob ^?! arena.ix "home".board.creation'time
       peeps = gob ^. arena.ix "home" . players & isn't _Empty
-      game'phase = gob ^? arena.ix "home" . phase & fromMaybe def
+      game'phase = gob ^?! arena.ix "home" . phase
       dt = unsafeCoerce $ gobble'dt now
   status'same <- atomically $ stateTVar ?gobble (update'activity now)
   unless status'same $ tweet'chat
