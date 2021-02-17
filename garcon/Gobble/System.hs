@@ -50,14 +50,9 @@ start'state = do
   pinous <- make'pinou'stream
   conn <- connect'db
   setup'db conn
-  let g0 = Gobble (-1)
-                  b0
+  let g0 = Gobble def
                   mempty
-                  mempty
-                  def
-                  (Chat mempty)
                   pinous
-                  mempty
                   col
                   d
                   ws
@@ -80,7 +75,7 @@ set'previously'seen g = do
 
 update'previously'seen :: Gobble -> Gobble
 update'previously'seen g = include'previously'seen ws g where
-  ws = M.keys $ M.unionsWith (+) $ g ^.. players.folded.answers
+  ws = M.keys $ M.unionsWith (+) $ g ^.. arena.players.folded.answers
 
 make'pinou'stream :: IO [FilePath]
 make'pinou'stream =
@@ -153,9 +148,8 @@ record'words c ps wss = liftIO $ do
     forM_ ws $ \w -> execute s [w&toSql,p]
   commit c
 
-record'round :: (MonadIO m) => Gobble -> m ()
-record'round g = liftIO $ do
-  let c = g^.gobble'connection
+record'round :: (MonadIO m) => Connection -> Room -> m ()
+record'round c g = liftIO $ do
   bid <- record'board c (g^.current'round) (g^.board)
   ids <- forM (g^@..players.itraversed) $ record'solution c bid
   record'words c ids (g^..players.folded.answers.to M.keys)

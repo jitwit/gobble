@@ -1,5 +1,6 @@
 {-# language OverloadedStrings, ImplicitParams, TemplateHaskell, LambdaCase #-}
-{-# language TypeApplications, FlexibleContexts #-}
+{-# language TypeApplications, FlexibleContexts, DisambiguateRecordFields #-}
+{-# language DuplicateRecordFields #-}
 
 module Gobble.Core where
 
@@ -55,25 +56,20 @@ data Chat'Message = Chat'Message
 data Boggle'Word = Boggle'Word
   { _been'seen :: Bool, _definition :: Text }
   deriving (Show)
-
-newtype Chat'View = Chat'View Gobble
-newtype Score'View = Score'View Gobble
-newtype Word'List'View = Word'List'View Gobble
-newtype Score'Preview = Score'Preview Gobble
+type Dictionary = HashMap Text Boggle'Word
+newtype Chat'View = Chat'View Room
+data Score'View = Score'View Dictionary Room
+newtype Word'List'View = Word'List'View Room
+newtype Score'Preview = Score'Preview Room
 data Player'Status = Player'Status Text Status
 newtype Round'View = Round'View Int
 
 data Chat = Chat { _messages :: Map UTCTime Chat'Message } deriving Show
 
 data Gobble = Gobble
-  { _current'round :: Int
-  , _board :: Board
-  , _players :: Map Name Player
+  { _arena :: Room -- soon to be map name room
   , _connections :: Map Name Connection
-  , _game'phase :: Phase
-  , _chat'room :: Chat
   , _pinou'stream :: [FilePath]
-  , _gobble'likes :: Map Name Text
   , _english :: HashMap Text Boggle'Word
   , _gobble'dawg :: D.Node
   , _gobble'big'words :: V.Vector String
@@ -82,14 +78,23 @@ data Gobble = Gobble
 data Visibility = Global | Private [Text]
 
 data Room = Room
-  { _room'name :: Name
-  , _room'members :: Map Name Player
-  , _room'chat :: Chat
-  , _room'likes :: Map Name Text
-  , _room'phase :: Phase
-  , _room'round :: Int
-  , _room'board :: Board
-  , _room'visibility :: Visibility }
+  { _name :: Name
+  , _players :: Map Name Player
+  , _chat :: Chat
+  , _likes :: Map Name Text
+  , _phase :: Phase
+  , _current'round :: Int
+  , _board :: Board
+  , _visibility :: Visibility }
+
+instance Default Board where
+  def = Board (unsafeCoerce 0) "" mempty
+
+instance Default Chat where
+  def = Chat mempty
+
+instance Default Room where
+  def = Room "home" mempty def mempty Ready (-1) def Global
 
 data Status'Query = Who'Query | Word'List'Query
   deriving (Show)
@@ -136,6 +141,7 @@ type Game'Log = (Text,Int,Map Text ([Text],Int,Status,UTCTime))
 
 makePrisms ''Phase
 makeLenses ''Board
+makeLenses ''Room
 makeLenses ''Player
 makeLenses ''Gobble
 makeLenses ''Chat'Message
@@ -195,17 +201,17 @@ calculate'scores (new,wl,ps) = ps & mapped %~ scr where
     ppts = [ score'word word | (word,1) <- M.toList $ all'subs .* sol .* wl ]
     npts = [ score'word word | (word,1) <- M.toList $ all'subs .* (sol .- wl) ]
 
-score'submissions :: Gobble -> Gobble
-score'submissions gob = gob & players.~result & game'phase.~Scoring where
+score'submissions :: Room -> Room
+score'submissions gob = gob & players.~result & phase.~Scoring where
   result = current'scores gob
 
-current'scores :: Gobble -> Map Name Player
+current'scores :: Room -> Map Name Player
 current'scores gob = calculate'scores
   (gob^.current'round.to signum,gob^.board.word'list,gob^.players)
 
-game'log'view :: Gobble -> Game'Log
-game'log'view gob = (gob^.board.letters,gob^.current'round,gob^.players<&>vp) where
-  vp p = ((p^.answers & M.keys),p^.total'score,p^.status,p^.last'activity)
+--game'log'view :: Gobble -> Game'Log
+--game'log'view gob = (gob^.board.letters,gob^.current'round,gob^.players<&>vp) where
+--  vp p = ((p^.answers & M.keys),p^.total'score,p^.status,p^.last'activity)
 
 update'activity'1 :: UTCTime -> Player -> Player
 update'activity'1 now who
@@ -217,6 +223,6 @@ update'activity'1 now who
 update'activity :: UTCTime -> Gobble -> (Bool,Gobble)
 update'activity now gob = (flag, gob') where
   flag = and $ zipWith (==)
-                       (gob'^..players.folded.status)
-                       (gob ^..players.folded.status)
-  gob' = gob & players . mapped %~ update'activity'1 now
+                       (gob'^..arena.players.folded.status)
+                       (gob ^..arena.players.folded.status)
+  gob' = gob & arena . players . mapped %~ update'activity'1 now
