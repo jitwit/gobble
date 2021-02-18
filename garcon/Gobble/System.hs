@@ -80,9 +80,9 @@ update'previously'seen r g = include'previously'seen ws g where
 make'pinou'stream :: IO [FilePath]
 make'pinou'stream =
   let img'dir = "static/images/"
-   in do imgs <- fmap (img'dir<>) . V.fromList <$> listDirectory img'dir
-         gen <- newStdGen
-         return [ imgs V.! j | j <- randomRs (0,V.length imgs - 1) gen ]
+   in do imgs <- fmap (img'dir<>) <$> listDirectory img'dir
+         xss <- replicateM 5 (shuffleM imgs)
+         return $ cycle $ join xss
 
 -- CONFIG
 db'file = "data/gobble.db"
