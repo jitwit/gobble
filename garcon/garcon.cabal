@@ -14,6 +14,7 @@ common doggle
     servant-server,
     data-default,
     servant-client,
+    servant-auth-server,
     servant-blaze,
     text,
     websockets,

@@ -87,6 +87,13 @@ instance ToMarkup Player'Status where
     There -> H.text $ "(" <> who <> " 💤)"
 --    Elsewhere -> H.text $ "{" <> who <> " 👻}"
 
+instance ToMarkup Round'View where
+  toMarkup (Round'View n) = html where
+    full = H.div ! H.class_ "round-done" $ H.text ""
+    empty = H.div ! H.class_ "round-todo" $ H.text ""
+    -- 1+n since rounds count from zero
+    html = mconcat $ take 5 $ (replicate (1+n) full) ++ (repeat empty)
+
 instance ToMarkup Chat'View where
   toMarkup (Chat'View gob) = table $ do
     thead $ mconcat $ intersperse (H.text ", ")
@@ -94,7 +101,7 @@ instance ToMarkup Chat'View where
           | (who,plr) <- gob^.players.to M.assocs ]
     -- plz make less ugly with long messages by dumping table or
     -- figuring something else out
-    gob & iforMOf_ (chat'room.messages.ifolded) $ \t (Chat'Message tweet author) ->
+    gob & iforMOf_ (chat.messages.ifolded) $ \t (Chat'Message tweet author) ->
       tr $ do td $ H.div ! H.class_ "occurrence" ! H.style "min-width: 80px;" $ do
                 H.span ! H.class_ "happening" $ H.string $ fmt t
                 H.text author
@@ -113,10 +120,9 @@ instance ToMarkup Score'Preview where
                     Here == plr^.status ]
 
 instance ToMarkup Score'View where
-  toMarkup (Score'View gob) = report where
+  toMarkup (Score'View dict gob) = report where
     sol = gob ^. board.word'list
     subs = gob^..players.traversed.answers
-    dict = gob ^. english
     res = classify'words $ RoundResult dict sol (M.unionsWith (+) subs)
     report = table $ do
       thead $ do td $ ""
@@ -160,17 +166,20 @@ write'board = renderSVG "static/board.svg" (D.mkSizeSpec $ Just <$> V2 300 300)
 tag'thing :: A.ToJSON v => Text -> v -> A.Value
 tag'thing tag val = A.object [ tag A..= val ]
 
-render'chat :: Gobble -> H
+render'chat :: Room -> H
 render'chat = renderHtml . toMarkup . Chat'View
 
-render'solution :: Gobble -> H
+render'solution :: Room -> H
 render'solution = renderHtml . toMarkup . Word'List'View
 
-render'scores :: Gobble -> H
-render'scores = renderHtml . toMarkup . Score'View
+render'scores :: Dictionary -> Room -> H
+render'scores d = renderHtml . toMarkup . Score'View d
 
-render'preview :: Gobble -> H
+render'preview :: Room -> H
 render'preview = renderHtml . toMarkup . Score'Preview
+
+render'round'view :: Room -> H
+render'round'view = renderHtml . toMarkup . Round'View . view current'round
 
 html'of'board :: Board -> H
 html'of'board b = renderHtml $ img ! H.src board'source where
@@ -179,7 +188,7 @@ html'of'board b = renderHtml $ img ! H.src board'source where
 html'of'pinou :: String -> H
 html'of'pinou src = renderHtml $ H.img ! H.src (stringValue src)
 
-render'words :: Name -> Gobble -> H
+render'words :: Name -> Room -> H
 render'words who gob = renderHtml $
   mapM_ (li.H.text) $ gob^.players.ix who.answers.to M.keys
 
@@ -193,10 +202,10 @@ instance ToMarkup GobblePage where
   toMarkup _ = html $ do
     H.head $ do
       title "gobble"
-      link ! H.rel "stylesheet" ! H.href "static/gobble.css?21"
+      link ! H.rel "stylesheet" ! H.href "static/gobble.css?22"
       link ! H.rel "icon" ! H.href "static/icon.png"
       script ! H.src "static/jquery-3.4.1.slim.js" $ ""
-      script ! H.src "static/gobble.js?21" $ ""
+      script ! H.src "static/gobble.js?22" $ ""
     H.body $ do
       H.h1 "GOBBLE"
       H.div ! H.class_ "gobble" $ do
@@ -204,6 +213,7 @@ instance ToMarkup GobblePage where
             H.div ! H.id "gobble" $ ""
             H.div ! H.id "solution" $ ""
           H.div ! H.class_ "blahamid" $ do
+            H.div ! H.id "rounds" $ ""
             H.div ! H.id "timer" $ ""
             H.form ! H.id "mush" $ do
               H.input ! H.autocomplete "off" ! H.spellcheck "false"
@@ -226,7 +236,7 @@ instance ToMarkup All'History'Page where
   toMarkup (All'History'Page h) = html $ do
     H.head $ do
       title "gobble"
-      link ! H.rel "stylesheet" ! H.href "static/gobble.css?20"
+      link ! H.rel "stylesheet" ! H.href "static/gobble.css?21"
       link ! H.rel "icon" ! H.href "static/icon.png"
       script ! H.src "static/jquery-3.4.1.slim.js" $ ""
     H.body ! H.style "width: 500px; margin: auto;" $ do

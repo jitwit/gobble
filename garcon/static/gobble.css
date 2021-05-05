@@ -18,6 +18,26 @@ h1 {
     gap: 20px;
 }
 
+#rounds {
+    display: inline-grid;
+    grid-template-columns: repeat(5,1fr);
+    width: 120px;
+}
+
+.round-done {
+    pad: 8px;
+    background: #C8CDFF;
+    height: 10px;
+    width: 16px;
+}
+
+.round-todo {
+    pad: 8px;
+    background: #C8C8C8;
+    height: 10px;
+    width: 16px;
+}
+
 .occurrence {
     position: relative;
     display: block;
@@ -51,8 +71,8 @@ ul {
     list-style-type: none;
 }
 
-#hourglass {
-    padding: 10px;
+#timer {
+    padding: 5px;
 }
 
 #pinou > img {

@@ -12,6 +12,8 @@ import qualified Data.ByteString.Lazy.UTF8 as B8
 import qualified Data.HashMap.Strict as H
 import Data.Bool
 import Data.Char
+import Data.Default
+import Data.Maybe
 import Data.Text (Text)
 import Data.Proxy
 import qualified Data.Map as M
@@ -41,34 +43,36 @@ import Gobble.System
 import Gobble.Render
 import Gobble.Dawggle
 
-fetch'board :: (?gobble :: TVar Gobble, MonadIO m) => m Board
-fetch'board = liftIO $ view board <$> readTVarIO ?gobble
-
 is'name'ok :: (?gobble :: TVar Gobble, MonadIO m) => Name -> m Name'Check
 is'name'ok name = liftIO $ do
-  check'1 <- not.isn't _Nothing.preview (players.ix name) <$> readTVarIO ?gobble
+  check'1 <- isn't _Nothing.preview (connections.ix name) <$> readTVarIO ?gobble
   if | 12 < T.length name -> pure Name'Too'Long
-     | name == "" -> pure Name'Is'Empty
-     | not $ name /= "" && name /= "null" && check'1 -> pure Name'Taken
+     | name == "" || name == "null" -> pure Name'Is'Empty
+     | check'1 -> pure Name'Taken
      | otherwise -> pure Name'OK
 
 new'player :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Connection -> m ()
 new'player who conn = liftIO $ do
   now <- liftIO getCurrentTime
   gob <- atomically $ stateTVar ?gobble $ dup .
-    (players.at who ?~ Player M.empty 0 0 0 now Here) .
+    (arena.ix "home".players.at who ?~ Player M.empty 0 0 0 now Here) .
     (connections.at who ?~ conn)
-  when (gob ^. game'phase & isn't _Ready) $ do
-    reply'json conn $ tag'thing "board" $ html'of'board (gob^.board)
+  when (gob ^?! arena.ix "home" . phase & isn't _Ready) $ do
+    reply'json conn $ tag'thing "board" $ html'of'board
+      (gob^?!arena.ix "home".board)
     reply'json conn $ A.object
-      [ "time" A..= (gob^.board.creation'time.to (addUTCTime round'period))
+      [ "time" A..= (gob^?!arena.ix "home".board.creation'time.
+                     to (addUTCTime round'period))
       , "pause" A..= score'length
-      , "round" A..= round'length ]
-    when (gob ^. game'phase & is _Scoring) $
+      , "round" A..= round'length
+      , "rounds" A..= render'round'view (gob^?!arena.ix "home")
+      ]
+    when (gob ^?! arena.ix "home" . phase & is _Scoring) $
       reply'json conn $ A.object
       [ "pinou"    A..= (html'of'pinou $ gob^.pinou'stream._head)
-      , "solution" A..= render'solution gob
-      , "scores"   A..= render'scores gob ]
+      , "solution" A..= render'solution (gob^?!arena.ix "home")
+      , "scores"   A..= render'scores (gob^.english) (gob^?!arena.ix "home")
+      ]
   add'tweet "GOBBLE" (who <> " joined the chat.")
 
 name'player :: (?gobble :: TVar Gobble, MonadIO m) => Connection -> m Name
@@ -85,7 +89,7 @@ name'player conn = liftIO $ do
 remove'player :: (?gobble :: TVar Gobble, MonadIO m) => Text -> Name -> m ()
 remove'player func who = liftIO $ do
   atomically $ modifyTVar' ?gobble $
-    (players.at who .~ Nothing) . (connections.at who .~ Nothing)
+    (arena.ix "home".players.at who .~ Nothing) . (connections.at who .~ Nothing)
   add'tweet "GOBBLE" (who <> " left the chat.")
 
 reply :: (?gobble :: TVar Gobble, WebSocketsData a, MonadIO m)
@@ -99,8 +103,8 @@ reply'json conn = reply conn . A.encode
 wow'wow :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Text -> m ()
 wow'wow who word = liftIO $ do
   gob <- readTVarIO ?gobble
-  when (Just word /= (gob^.gobble'likes.at who)) $ do
-    atomically $ writeTVar ?gobble $ gob & gobble'likes.at who ?~ word
+  when (Just word /= (gob^.arena.ix "home".likes.at who)) $ do
+    atomically $ writeTVar ?gobble $ gob & arena.ix "home".likes.at who ?~ word
     add'tweet "GOBBLE" $ T.unwords [who,"likes",word]
 
 submit'words :: (?gobble :: TVar Gobble, MonadIO m) => Name -> [Text] -> m ()
@@ -109,19 +113,20 @@ submit'words who words = liftIO $ do
   atomically $ do
     let ok'word w = T.all isLetter w
     gob <- readTVar ?gobble
-    when (gob ^. game'phase & isn't _Scoring) $ writeTVar ?gobble $
-      gob & players.ix who %~
+    when (gob ^?! arena.ix "home" . phase & isn't _Scoring) $ writeTVar ?gobble $
+      gob & arena.ix "home".players.ix who %~
           ((answers %~ flip (foldr (\w -> bool id (at w?~1) (ok'word w))) words) .
            (last'activity .~ now))
 
 delete'word :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Text -> m ()
 delete'word who word = liftIO $ atomically $ do
   gob <- readTVar ?gobble
-  when (gob ^. game'phase & isn't _Scoring) $ writeTVar ?gobble
-    (gob & players.ix who.answers.at word .~ Nothing)
+  when (gob ^?! arena.ix "home" . phase & isn't _Scoring) $ writeTVar ?gobble
+    (gob & arena.ix "home".players.ix who.answers.at word .~ Nothing)
 
 game'ongoing :: (?gobble :: TVar Gobble, MonadIO m) => m Bool
-game'ongoing = liftIO $ readTVarIO ?gobble <&> is _Boggled . view game'phase
+game'ongoing = liftIO $ readTVarIO ?gobble <&>
+  is _Boggled . (^?!arena.ix "home".phase)
 
 handle'chirp :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Chirp -> m ()
 handle'chirp who = \case
@@ -146,15 +151,15 @@ add'tweet :: (?gobble :: TVar Gobble, MonadIO m) => Name -> Text -> m ()
 add'tweet who tweet = liftIO $ do
   now <- getCurrentTime
   atomically $ modifyTVar' ?gobble $
-    (players.ix who.last'activity.~now) .
-    (chat'room.messages.at now?~Chat'Message tweet who) .
-    (chat'room.messages %~ \m -> M.drop (M.size m - 10) m)
+    (arena.ix "home".players.ix who.last'activity.~now) .
+    (arena.ix "home".chat.messages.at now?~Chat'Message tweet who) .
+    (arena.ix "home".chat.messages %~ \m -> M.drop (M.size m - 10) m)
   tweet'chat
   print (who,tweet)
 
 tweet'chat :: (?gobble :: TVar Gobble, MonadIO m) => m ()
-tweet'chat = liftIO $ tagged'broadcast "chirp" =<< render'chat <$>
-  readTVarIO ?gobble
+tweet'chat = liftIO $ tagged'broadcast "chirp" =<< render'chat .
+  (^?!arena.ix "home") <$> readTVarIO ?gobble
 
 broadcast :: (?gobble :: TVar Gobble, WebSocketsData a, MonadIO m) => a -> m ()
 broadcast msg = liftIO $ readTVarIO ?gobble >>=
@@ -172,21 +177,26 @@ broadcast'clear what = tagged'broadcast what clear'html
 
 ws'handle :: (?gobble :: TVar Gobble, MonadIO m)
             => Name -> Connection -> DataMessage -> m ()
-ws'handle who conn d'm = liftIO $ case parse'ws'message d'm of
-  Status'Message Who'Query -> reply'json conn =<< get'players
-  Status'Message Word'List'Query -> send'words conn who
-  Submit'Message ws -> submit'words who ws
-  Delete'Message w -> delete'word who w
-  Like'Message w -> wow'wow who w
-  Chirp'Message w -> print w >> handle'chirp who w
-  IDK'Message idk -> reply'json @Text conn "idk"
+ws'handle who conn d'm = liftIO $ do
+  t0 <- getCurrentTime
+  case parse'ws'message d'm of
+    Status'Message Who'Query -> reply'json conn =<< get'players
+    Status'Message Word'List'Query -> send'words conn who
+    Submit'Message ws -> submit'words who ws
+    Delete'Message w -> delete'word who w
+    Like'Message w -> wow'wow who w
+    Chirp'Message w -> print w >> handle'chirp who w
+    IDK'Message idk -> reply'json @Text conn "idk"
+  t1 <- getCurrentTime
+  print $ d'm
+  print $ diffUTCTime t1 t0
 
 get'players :: (?gobble :: TVar Gobble) => IO [Name]
-get'players = M.keys . view players <$> readTVarIO ?gobble
+get'players = M.keys . view (arena.ix "home".players) <$> readTVarIO ?gobble
 
 update'phase :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 update'phase = liftIO $ atomically $ modifyTVar' ?gobble switch'phase where
-  switch'phase = game'phase %~ \case
+  switch'phase = arena.ix "home".phase %~ \case
     Scoring -> Boggled
     Boggled -> Scoring
     other   -> other
@@ -194,46 +204,46 @@ update'phase = liftIO $ atomically $ modifyTVar' ?gobble switch'phase where
 send'words :: (?gobble :: TVar Gobble, MonadIO m) => Connection -> Name -> m ()
 send'words conn who = liftIO $ do
   gob <- readTVarIO ?gobble
-  when (gob ^. game'phase & isn't _Scoring) $
-    reply'json conn $ tag'thing "words" $ render'words who gob
+  when (gob ^?! arena.ix "home" . phase & isn't _Scoring) $
+    reply'json conn $ tag'thing "words" $ render'words who (gob^?!arena.ix "home")
 
 send'preview :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 send'preview = liftIO $ do
   gob <- readTVarIO ?gobble
-  when (gob ^. game'phase & isn't _Scoring) $
-    tagged'broadcast "solution" $ render'preview gob
+  when (gob ^?! arena.ix "home" . phase & isn't _Scoring) $
+    tagged'broadcast "solution" $ render'preview (gob^?!arena.ix "home")
 
 score'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 score'round = liftIO $ do
-  gob <- atomically $ stateTVar ?gobble (dup.score'submissions)
+  gob <- atomically $ stateTVar ?gobble (\g -> dup $ g&arena.ix "home"%~score'submissions)
   putStrLn "Scored round... "
   broadcast'clear "words"
   tagged'broadcast "pinou" $ html'of'pinou $ gob ^. pinou'stream._head
   broadcast'val $ A.object
-    [ "solution" A..= render'solution gob
-    , "scores"   A..= render'scores gob ]
-  record'round gob
+    [ "solution" A..= render'solution (gob^?!arena.ix "home")
+    , "scores"   A..= render'scores (gob^.english) (gob^?!arena.ix "home") ]
+  record'round (gob^.gobble'connection) (gob^?!arena.ix "home")
   putStrLn "Added round to DB..."
-  atomically $ modifyTVar ?gobble update'previously'seen
+  atomically $ modifyTVar ?gobble (update'previously'seen "home")
   putStrLn "Recorded round..."
 
 reset'gobble :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 reset'gobble = liftIO $ do
   atomically $ modifyTVar' ?gobble $
-    (game'phase .~ Ready) .
-    (current'round .~ (-1)) .
-    (chat'room .~ Chat mempty)
+    (arena.ix "home".phase .~ Ready) .
+    (arena.ix "home".current'round .~ (-1)) .
+    (arena.ix "home".chat .~ def)
   putStrLn "ready!"
 
 fresh'round :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 fresh'round = liftIO $ do
   gob <- readTVarIO ?gobble
   b <- new'board (gob^.gobble'dawg) (gob^.english) (gob^.gobble'big'words)
-  gob <- (board .~ b) . (game'phase .~ Boggled) .
-         (current'round %~ ((`mod`5).succ)) .
+  gob <- (arena.ix "home".board .~ b) . (arena.ix "home".phase .~ Boggled) .
+         (arena.ix "home".current'round %~ ((`mod`5).succ)) .
          (pinou'stream %~ tail) .
-         (gobble'likes .~ mempty) .
-         (players.traversed.answers .~ M.empty) <$>
+         (arena.ix "home".likes .~ mempty) .
+         (arena.ix "home".players.traversed.answers .~ M.empty) <$>
          readTVarIO ?gobble
   atomically $ writeTVar ?gobble gob
   putStrLn "New Round"
@@ -244,19 +254,20 @@ fresh'round = liftIO $ do
     , "pause"    A..= score'length
     , "round"    A..= round'length
     , "scores"   A..= clear'html
-    , "solution" A..= clear'html ]
+    , "solution" A..= clear'html
+    , "rounds" A..= render'round'view (gob^?!arena.ix "home") ]
 
 run'gobble :: (?gobble :: TVar Gobble, MonadIO m) => m ()
 run'gobble = liftIO $ forever $ do
   gob <- readTVarIO ?gobble
   now <- getCurrentTime
-  let gobble'dt t = diffUTCTime t $ gob ^. board.creation'time
-      peeps = gob ^. players & isn't _Empty
-      phase = gob ^. game'phase
+  let gobble'dt t = diffUTCTime t $ gob ^?! arena.ix "home".board.creation'time
+      peeps = gob ^. arena.ix "home" . players & isn't _Empty
+      game'phase = gob ^?! arena.ix "home" . phase
       dt = unsafeCoerce $ gobble'dt now
   status'same <- atomically $ stateTVar ?gobble (update'activity now)
   unless status'same $ tweet'chat
-  case phase of
+  case game'phase of
     Ready   -> when peeps fresh'round
     Boggled -> if | not peeps -> reset'gobble
                   | dt > (10^12)*round'length -> score'round
@@ -264,7 +275,7 @@ run'gobble = liftIO $ forever $ do
     Scoring -> if | not peeps -> reset'gobble
                   | dt > (10^12)*overall'length -> fresh'round
                   | otherwise -> mempty
-  case phase of
+  case game'phase of
     Ready   -> threadDelay $ ready'length
     running -> threadDelay $ run'length
 
@@ -308,7 +319,7 @@ type BoggleAPI =
   -- view all history
   :<|> "previously" :> Get '[HTML] All'History'Page
   -- debug view
-  :<|> "help" :> "naked" :> Get '[PlainText] String
+--  :<|> "help" :> "naked" :> Get '[PlainText] String
   -- endpoint to query dictionary
   :<|> "define" :> Capture "word" Text :> Get '[PlainText] Text
   -- endpoint to solve board
@@ -318,16 +329,16 @@ type BoggleAPI =
   -- danger
   :<|> "fix" :> "name" :> Capture "from" Text :> Capture "to" Text :> Get '[JSON] ()
 
-naked'state :: (?gobble :: TVar Gobble) => Handler String 
-naked'state = liftIO $ do
-  gob <- readTVarIO ?gobble
-  return $ unlines [gob & game'log'view & show,"",gob ^. chat'room & show]
+-- naked'state :: (?gobble :: TVar Gobble) => Handler String 
+-- naked'state = liftIO $ do
+--   gob <- readTVarIO ?gobble
+--   return $ unlines [gob & game'log'view & show,"",gob ^. chat'room & show]
 
 boggle'server :: (?gobble :: TVar Gobble) => Server BoggleAPI
 boggle'server = pure GobblePage
   :<|> serveDirectoryWebApp "static"
   :<|> all'history'page
-  :<|> naked'state
+--  :<|> naked'state
   :<|> fmap (maybe "idk" id) . definition'of
   :<|> http'boggle
   :<|> refresh'pinous
@@ -371,7 +382,7 @@ launch'boggle port = do
          E.finally run'gobble $ do
            killThread bog'thread
            killThread preview'thread
-         putStrLn $ "GOBBLE died"
+           putStrLn $ "GOBBLE died"
 
 main :: IO ()
 main = getArgs >>= \case

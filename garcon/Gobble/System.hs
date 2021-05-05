@@ -3,6 +3,7 @@
 module Gobble.System where
 
 import Control.Applicative
+import qualified Control.Exception as E
 import Control.Lens
 import Control.Monad
 import Control.Monad.IO.Class
@@ -49,14 +50,9 @@ start'state = do
   pinous <- make'pinou'stream
   conn <- connect'db
   setup'db conn
-  let g0 = Gobble (-1)
-                  b0
+  let g0 = Gobble (M.singleton "home" def)
                   mempty
-                  mempty
-                  def
-                  (Chat mempty)
                   pinous
-                  mempty
                   col
                   d
                   ws
@@ -77,16 +73,16 @@ set'previously'seen g = do
   ws <- query'db g query'distinct'words
   return $! include'previously'seen ws g
 
-update'previously'seen :: Gobble -> Gobble
-update'previously'seen g = include'previously'seen ws g where
-  ws = M.keys $ M.unionsWith (+) $ g ^.. players.folded.answers
+update'previously'seen :: Room'ID -> Gobble -> Gobble
+update'previously'seen r g = include'previously'seen ws g where
+  ws = M.keys $ M.unionsWith (+) $ g ^.. arena.ix r.players.folded.answers
 
 make'pinou'stream :: IO [FilePath]
 make'pinou'stream =
   let img'dir = "static/images/"
-   in do imgs <- fmap (img'dir<>) . V.fromList <$> listDirectory img'dir
-         gen <- newStdGen
-         return [ imgs V.! j | j <- randomRs (0,V.length imgs - 1) gen ]
+   in do imgs <- fmap (img'dir<>) <$> listDirectory img'dir
+         xss <- replicateM 5 (shuffleM imgs)
+         return $ cycle $ join xss
 
 -- CONFIG
 db'file = "data/gobble.db"
@@ -152,9 +148,8 @@ record'words c ps wss = liftIO $ do
     forM_ ws $ \w -> execute s [w&toSql,p]
   commit c
 
-record'round :: (MonadIO m) => Gobble -> m ()
-record'round g = liftIO $ do
-  let c = g^.gobble'connection
+record'round :: (MonadIO m) => Connection -> Room -> m ()
+record'round c g = liftIO $ do
   bid <- record'board c (g^.current'round) (g^.board)
   ids <- forM (g^@..players.itraversed) $ record'solution c bid
   record'words c ids (g^..players.folded.answers.to M.keys)
