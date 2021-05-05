@@ -33,7 +33,7 @@ update-images :
 	nixops scp --to gobble-net garcon/images/ $(static-dir)
 
 download-db :
-	nixops scp --from gobble-net /var/www/gobble/data/gobble.db gobble.db
+	scp root@boggle-bitch.net:/var/www/gobble/data/gobble.db gobble.db
 
 clean :
 	find . -name "*~" -exec rm {} \;
